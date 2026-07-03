@@ -71,6 +71,11 @@ Android SDK is installed on the secondary drive at `/media/matt/Storage/DevTools
 | Validation | Result |
 |-----------|--------|
 | `dart format lib test` | ✅ |
+| `flutter pub get` | ✅ |
+| `flutter analyze --no-fatal-infos` | ✅ (2 infos) |
+| `flutter test` | ✅ 7/7 |
+| `flutter build web --debug` | ✅ |
+| `flutter build apk --debug` | ✅ 140MB debug APK |
 
 ## Links
 

@@ -60,12 +60,12 @@ flutter build apk --debug
 
 ## Device Install
 
-To install on a connected phone via USB:
+To install on a connected phone via USB, see [PHONE_INSTALL.md](PHONE_INSTALL.md).
+
+Briefly:
 
 ```bash
-flutter install
-# or
-adb install build/app/outputs/flutter-apk/app-debug.apk
+adb install -r build/app/outputs/flutter-apk/app-debug.apk
 ```
 
 No phone was connected at setup time — device install not tested.
