@@ -33,6 +33,18 @@ Android APK builds are blocked because Flutter doctor cannot locate an Android S
 
 Improve the visual app shell and card detail UI, or approve Android SDK/toolchain setup on secondary-drive storage if Android APK validation is required.
 
+
+### v0.1 visual shell polish
+
+Completed after Flutter validation:
+
+- Improved dark Material 3 theme.
+- Improved Home, Scanner, Mock Scan Result, Card Detail, Collection, and Settings screens.
+- Added small reusable UI widgets: `StatusPill`, `FixtureBadge`, `SectionCard`, and `PrimaryActionCard`.
+- Fixture mode remains default; real API mode remains explicit and unimplemented.
+- No auth, billing, camera/OCR, provider calls, or app-store publishing.
+- `flutter analyze`, `flutter test`, and `flutter build web --debug` passed.
+
 ## Links
 
 - Related: [../README.md](../README.md)

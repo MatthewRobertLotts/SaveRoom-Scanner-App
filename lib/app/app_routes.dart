@@ -16,11 +16,11 @@ class AppRoutes {
   static const settings = '/settings';
 
   static Map<String, WidgetBuilder> get routes => {
-        home: (_) => const HomeScreen(),
-        scanner: (_) => const ScannerScreen(),
-        mockScanResult: (_) => const MockScanResultScreen(),
-        cardDetail: (_) => const CardDetailScreen(),
-        collection: (_) => const CollectionScreen(),
-        settings: (_) => const SettingsScreen(),
-      };
+    home: (_) => const HomeScreen(),
+    scanner: (_) => const ScannerScreen(),
+    mockScanResult: (_) => const MockScanResultScreen(),
+    cardDetail: (_) => const CardDetailScreen(),
+    collection: (_) => const CollectionScreen(),
+    settings: (_) => const SettingsScreen(),
+  };
 }

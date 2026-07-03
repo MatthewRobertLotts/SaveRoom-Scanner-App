@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../services/fixture_loader.dart';
+import '../../widgets/fixture_badge.dart';
 import '../../widgets/info_tile.dart';
+import '../../widgets/section_card.dart';
 import '../../widgets/saveroom_shell.dart';
 
 class CardDetailScreen extends StatelessWidget {
@@ -26,81 +28,170 @@ class CardDetailScreen extends StatelessWidget {
         }
         return SaveRoomShell(
           title: 'Card detail',
-          children: _content(snapshot.data!),
+          children: _content(context, snapshot.data!),
         );
       },
     );
   }
 
-  List<Widget> _content(Map<String, dynamic> fixture) {
+  List<Widget> _content(BuildContext context, Map<String, dynamic> fixture) {
     final data = asMap(fixture['data']);
     final card = asMap(data['card']);
     final set = asMap(data['set']);
-    final pricing = asMap(data['pricing']);
     final images = asMap(data['images']);
+    final pricing = asMap(data['pricing']);
     final commercial = asMap(data['commercial']);
     final metadata = asMap(fixture['metadata']);
-    final setText = [
+    final providers = asMap(data['provider_status']);
+    final setText = joinPresent([
       textAt(set, 'name'),
-      textAt(set, 'code'),
-      textAt(card, 'number'),
-    ].where((value) => value != '—').join(' / ');
+      textAt(set, 'set_code'),
+      textAt(card, 'collector_number'),
+    ]);
 
     return [
+      const FixtureBadge(),
+      const SizedBox(height: 12),
       Text(
         textAt(card, 'name', 'Unknown card'),
-        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        style: Theme.of(context).textTheme.headlineLarge,
       ),
-      InfoTile(
-        label: 'Set / code / number',
-        value: setText.isEmpty ? '—' : setText,
+      const SizedBox(height: 6),
+      Text(setText, style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 12),
+      _ImagePanel(images: images),
+      SectionCard(
+        title: 'Card facts',
+        icon: Icons.style_outlined,
+        children: [
+          InfoTile(
+            label: 'Language',
+            value: textAt(card, 'language_code'),
+            icon: Icons.language_outlined,
+          ),
+          InfoTile(
+            label: 'Rarity',
+            value: textAt(card, 'rarity'),
+            icon: Icons.star_outline,
+          ),
+          InfoTile(
+            label: 'Card key',
+            value: textAt(card, 'card_key'),
+            icon: Icons.key_outlined,
+          ),
+        ],
       ),
-      InfoTile(label: 'Language', value: textAt(card, 'language')),
-      InfoTile(label: 'Pricing summary', value: _pricingText(pricing)),
-      InfoTile(label: 'Image URL/path', value: _firstImage(images)),
-      InfoTile(
-        label: 'Provenance / metadata',
-        value: _metadataText(metadata, commercial),
+      SectionCard(
+        title: 'Pricing / evidence',
+        icon: Icons.query_stats_outlined,
+        children: _pricingRows(pricing),
+      ),
+      SectionCard(
+        title: 'Inventory / commercial',
+        icon: Icons.sell_outlined,
+        children: _commercialRows(commercial),
+      ),
+      SectionCard(
+        title: 'Source / provenance',
+        icon: Icons.verified_outlined,
+        children: [
+          InfoTile(label: 'Contract', value: textAt(metadata, 'contract')),
+          InfoTile(
+            label: 'API version',
+            value: textAt(metadata, 'api_version'),
+          ),
+          InfoTile(label: 'Sanitized', value: textAt(metadata, 'sanitized')),
+          InfoTile(label: 'Providers', value: providers.keys.join(', ')),
+        ],
+      ),
+      SectionCard(
+        title: 'Raw fixture debug',
+        icon: Icons.data_object_outlined,
+        children: [
+          Text(
+            fixture.toString(),
+            maxLines: 12,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     ];
   }
 
-  String _pricingText(Map<String, dynamic> pricing) {
-    if (pricing.isEmpty) return '—';
-    final parts = <String>[];
-    for (final key in [
-      'market_price',
-      'market_price_gbp',
-      'currency',
-      'price_label',
-      'source',
-    ]) {
-      final value = pricing[key];
-      if (value != null) parts.add('$key: $value');
-    }
-    return parts.isEmpty ? pricing.toString() : parts.join(' · ');
+  List<Widget> _pricingRows(Map<String, dynamic> pricing) {
+    final evidence = asMap(pricing['evidence_summary']);
+    return [
+      InfoTile(label: 'Primary price', value: textAt(pricing, 'primary_price')),
+      InfoTile(
+        label: 'Fallback price',
+        value: textAt(pricing, 'fallback_price'),
+      ),
+      InfoTile(label: 'Evidence source', value: textAt(evidence, 'source')),
+      InfoTile(
+        label: 'Evidence count',
+        value: textAt(evidence, 'evidence_count'),
+      ),
+    ];
   }
 
-  String _firstImage(Map<String, dynamic> images) {
-    for (final value in images.values) {
-      if (value != null && value.toString().trim().isNotEmpty) {
-        return value.toString();
-      }
-    }
-    return '—';
+  List<Widget> _commercialRows(Map<String, dynamic> commercial) {
+    final skus = asList(commercial['sellable_skus']);
+    final firstSku = skus.isNotEmpty
+        ? asMap(skus.first)
+        : const <String, dynamic>{};
+    return [
+      InfoTile(
+        label: 'Default SKU',
+        value: textAt(commercial, 'default_sku_id'),
+      ),
+      InfoTile(label: 'Sellable SKUs', value: '${skus.length}'),
+      InfoTile(
+        label: 'First condition',
+        value: textAt(firstSku, 'condition_code'),
+      ),
+      InfoTile(label: 'SKU status', value: textAt(firstSku, 'status')),
+    ];
   }
+}
 
-  String _metadataText(
-    Map<String, dynamic> metadata,
-    Map<String, dynamic> commercial,
-  ) {
-    final bits = <String>[];
-    for (final key in ['api_version', 'contract', 'fixture', 'sanitized']) {
-      if (metadata.containsKey(key)) bits.add('$key: ${metadata[key]}');
-    }
-    if (commercial.isNotEmpty) {
-      bits.add('commercial keys: ${commercial.keys.join(', ')}');
-    }
-    return bits.isEmpty ? '—' : bits.join(' · ');
+class _ImagePanel extends StatelessWidget {
+  const _ImagePanel({required this.images});
+
+  final Map<String, dynamic> images;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = textAt(images, 'display_image_url');
+    return SectionCard(
+      title: 'Image',
+      icon: Icons.image_outlined,
+      children: [
+        Container(
+          height: 170,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.image_not_supported_outlined, size: 44),
+                const SizedBox(height: 8),
+                Text(
+                  url == '—'
+                      ? 'No local image asset yet'
+                      : 'Image URL/path shown below',
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SelectableText(url),
+      ],
+    );
   }
 }

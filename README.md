@@ -68,3 +68,27 @@ Android APK builds are blocked until an Android SDK/toolchain is approved and in
 
 - Related: [docs/APP_ARCHITECTURE.md](docs/APP_ARCHITECTURE.md)
 - Related: [docs/FIXTURE_MODE.md](docs/FIXTURE_MODE.md)
+
+
+## Visual shell status
+
+The v0.1 visual shell is polished and fixture-first:
+
+- Dark Material 3 SaveRoom identity.
+- Home, scanner placeholder, mock scan result, card detail, collection, and settings screens improved.
+- Reusable widgets for section cards, status pills, fixture badge, and action cards.
+- Card detail reads `card_detail_response.json` defensively.
+- No real API calls by default.
+- No auth, billing, camera/OCR, provider calls, or app-store publishing.
+
+Validation:
+
+```bash
+dart format lib test
+flutter pub get
+flutter analyze
+flutter test
+flutter build web --debug
+```
+
+Android APK remains blocked until Android SDK is approved/configured.
