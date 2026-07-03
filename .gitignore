@@ -1,0 +1,28 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# IDE/OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Secrets / private data
+.env
+*.env
+*.sqlite
+*.sqlite3
+*api_key*
+*secret*
+private_provider_payloads/
+raw_payloads/
+headers/
+account_metadata/
+marketplace_data/
