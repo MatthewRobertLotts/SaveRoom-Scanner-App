@@ -20,15 +20,29 @@ SaveRoom Scanner App is a separate Flutter/mobile/frontend repo for visual scann
 
 All controllable app source, assets, docs, generated project files, build outputs, and package caches should live on the secondary drive.
 
-Use these cache paths when running Flutter/Dart/Gradle:
+| Variable | Path |
+|----------|------|
+| `ANDROID_SDK_ROOT` | `/media/matt/Storage/DevTools/android-sdk` |
+| `ANDROID_HOME` | `$ANDROID_SDK_ROOT` |
+| `GRADLE_USER_HOME` | `$DEV_CACHE_ROOT/gradle` |
+| `ANDROID_USER_HOME` | `$DEV_CACHE_ROOT/android-user` |
+| `PUB_CACHE` | `$DEV_CACHE_ROOT/dart-pub-cache` |
+
+Example:
 
 ```bash
 export APP_REPO="/media/matt/Storage/Brain/SaveRoom-Scanner-App"
 export API_REPO="/media/matt/Storage/Brain/Pokemon Card Database"
 export DEV_CACHE_ROOT="/media/matt/Storage/DevCaches"
+export DEV_TOOLS_ROOT="/media/matt/Storage/DevTools"
+export FLUTTER_SDK="$DEV_TOOLS_ROOT/flutter"
+export ANDROID_SDK_ROOT="$DEV_TOOLS_ROOT/android-sdk"
+export ANDROID_HOME="$ANDROID_SDK_ROOT"
 export PUB_CACHE="$DEV_CACHE_ROOT/dart-pub-cache"
 export GRADLE_USER_HOME="$DEV_CACHE_ROOT/gradle"
 export ANDROID_USER_HOME="$DEV_CACHE_ROOT/android-user"
+export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+export PATH="$FLUTTER_SDK/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
 ```
 
 ### Safety boundaries
@@ -49,21 +63,14 @@ export ANDROID_USER_HOME="$DEV_CACHE_ROOT/android-user"
 - `v12.5.0`: paid beta/billing integration.
 - `v13.0`: only with explicit Matthew approval.
 
-### Flutter status
+### Flutter / Android build status
 
 Flutter SDK is installed on the secondary drive at `/media/matt/Storage/DevTools/flutter`.
+Android SDK is installed on the secondary drive at `/media/matt/Storage/DevTools/android-sdk`.
 
-Validated with:
-
-```bash
-dart format lib test
-flutter pub get
-flutter analyze
-flutter test
-flutter build web --debug
-```
-
-Android APK builds are blocked until an Android SDK/toolchain is approved and installed/configured.
+| Validation | Result |
+|-----------|--------|
+| `dart format lib test` | ✅ |
 
 ## Links
 
@@ -96,14 +103,13 @@ v0.2 adds real local API read mode using v12.2.0 endpoints:
 - Tests: 7/7 passed (fixture mode, AppConfig defaults, http injection).
 - Backend not required for tests.
 
-Validated with:
+| Validation | Result |
+|-----------|--------|
+| `dart format lib test` | ✅ |
+| `flutter pub get` | ✅ |
+| `flutter analyze --no-fatal-infos` | ✅ (2 infos) |
+| `flutter test` | ✅ 7/7 |
+| `flutter build web --debug` | ✅ |
+| `flutter build apk --debug` | ✅ 140MB debug APK at `build/app/outputs/flutter-apk/app-debug.apk` |
 
-```bash
-dart format lib test
-flutter pub get
-flutter analyze --no-fatal-infos
-flutter test
-flutter build web --debug
-```
-
-Android APK remains blocked until Android SDK is approved/configured.
+See [docs/ANDROID_BUILD_SETUP.md](docs/ANDROID_BUILD_SETUP.md) for SDK paths and commands.

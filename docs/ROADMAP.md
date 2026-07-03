@@ -23,9 +23,17 @@ This roadmap keeps the app small until the API has the next backend foundations.
 - Opt-in via `--dart-define=SAVEROOM_FIXTURE_MODE=false`.
 - Settings screen: mode display + health-check button.
 - Card detail screen: uses API client, graceful fallback.
-- Tests: 7/7 passed (fixture mode, AppConfig defaults, http injection).
-- Backend not required for tests.
-- No auth/tokens/billing/camera/OCR.
+- Tests: 7/7 passed.
+
+### Android SDK setup
+
+- OpenJDK 17 installed (system package).
+- Android command-line tools installed at `/media/matt/Storage/DevTools/android-sdk`.
+- Packages: platform-tools, platforms;android-36, build-tools;36.0.0.
+- NDK and CMake auto-installed by Flutter.
+- `flutter build apk --debug` : ✅ 140MB debug APK.
+- APK path: `build/app/outputs/flutter-apk/app-debug.apk`.
+- Build outputs kept in repo's `build/` directory (gitignored).
 
 No v13 work, billing, login, scanner backend tables, or app-store publishing in current milestone.
 
