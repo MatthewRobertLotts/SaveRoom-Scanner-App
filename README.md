@@ -51,17 +51,18 @@ export ANDROID_USER_HOME="$DEV_CACHE_ROOT/android-user"
 
 ### Flutter status
 
-This repo currently contains a safe Flutter source skeleton and docs. `flutter create` was not run because Flutter/Dart were not installed in the current environment during bootstrap.
+Flutter SDK is installed on the secondary drive at `/media/matt/Storage/DevTools/flutter`.
 
-After Matthew approves/install Flutter on the secondary drive where possible:
+Validated with:
 
 ```bash
-cd "$APP_REPO"
-flutter create --org com.saveroom --project-name saveroom_scanner_app .
 flutter pub get
 flutter analyze
 flutter test
+flutter build web --debug
 ```
+
+Android APK builds are blocked until an Android SDK/toolchain is approved and installed/configured.
 
 ## Links
 

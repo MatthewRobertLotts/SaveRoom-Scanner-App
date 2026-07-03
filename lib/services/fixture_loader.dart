@@ -14,11 +14,14 @@ class FixtureLoader {
     throw FormatException('Fixture $fileName is not a JSON object');
   }
 
-  Future<Map<String, dynamic>> loadCardDetail() => loadJson('card_detail_response.json');
+  Future<Map<String, dynamic>> loadCardDetail() =>
+      loadJson('card_detail_response.json');
 }
 
-Map<String, dynamic> asMap(Object? value) => value is Map<String, dynamic> ? value : const {};
-List<dynamic> asList(Object? value) => value is List<dynamic> ? value : const [];
+Map<String, dynamic> asMap(Object? value) =>
+    value is Map<String, dynamic> ? value : const {};
+List<dynamic> asList(Object? value) =>
+    value is List<dynamic> ? value : const [];
 String textAt(Map<String, dynamic> map, String key, [String fallback = '—']) {
   final value = map[key];
   if (value == null) return fallback;

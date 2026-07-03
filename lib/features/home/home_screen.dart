@@ -10,11 +10,17 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SaveRoomShell(
+    return const SaveRoomShell(
       title: 'SaveRoom Scanner',
       children: [
-        const InfoTile(label: 'SaveRoom Scanner API baseline', value: AppConfig.apiBaseline),
-        const InfoTile(label: 'Mode', value: AppConfig.fixtureMode ? 'Fixture mode' : 'Real API mode'),
+        InfoTile(
+          label: 'SaveRoom Scanner API baseline',
+          value: AppConfig.apiBaseline,
+        ),
+        InfoTile(
+          label: 'Mode',
+          value: AppConfig.fixtureMode ? 'Fixture mode' : 'Real API mode',
+        ),
         _NavCard(title: 'Start Scanner', route: AppRoutes.scanner),
         _NavCard(title: 'View Mock Card Detail', route: AppRoutes.cardDetail),
         _NavCard(title: 'My Collection', route: AppRoutes.collection),

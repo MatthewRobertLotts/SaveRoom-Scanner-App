@@ -4,7 +4,7 @@ Tags: #type/project
 
 ## Overview
 
-This report records the first SaveRoom Scanner App repo bootstrap attempt. Flutter/Dart were not installed, so this is a safe source/docs/fixture skeleton rather than a generated or verified Flutter project.
+This report records the SaveRoom Scanner App bootstrap and first Flutter validation pass. Flutter/Dart are now installed on the secondary drive and the repo has generated Flutter project files plus the existing fixture-mode shell.
 
 ## Body
 
@@ -16,13 +16,22 @@ This report records the first SaveRoom Scanner App repo bootstrap attempt. Flutt
 - Sanitized v12.2.0 fixture files copied into `assets/fixtures/v12_2_pos/`.
 - Docs for architecture, API integration, fixture mode, roadmap, and bootstrap status.
 
-### Blocker
+### Validation
 
-`flutter`, `dart`, and `flutter doctor` were not available in PATH. Per storage rule, Flutter was not installed or moved automatically.
+- Flutter SDK: `/media/matt/Storage/DevTools/flutter`
+- Dart SDK: bundled with Flutter
+- `flutter pub get`: passed
+- `flutter analyze`: passed
+- `flutter test`: passed
+- `flutter build web --debug`: passed
+
+### Remaining blocker
+
+Android APK builds are blocked because Flutter doctor cannot locate an Android SDK. Android Studio/SDK/system package installation was not attempted.
 
 ### Next
 
-Matthew should approve/install Flutter SDK, preferably under `/media/matt/Storage/DevCaches/flutter` or another secondary-drive location, then run `flutter create`/`flutter pub get`/`flutter analyze`/`flutter test` with secondary-drive cache env vars active.
+Improve the visual app shell and card detail UI, or approve Android SDK/toolchain setup on secondary-drive storage if Android APK validation is required.
 
 ## Links
 

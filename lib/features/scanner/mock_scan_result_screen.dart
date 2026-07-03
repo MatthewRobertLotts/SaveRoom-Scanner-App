@@ -13,7 +13,9 @@ class MockScanResultScreen extends StatelessWidget {
     return FutureBuilder<Map<String, dynamic>>(
       future: const FixtureLoader().loadCardDetail(),
       builder: (context, snapshot) {
-        final body = snapshot.hasData ? _loaded(context, snapshot.data!) : _loading(snapshot);
+        final body = snapshot.hasData
+            ? _loaded(context, snapshot.data!)
+            : _loading(snapshot);
         return SaveRoomShell(title: 'Mock scan result', children: body);
       },
     );
@@ -30,12 +32,21 @@ class MockScanResultScreen extends StatelessWidget {
         child: const Text('View card detail'),
       ),
       const SizedBox(height: 8),
-      const FilledButton(onPressed: null, child: Text('Add to collection — planned v12.4')),
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Rescan')),
+      const FilledButton(
+        onPressed: null,
+        child: Text('Add to collection — planned v12.4'),
+      ),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Rescan'),
+      ),
     ];
   }
 
   List<Widget> _loading(AsyncSnapshot<Map<String, dynamic>> snapshot) => [
-        if (snapshot.hasError) Text('Fixture load failed: ${snapshot.error}') else const LinearProgressIndicator(),
+        if (snapshot.hasError)
+          Text('Fixture load failed: ${snapshot.error}')
+        else
+          const LinearProgressIndicator(),
       ];
 }

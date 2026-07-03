@@ -11,10 +11,7 @@ class SaveRoomShell extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: children,
-        ),
+        child: ListView(padding: const EdgeInsets.all(16), children: children),
       ),
     );
   }

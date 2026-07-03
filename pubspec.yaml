@@ -1,10 +1,10 @@
 name: saveroom_scanner_app
-description: SaveRoom Scanner App frontend shell consuming the SaveRoom Pokémon Database API.
-publish_to: 'none'
+description: SaveRoom scanner and collector app frontend.
+publish_to: "none"
 version: 0.1.0+1
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: ">=3.9.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -13,7 +13,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

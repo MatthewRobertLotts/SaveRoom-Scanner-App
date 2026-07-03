@@ -9,7 +9,9 @@ class SaveRoomApiClient {
 
   Future<Map<String, dynamic>> getCardDetail(String cardKey) {
     if (AppConfig.fixtureMode) return _fixtureLoader.loadCardDetail();
-    throw UnimplementedError('Real API mode is planned after fixture UI hardening.');
+    throw UnimplementedError(
+      'Real API mode is planned after fixture UI hardening.',
+    );
   }
 
   Future<List<Map<String, dynamic>>> searchCards(String query) async {
@@ -18,6 +20,8 @@ class SaveRoomApiClient {
   }
 
   Future<Map<String, dynamic>> getCurrentUserEntitlements() {
-    throw UnimplementedError('App user entitlements are planned for backend v12.3.');
+    throw UnimplementedError(
+      'App user entitlements are planned for backend v12.3.',
+    );
   }
 }

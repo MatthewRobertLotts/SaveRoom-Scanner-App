@@ -26,3 +26,11 @@ raw_payloads/
 headers/
 account_metadata/
 marketplace_data/
+
+# Android signing / release artifacts
+*.jks
+*.keystore
+key.properties
+**/key.properties
+*.apk
+*.aab

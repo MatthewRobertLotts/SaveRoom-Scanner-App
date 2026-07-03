@@ -10,7 +10,9 @@ class CollectionScreen extends StatelessWidget {
     return const SaveRoomShell(
       title: 'My Collection',
       children: [
-        Text('Collection backend comes in v12.4. For now this screen is UI-only.'),
+        Text(
+          'Collection backend comes in v12.4. For now this screen is UI-only.',
+        ),
         ListTile(title: Text('Future: owned cards')),
         ListTile(title: Text('Future: wishlist')),
         ListTile(title: Text('Future: favourites')),
