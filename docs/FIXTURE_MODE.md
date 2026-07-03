@@ -4,7 +4,7 @@ Tags: #type/project
 
 ## Overview
 
-Fixture mode is the default development mode for the first app shell. It loads sanitized v12.2.0 POS/frontend fixtures copied from the released API repo.
+Fixture mode is the default development mode for the app shell. It loads sanitized v12.2.0 POS/frontend fixtures copied from the released API repo.
 
 ## Body
 
@@ -21,6 +21,23 @@ Fixture mode is the default development mode for the first app shell. It loads s
 
 Source API release: `v12.2.0` at `4a3d91806999b168c6866c0c4f050ddae8557205`.
 
+### Real API mode
+
+Real local API mode is available since v0.2 but disabled by default.
+
+Enable it:
+
+```bash
+flutter run --dart-define=SAVEROOM_FIXTURE_MODE=false --dart-define=SAVEROOM_API_BASE_URL=http://127.0.0.1:8765
+```
+
+In real API mode:
+
+- `GET /api/v1/cards/{card_key}/detail` for card detail
+- `GET /api/v1/health` for API health
+- Read-only endpoints only
+- No auth/tokens required (local dev API without API key requirement)
+
 ### Rules
 
 - Sanitized fixtures only.
@@ -33,3 +50,4 @@ Source API release: `v12.2.0` at `4a3d91806999b168c6866c0c4f050ddae8557205`.
 
 - Related: [APP_ARCHITECTURE.md](APP_ARCHITECTURE.md)
 - Related: [API_INTEGRATION_PLAN.md](API_INTEGRATION_PLAN.md)
+- Related: [V0_2_REAL_LOCAL_API_MODE_REPORT.md](V0_2_REAL_LOCAL_API_MODE_REPORT.md)

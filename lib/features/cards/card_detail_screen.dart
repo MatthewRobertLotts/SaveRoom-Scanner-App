@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../config/app_config.dart';
 import '../../services/fixture_loader.dart';
+import '../../services/saveroom_api_client.dart';
 import '../../widgets/fixture_badge.dart';
 import '../../widgets/info_tile.dart';
 import '../../widgets/section_card.dart';
@@ -11,13 +13,38 @@ class CardDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final client = SaveRoomApiClient(fixtureLoader: const FixtureLoader());
     return FutureBuilder<Map<String, dynamic>>(
-      future: const FixtureLoader().loadCardDetail(),
+      future: client.getCardDetail('en:sv03-223'),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return SaveRoomShell(
             title: 'Card detail',
-            children: [Text('Fixture load failed: ${snapshot.error}')],
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    const Icon(Icons.error_outline, size: 48),
+                    const SizedBox(height: 12),
+                    Text(
+                      '${AppConfig.fixtureMode ? 'Fixture' : 'API'} load failed',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text('${snapshot.error}'),
+                    if (!AppConfig.fixtureMode) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Start local API at ${AppConfig.apiBaseUrl} '
+                        'or switch back to fixture mode.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           );
         }
         if (!snapshot.hasData) {
@@ -50,7 +77,15 @@ class CardDetailScreen extends StatelessWidget {
     ]);
 
     return [
-      const FixtureBadge(),
+      if (AppConfig.fixtureMode) const FixtureBadge(),
+      if (!AppConfig.fixtureMode)
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Chip(
+            avatar: Icon(Icons.cloud_done_outlined, size: 18),
+            label: Text('Live API mode'),
+          ),
+        ),
       const SizedBox(height: 12),
       Text(
         textAt(card, 'name', 'Unknown card'),

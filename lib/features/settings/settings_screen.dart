@@ -1,16 +1,46 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
 
 import '../../config/app_config.dart';
+import '../../services/fixture_loader.dart';
+import '../../services/saveroom_api_client.dart';
 import '../../widgets/info_tile.dart';
 import '../../widgets/section_card.dart';
 import '../../widgets/saveroom_shell.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  String _healthResult = '';
+  bool _healthLoading = false;
+
+  Future<void> _checkHealth() async {
+    setState(() {
+      _healthLoading = true;
+      _healthResult = '';
+    });
+    try {
+      final client = SaveRoomApiClient(fixtureLoader: const FixtureLoader());
+      final result = await client.getHealth();
+      setState(() {
+        _healthResult = result['data']?['ok'] == true ? 'OK' : 'Unhealthy';
+      });
+    } catch (e) {
+      setState(() => _healthResult = 'Error: $e');
+    } finally {
+      setState(() => _healthLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const SaveRoomShell(
+    return SaveRoomShell(
       title: 'API / Settings',
       children: [
         SectionCard(
@@ -21,10 +51,61 @@ class SettingsScreen extends StatelessWidget {
             InfoTile(label: 'API baseline', value: AppConfig.apiBaseline),
             InfoTile(
               label: 'Fixture mode',
-              value: AppConfig.fixtureMode ? 'enabled' : 'off',
+              value: AppConfig.fixtureMode ? 'enabled (default)' : 'off',
             ),
-            InfoTile(label: 'Real API mode', value: 'planned only'),
+            InfoTile(
+              label: 'Real API mode',
+              value: AppConfig.fixtureMode
+                  ? 'opt-in via dart-define'
+                  : 'active (dev only)',
+            ),
             InfoTile(label: 'Real API base URL', value: AppConfig.apiBaseUrl),
+            InfoTile(label: 'API key support', value: 'not implemented yet'),
+          ],
+        ),
+        SectionCard(
+          title: 'Health check',
+          icon: Icons.favorite_outlined,
+          children: [
+            Text(
+              AppConfig.fixtureMode
+                  ? 'Fixture mode — no API server needed.'
+                  : 'Check that the local API is responding.',
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: _healthLoading ? null : _checkHealth,
+              icon: _healthLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh),
+              label: const Text('Check API health'),
+            ),
+            if (_healthResult.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    _healthResult == 'OK'
+                        ? Icons.check_circle
+                        : Icons.warning_amber,
+                    size: 18,
+                    color: _healthResult == 'OK' ? Colors.green : Colors.orange,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(_healthResult)),
+                ],
+              ),
+            ],
+            const SizedBox(height: 4),
+            Text(
+              'No auth/token support. No provider calls. '
+              'Read-only endpoints only.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ),
         SectionCard(
@@ -41,7 +122,8 @@ class SettingsScreen extends StatelessWidget {
           icon: Icons.storage_outlined,
           children: [
             Text(
-              'App repo, Flutter SDK, package cache and Gradle cache are kept on /media/matt/Storage where controllable.',
+              'App repo, Flutter SDK, package cache and Gradle cache are kept '
+              'on /media/matt/Storage where controllable.',
             ),
           ],
         ),

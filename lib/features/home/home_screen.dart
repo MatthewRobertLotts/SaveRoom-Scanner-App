@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_routes.dart';
-import '../../config/app_config.dart';
 import '../../widgets/fixture_badge.dart';
 import '../../widgets/primary_action_card.dart';
 import '../../widgets/section_card.dart';
@@ -30,10 +29,7 @@ class HomeScreen extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            StatusPill(
-              'API baseline: ${AppConfig.apiBaseline}',
-              icon: Icons.hub_outlined,
-            ),
+            StatusPill('API baseline: v12.2.0', icon: Icons.hub_outlined),
             FixtureBadge(),
           ],
         ),
@@ -69,7 +65,7 @@ class HomeScreen extends StatelessWidget {
           icon: Icons.route_outlined,
           children: [
             _StatusLine('Fixture data ready'),
-            _StatusLine('Real API mode planned'),
+            _StatusLine('Real API mode available via dart-define'),
             _StatusLine('Auth planned v12.3'),
             _StatusLine('Collection backend planned v12.4'),
           ],

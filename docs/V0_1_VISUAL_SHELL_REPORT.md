@@ -32,7 +32,7 @@ flutter build web --debug: passed
 ### Boundaries kept
 
 - Fixture mode remains default.
-- Real API mode remains planned only.
+- Real API mode was planned-only at v0.1. See v0.2 report for the current state.
 - No real backend calls on startup.
 - No auth, billing, camera/OCR, provider calls, marketplace calls, or app-store publishing.
 - API baseline remains `v12.2.0`.
@@ -41,9 +41,12 @@ flutter build web --debug: passed
 
 Android APK build is still blocked by missing Android SDK. Chrome runtime and Linux desktop builds still need their own toolchain dependencies if Matthew wants those targets.
 
-### Next
+### Next (completed in v0.2)
 
-Recommended next task: add real local API read mode using v12.2.0 endpoints, or continue card detail UI with local image handling/placeholders.
+Real local API read mode was delivered as v0.2. See:
+
+- [V0_2_REAL_LOCAL_API_MODE_REPORT.md](V0_2_REAL_LOCAL_API_MODE_REPORT.md)
+- [ROADMAP.md](ROADMAP.md)
 
 ## Links
 

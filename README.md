@@ -14,7 +14,7 @@ SaveRoom Scanner App is a separate Flutter/mobile/frontend repo for visual scann
 - App repo: `/media/matt/Storage/Brain/SaveRoom-Scanner-App`
 - API baseline: `v12.2.0` on `main` at `4a3d91806999b168c6866c0c4f050ddae8557205`
 - Default app mode: fixture mode
-- Real API mode: planned, off by default
+- Real local API mode: opt-in via `--dart-define=SAVEROOM_FIXTURE_MODE=false`
 
 ### Storage rule
 
@@ -56,6 +56,7 @@ Flutter SDK is installed on the secondary drive at `/media/matt/Storage/DevTools
 Validated with:
 
 ```bash
+dart format lib test
 flutter pub get
 flutter analyze
 flutter test
@@ -70,7 +71,7 @@ Android APK builds are blocked until an Android SDK/toolchain is approved and in
 - Related: [docs/FIXTURE_MODE.md](docs/FIXTURE_MODE.md)
 
 
-## Visual shell status
+## Visual shell status (v0.1)
 
 The v0.1 visual shell is polished and fixture-first:
 
@@ -81,12 +82,26 @@ The v0.1 visual shell is polished and fixture-first:
 - No real API calls by default.
 - No auth, billing, camera/OCR, provider calls, or app-store publishing.
 
-Validation:
+## Real local API read mode (v0.2)
+
+v0.2 adds real local API read mode using v12.2.0 endpoints:
+
+- Fixture mode remains the default.
+- Real local API mode is opt-in via `--dart-define=SAVEROOM_FIXTURE_MODE=false`.
+- Endpoints used: `GET /api/v1/cards/{card_key}/detail` and `GET /api/v1/health`.
+- Read-only: no POST/PUT/PATCH/DELETE endpoints.
+- No API keys/tokens in the app.
+- No auth, billing, provider, or write endpoints.
+- Settings screen includes a user-triggered health-check button.
+- Tests: 7/7 passed (fixture mode, AppConfig defaults, http injection).
+- Backend not required for tests.
+
+Validated with:
 
 ```bash
 dart format lib test
 flutter pub get
-flutter analyze
+flutter analyze --no-fatal-infos
 flutter test
 flutter build web --debug
 ```
