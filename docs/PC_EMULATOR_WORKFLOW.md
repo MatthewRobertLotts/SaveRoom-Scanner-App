@@ -53,6 +53,22 @@ Find the Zima board LAN IP with `hostname -I` or check your router.
 - Use the Samba/network share as the active Flutter build workspace — copy/clone the repo locally on the Windows PC.
 - Commit build outputs, APKs, caches, or generated platform noise from either machine.
 
+## Matthew testing checklist (v0.3)
+
+1. Pull latest: `git pull origin main`.
+2. Open VS Code.
+3. Select Android emulator (not Windows).
+4. Press F5.
+5. Tap Start Scanner.
+6. Search "char" — confirm only Charizard appears.
+7. Clear search — all 5 cards visible.
+8. Tap each fixture card — confirm detail updates for each.
+9. Scroll to Pricing / evidence — confirm formatted £ amounts, no raw `{amount:...}` text.
+10. Check rarity shows "Unknown / fixture pending" for Charizard (null rarity).
+11. Search "zzz" — confirm empty state "No fixture cards found".
+12. Search "sv04" — confirm Miraidon ex shown.
+13. Report screenshots/video if anything looks wrong.
+
 ## Links
 
 - [README.md](../README.md)

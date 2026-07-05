@@ -42,7 +42,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         const SizedBox(height: 12),
         TextField(
           decoration: InputDecoration(
-            hintText: 'Search cards…',
+            hintText: 'Search cards\u2026',
             prefixIcon: const Icon(Icons.search),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
@@ -58,51 +58,77 @@ class _ScannerScreenState extends State<ScannerScreen> {
           style: theme.textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
-        // ponytail: shrinkWrap + NeverScrollableScrollPhysics because
-        // SaveRoomShell already wraps children in a scrollable ListView.
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _filteredKeys.length,
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, i) {
-            final key = _filteredKeys[i];
-            final card = Fixtures.byKey(key)['data']?['card'];
-            final set = Fixtures.byKey(key)['data']?['set'];
-            final name = card?['name'] ?? key;
-            final setText =
-                '${set?['name'] ?? ''} / ${card?['collector_number'] ?? ''}';
-            final rarity = card?['rarity'];
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: theme.colorScheme.primaryContainer,
-                child: Icon(
-                  Icons.style,
-                  color: theme.colorScheme.onPrimaryContainer,
+        if (_filteredKeys.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.search_off_outlined,
+                  size: 48,
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.5,
+                  ),
                 ),
-              ),
-              title: Text(
-                name.toString(),
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(setText, style: theme.textTheme.bodySmall),
-              trailing: rarity != null
-                  ? Chip(
-                      label: Text(
-                        rarity.toString(),
-                        style: const TextStyle(fontSize: 10),
-                      ),
-                      visualDensity: VisualDensity.compact,
-                    )
-                  : null,
-              onTap: () => Navigator.pushNamed(
-                context,
-                AppRoutes.cardDetail,
-                arguments: key,
-              ),
-            );
-          },
-        ),
+                const SizedBox(height: 8),
+                Text(
+                  'No fixture cards found',
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Try another name or card key',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          )
+        else
+          // ponytail: shrinkWrap + NeverScrollableScrollPhysics because
+          // SaveRoomShell already wraps children in a scrollable ListView.
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _filteredKeys.length,
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (context, i) {
+              final key = _filteredKeys[i];
+              final card = Fixtures.byKey(key)['data']?['card'];
+              final set = Fixtures.byKey(key)['data']?['set'];
+              final name = card?['name'] ?? key;
+              final setText =
+                  '${set?['name'] ?? ''} / ${card?['collector_number'] ?? ''}';
+              final rarity = card?['rarity'];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.style,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                title: Text(
+                  name.toString(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(setText, style: theme.textTheme.bodySmall),
+                trailing: rarity != null
+                    ? Chip(
+                        label: Text(
+                          rarity.toString(),
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      )
+                    : null,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.cardDetail,
+                  arguments: key,
+                ),
+              );
+            },
+          ),
       ],
     );
   }

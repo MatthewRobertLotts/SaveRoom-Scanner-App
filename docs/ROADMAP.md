@@ -10,30 +10,22 @@ This roadmap keeps the app small until the API has the next backend foundations.
 
 - `v0.1 app shell ✅`: fixture UI, navigation, mock scan result.
 - `v0.2 real API read mode ✅`: card detail/search integration with local API.
-- `v0.3 auth-aware UI`: login mock, `/me` once v12.3 exists, entitlement display.
-- `v0.4 collection UI`: owned-card screens once v12.4 backend exists.
-- `v0.5 scanner MVP`: camera/OCR/scan candidate flow.
+- `v0.3 fixture card selection ✅`: 5 fixture cards, searchable picker, pricing formatting fix.
+- `v0.4 auth-aware UI`: login mock, `/me` once v12.3 exists, entitlement display.
+- `v0.5 collection UI`: owned-card screens once v12.4 backend exists.
+- `v0.6 scanner MVP`: camera/OCR/scan candidate flow.
 - `paid beta`: after v12.5 billing/entitlement enforcement.
 
-### v0.2 completed
+### v0.3 fixture card selection — completed
 
-- http package added.
-- Real API client methods: getCardDetail, getHealth.
-- Fixture mode remains default.
-- Opt-in via `--dart-define=SAVEROOM_FIXTURE_MODE=false`.
-- Settings screen: mode display + health-check button.
-- Card detail screen: uses API client, graceful fallback.
-- Tests: 7/7 passed.
-
-### Android SDK setup
-
-- OpenJDK 17 installed (system package).
-- Android command-line tools installed at `/media/matt/Storage/DevTools/android-sdk`.
-- Packages: platform-tools, platforms;android-36, build-tools;36.0.0.
-- NDK and CMake auto-installed by Flutter.
-- `flutter build apk --debug` : ✅ 140MB debug APK.
-- APK path: `build/app/outputs/flutter-apk/app-debug.apk`.
-- Build outputs kept in repo's `build/` directory (gitignored).
+- 5 demo fixture cards: Charizard ex, Miraidon ex, Iono, Greninja ex, Giratina V.
+- Scanner screen replaced with searchable fixture card picker.
+- Card detail reads cardKey from route arguments (no hardcoded Charizard).
+- Pricing/evidence section now formatted: £87.90 GBP instead of raw `{amount:87.9,...}`.
+- Rarity null display: "Unknown / fixture pending" for missing rarity.
+- Scanner empty state: "No fixture cards found".
+- All 5 fixture cards verified in tests (47 tests total).
+- Backend not required for any tests.
 
 No v13 work, billing, login, scanner backend tables, or app-store publishing in current milestone.
 
