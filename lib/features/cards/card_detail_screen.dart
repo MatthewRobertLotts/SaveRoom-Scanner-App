@@ -9,14 +9,18 @@ import '../../widgets/info_tile.dart';
 import '../../widgets/section_card.dart';
 import '../../widgets/saveroom_shell.dart';
 
+/// ponytail: cardKey passed via route args instead of a separate screen per card.
+/// ModalRoute.of(context)?.settings.arguments as String?.
 class CardDetailScreen extends StatelessWidget {
   const CardDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final cardKey =
+        ModalRoute.of(context)?.settings.arguments as String? ?? 'en:sv03-223';
     final client = SaveRoomApiClient(fixtureLoader: const FixtureLoader());
     return FutureBuilder<Map<String, dynamic>>(
-      future: client.getCardDetail('en:sv03-223'),
+      future: client.getCardDetail(cardKey),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return SaveRoomShell(

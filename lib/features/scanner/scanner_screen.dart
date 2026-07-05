@@ -1,68 +1,109 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_routes.dart';
-import '../../widgets/section_card.dart';
+import '../../services/fixtures.dart';
 import '../../widgets/saveroom_shell.dart';
 
-class ScannerScreen extends StatelessWidget {
+/// ponytail: fixture-mode card picker in place of real scanner UI.
+/// Replace with camera/OCR when that milestone arrives.
+class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return SaveRoomShell(
-      title: 'Scanner',
-      children: [
-        const _ScanFrame(),
-        const SizedBox(height: 18),
-        Text(
-          'Camera scanner coming later',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          'No camera/OCR package, permissions, or native scanner config has been added yet.',
-        ),
-        const SizedBox(height: 16),
-        FilledButton.icon(
-          onPressed: () =>
-              Navigator.pushNamed(context, AppRoutes.mockScanResult),
-          icon: const Icon(Icons.science_outlined),
-          label: const Text('Use mock scan result'),
-        ),
-        const SectionCard(
-          title: 'Planned scanner backend',
-          icon: Icons.pending_actions_outlined,
-          children: [
-            Text(
-              'Scan candidate response shape and collection-safe endpoints are planned for v12.4.',
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  State<ScannerScreen> createState() => _ScannerScreenState();
 }
 
-class _ScanFrame extends StatelessWidget {
-  const _ScanFrame();
+class _ScannerScreenState extends State<ScannerScreen> {
+  String _query = '';
+
+  List<String> get _filteredKeys {
+    if (_query.isEmpty) return Fixtures.cardKeys;
+    final q = _query.toLowerCase();
+    return Fixtures.cardKeys.where((key) {
+      final card = Fixtures.byKey(key)['data']?['card'];
+      final name = (card?['name'] ?? '').toString().toLowerCase();
+      final code = (card?['card_key'] ?? '').toString().toLowerCase();
+      return name.contains(q) || code.contains(q);
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
-    return AspectRatio(
-      aspectRatio: 1.45,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: color, width: 2),
-          gradient: LinearGradient(
-            colors: [color.withValues(alpha: .20), Colors.transparent],
+    final theme = Theme.of(context);
+    return SaveRoomShell(
+      title: 'Choose a fixture card',
+      children: [
+        Text(
+          'Fixture mode — camera/OCR not enabled yet',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        child: const Center(
-          child: Icon(Icons.document_scanner_outlined, size: 70),
+        const SizedBox(height: 12),
+        TextField(
+          decoration: InputDecoration(
+            hintText: 'Search cards…',
+            prefixIcon: const Icon(Icons.search),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.3,
+            ),
+          ),
+          onChanged: (v) => setState(() => _query = v),
         ),
-      ),
+        const SizedBox(height: 8),
+        Text(
+          '${_filteredKeys.length} of ${Fixtures.cardKeys.length} cards',
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        // ponytail: shrinkWrap + NeverScrollableScrollPhysics because
+        // SaveRoomShell already wraps children in a scrollable ListView.
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _filteredKeys.length,
+          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemBuilder: (context, i) {
+            final key = _filteredKeys[i];
+            final card = Fixtures.byKey(key)['data']?['card'];
+            final set = Fixtures.byKey(key)['data']?['set'];
+            final name = card?['name'] ?? key;
+            final setText =
+                '${set?['name'] ?? ''} / ${card?['collector_number'] ?? ''}';
+            final rarity = card?['rarity'];
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundColor: theme.colorScheme.primaryContainer,
+                child: Icon(
+                  Icons.style,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              title: Text(
+                name.toString(),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(setText, style: theme.textTheme.bodySmall),
+              trailing: rarity != null
+                  ? Chip(
+                      label: Text(
+                        rarity.toString(),
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    )
+                  : null,
+              onTap: () => Navigator.pushNamed(
+                context,
+                AppRoutes.cardDetail,
+                arguments: key,
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

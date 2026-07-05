@@ -16,8 +16,9 @@ class SaveRoomApiClient {
   final http.Client _httpClient;
 
   Future<Map<String, dynamic>> getCardDetail(String cardKey) async {
-    if (AppConfig.fixtureMode) return _fixtureLoader.loadCardDetail();
-    // ponytail: single endpoint, upgrade when batch is needed
+    if (AppConfig.fixtureMode) {
+      return _fixtureLoader.loadCardDetailByKey(cardKey);
+    }
     final uri = Uri.parse(
       '${AppConfig.apiBaseUrl}/api/v1/cards/${Uri.encodeComponent(cardKey)}/detail',
     );
@@ -54,7 +55,9 @@ class SaveRoomApiClient {
 
   // ponytail: searchCards and getCurrentUserEntitlements stubs kept for interface shape
   Future<List<Map<String, dynamic>>> searchCards(String query) async {
-    if (AppConfig.fixtureMode) return [await _fixtureLoader.loadCardDetail()];
+    if (AppConfig.fixtureMode) {
+      return [await _fixtureLoader.loadCardDetail()];
+    }
     throw UnimplementedError('Real API search is not implemented in v0.2.');
   }
 

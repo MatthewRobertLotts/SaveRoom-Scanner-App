@@ -60,7 +60,11 @@ class MockScanResultScreen extends StatelessWidget {
         ],
       ),
       FilledButton(
-        onPressed: () => Navigator.pushNamed(context, AppRoutes.cardDetail),
+        onPressed: () => Navigator.pushNamed(
+          context,
+          AppRoutes.cardDetail,
+          arguments: 'en:sv03-223',
+        ),
         child: const Text('View card detail'),
       ),
       const SizedBox(height: 8),

@@ -36,7 +36,7 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 16),
         PrimaryActionCard(
           title: 'Start Scanner',
-          subtitle: 'Use the fixture scan flow for now',
+          subtitle: 'Choose a fixture card to simulate a scan',
           icon: Icons.document_scanner_outlined,
           onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
         ),
