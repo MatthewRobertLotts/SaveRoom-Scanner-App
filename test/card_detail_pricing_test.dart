@@ -94,6 +94,7 @@ void main() {
       expect(find.textContaining('{amount'), findsNothing);
       expect(find.textContaining('Instance of'), findsNothing);
       expect(find.textContaining('total_evidence'), findsNothing);
+      expect(find.text('Raw fixture debug'), findsNothing);
     });
   });
 

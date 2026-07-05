@@ -129,17 +129,16 @@ class CardDetailScreen extends StatelessWidget {
             value: textAt(metadata, 'api_version'),
           ),
           InfoTile(label: 'Sanitized', value: textAt(metadata, 'sanitized')),
-          InfoTile(label: 'Providers', value: providers.keys.join(', ')),
-        ],
-      ),
-      SectionCard(
-        title: 'Raw fixture debug',
-        icon: Icons.data_object_outlined,
-        children: [
-          Text(
-            fixture.toString(),
-            maxLines: 12,
-            overflow: TextOverflow.ellipsis,
+          InfoTile(
+            label: 'Providers',
+            value: providers.keys
+                .map(
+                  (s) => s
+                      .replaceAll('justtcg', 'JustTCG')
+                      .replaceAll('cardmarket', 'Cardmarket')
+                      .replaceAll('tcgplayer', 'TCGplayer'),
+                )
+                .join(', '),
           ),
         ],
       ),
