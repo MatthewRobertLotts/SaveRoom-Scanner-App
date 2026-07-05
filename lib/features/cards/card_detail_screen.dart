@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../config/app_config.dart';
 import '../../services/fixture_loader.dart';
 import '../../services/saveroom_api_client.dart';
+import '../../widgets/card_image_panel.dart';
 import '../../widgets/fixture_badge.dart';
 import '../../widgets/info_tile.dart';
 import '../../widgets/section_card.dart';
@@ -64,17 +65,10 @@ class CardDetailScreen extends StatelessWidget {
   List<Widget> _content(BuildContext context, Map<String, dynamic> fixture) {
     final data = asMap(fixture['data']);
     final card = asMap(data['card']);
-    final set = asMap(data['set']);
-    final images = asMap(data['images']);
     final pricing = asMap(data['pricing']);
     final commercial = asMap(data['commercial']);
     final metadata = asMap(fixture['metadata']);
     final providers = asMap(data['provider_status']);
-    final setText = joinPresent([
-      textAt(set, 'name'),
-      textAt(set, 'set_code'),
-      textAt(card, 'collector_number'),
-    ]);
 
     return [
       if (AppConfig.fixtureMode) const FixtureBadge(),
@@ -87,14 +81,8 @@ class CardDetailScreen extends StatelessWidget {
           ),
         ),
       const SizedBox(height: 12),
-      Text(
-        textAt(card, 'name', 'Unknown card'),
-        style: Theme.of(context).textTheme.headlineLarge,
-      ),
-      const SizedBox(height: 6),
-      Text(setText, style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 12),
-      _ImagePanel(images: images),
+      CardImagePanel.fromData(data),
+      const SizedBox(height: 8),
       SectionCard(
         title: 'Card facts',
         icon: Icons.style_outlined,
@@ -186,47 +174,5 @@ class CardDetailScreen extends StatelessWidget {
       ),
       InfoTile(label: 'SKU status', value: textAt(firstSku, 'status')),
     ];
-  }
-}
-
-class _ImagePanel extends StatelessWidget {
-  const _ImagePanel({required this.images});
-
-  final Map<String, dynamic> images;
-
-  @override
-  Widget build(BuildContext context) {
-    final url = textAt(images, 'display_image_url');
-    return SectionCard(
-      title: 'Image',
-      icon: Icons.image_outlined,
-      children: [
-        Container(
-          height: 170,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.image_not_supported_outlined, size: 44),
-                const SizedBox(height: 8),
-                Text(
-                  url == '—'
-                      ? 'No local image asset yet'
-                      : 'Image URL/path shown below',
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        SelectableText(url),
-      ],
-    );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_routes.dart';
 import '../../services/fixture_loader.dart';
+import '../../widgets/card_image_panel.dart';
 import '../../widgets/fixture_badge.dart';
 import '../../widgets/info_tile.dart';
 import '../../widgets/section_card.dart';
@@ -34,6 +35,8 @@ class MockScanResultScreen extends StatelessWidget {
     ]);
     return [
       const FixtureBadge(),
+      const SizedBox(height: 12),
+      CardImagePanel.fromData(data),
       const SizedBox(height: 12),
       SectionCard(
         title: textAt(card, 'name', 'Matched card'),

@@ -80,7 +80,7 @@ Android SDK is installed on the secondary drive at `/media/matt/Storage/DevTools
 ## Links
 
 - Related: [docs/APP_ARCHITECTURE.md](docs/APP_ARCHITECTURE.md)
-- Related: [docs/FIXTURE_MODE.md](docs/FIXTURE_MODE.md)
+- Related: [docs/PC_EMULATOR_WORKFLOW.md](docs/PC_EMULATOR_WORKFLOW.md)
 
 
 ## Visual shell status (v0.1)
