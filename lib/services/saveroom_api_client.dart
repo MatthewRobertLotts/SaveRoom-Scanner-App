@@ -117,7 +117,7 @@ class SaveRoomApiClient {
     }
     final uri = Uri.parse(
       '${AppConfig.apiBaseUrl}/api/v1/search/cards'
-      '?q=${Uri.encodeComponent(query)}&limit=50',
+      '?q=${Uri.encodeComponent(query)}&language_code=en&limit=200',
     );
     final response = await _httpClient
         .get(uri)
@@ -126,10 +126,28 @@ class SaveRoomApiClient {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
       final data = decoded['data'];
       if (data is List) {
-        return data
+        final results = data
             .cast<Map<String, dynamic>>()
             .map((item) => SearchResult.fromApiItem(item))
             .toList();
+        // ponytail: client-side ranking: exact > starts-with > contains > English > others
+        final q = query.toLowerCase();
+        results.sort((a, b) {
+          final aName = a.name.toLowerCase();
+          final bName = b.name.toLowerCase();
+          final aExact = aName == q ? 4 : 0;
+          final bExact = bName == q ? 4 : 0;
+          final aStarts = aName.startsWith(q) ? 3 : 0;
+          final bStarts = bName.startsWith(q) ? 3 : 0;
+          final aContains = aName.contains(q) ? 2 : 0;
+          final bContains = bName.contains(q) ? 2 : 0;
+          final aScore =
+              aExact + aStarts + aContains + (a.language == 'en' ? 1 : 0);
+          final bScore =
+              bExact + bStarts + bContains + (b.language == 'en' ? 1 : 0);
+          return bScore.compareTo(aScore);
+        });
+        return results;
       }
       return [];
     }
