@@ -12,12 +12,14 @@ class SearchResult {
   final String name;
   final String setText;
   final String? rarity;
+  final String? language;
 
   const SearchResult({
     required this.cardKey,
     required this.name,
     required this.setText,
     this.rarity,
+    this.language,
   });
 
   /// Construct from fixture card data (uses the `data.card` / `data.set` shape).
@@ -29,17 +31,20 @@ class SearchResult {
       name: card['name'] as String? ?? '',
       setText: '${set['name'] ?? ''} / ${card['collector_number'] ?? ''}',
       rarity: card['rarity'] as String?,
+      language: card['language_code'] as String?,
     );
   }
 
   /// Construct from API search response item.
   factory SearchResult.fromApiItem(Map<String, dynamic> item) {
     final set = (item['set'] as Map<String, dynamic>?) ?? const {};
+    final lang = (item['language'] as Map<String, dynamic>?) ?? const {};
     return SearchResult(
       cardKey: item['card_key'] as String? ?? '',
       name: item['name'] as String? ?? '',
       setText: '${set['name'] ?? ''} / ${item['collector_number'] ?? ''}',
       rarity: item['rarity'] as String?,
+      language: lang['code'] as String? ?? item['language_code'] as String?,
     );
   }
 }

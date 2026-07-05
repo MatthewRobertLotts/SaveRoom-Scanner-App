@@ -140,7 +140,9 @@ class CardDetailScreen extends StatelessWidget {
                   (s) => s
                       .replaceAll('justtcg', 'JustTCG')
                       .replaceAll('cardmarket', 'Cardmarket')
-                      .replaceAll('tcgplayer', 'TCGplayer'),
+                      .replaceAll('tcgplayer', 'TCGplayer')
+                      .replaceAll('uk_ebay_sold', 'UK eBay sold')
+                      .replaceAll('tcgdex', 'TCGdex'),
                 )
                 .join(', '),
           ),
@@ -228,6 +230,8 @@ String _humanSource(String raw) {
       .replaceAll('justtcg', 'JustTCG')
       .replaceAll('cardmarket', 'Cardmarket')
       .replaceAll('tcgplayer', 'TCGplayer')
+      .replaceAll('uk_ebay_sold', 'UK eBay sold')
+      .replaceAll('tcgdex', 'TCGdex')
       .split('_')
       .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
       .join(' ');

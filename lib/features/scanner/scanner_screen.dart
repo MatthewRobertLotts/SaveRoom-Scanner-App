@@ -9,7 +9,7 @@ import '../../services/saveroom_api_client.dart';
 import '../../widgets/saveroom_shell.dart';
 
 /// ponytail: one screen, two modes. Fixture = local picker. Live = API-backed
-/// search. Reuses the same TextField + ListView pattern.
+/// search with request-ID guard against stale errors.
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
@@ -21,6 +21,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   final _client = SaveRoomApiClient();
   final _textController = TextEditingController();
   Timer? _debounce;
+  int _reqId = 0;
 
   List<SearchResult> _results = [];
   bool _loading = false;
@@ -37,9 +38,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
   void _onSearchChanged(String query) {
     _debounce?.cancel();
     if (!AppConfig.fixtureMode && query.length >= 3) {
+      final id = ++_reqId;
       _debounce = Timer(
         const Duration(milliseconds: 400),
-        () => _doSearch(query),
+        () => _doSearch(query, id),
       );
     } else {
       setState(() {
@@ -50,21 +52,32 @@ class _ScannerScreenState extends State<ScannerScreen> {
     }
   }
 
-  Future<void> _doSearch(String query) async {
+  Future<void> _doSearch(String query, int reqId) async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       final results = await _client.searchCards(query);
+      // ponytail: ignore stale responses from earlier requests
+      if (reqId != _reqId) return;
       setState(() {
-        _results = results;
+        _results = results
+          ..sort((a, b) {
+            if (a.language == 'en' && b.language != 'en') return -1;
+            if (a.language != 'en' && b.language == 'en') return 1;
+            return 0;
+          });
         _searched = true;
         _loading = false;
       });
     } catch (e) {
+      if (reqId != _reqId) return;
       setState(() {
-        _error = 'API error: $e';
+        // ponytail: friendly error, no raw exception class names
+        _error = e is TimeoutException
+            ? 'Search timed out. Try a more specific search.'
+            : 'Search failed. Try again or check the API connection.';
         _loading = false;
         _searched = true;
       });
@@ -159,7 +172,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
               'Search by English card name, set, or card key',
             ),
         ] else ...[
-          // ponytail: fixture mode — local filter on _textController value
           _fixtureModeContent(theme),
         ],
       ],
@@ -226,8 +238,37 @@ class _ScannerScreenState extends State<ScannerScreen> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _results.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, i) =>
-          _buildResultTile(theme, _results[i], _results[i].cardKey),
+      itemBuilder: (context, i) {
+        final r = _results[i];
+        final subtitle = r.language != null && r.language != 'en'
+            ? '${r.setText} · ${r.language}'
+            : r.setText;
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor: theme.colorScheme.primaryContainer,
+            child: Icon(
+              Icons.style,
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+          ),
+          title: Text(
+            r.name,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
+          trailing: r.rarity != null
+              ? Chip(
+                  label: Text(r.rarity!, style: const TextStyle(fontSize: 10)),
+                  visualDensity: VisualDensity.compact,
+                )
+              : null,
+          onTap: () => Navigator.pushNamed(
+            context,
+            AppRoutes.cardDetail,
+            arguments: r.cardKey,
+          ),
+        );
+      },
     );
   }
 
