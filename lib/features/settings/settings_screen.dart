@@ -106,6 +106,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Read-only endpoints only.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            if (!AppConfig.fixtureMode) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Android emulator: 127.0.0.1 is the emulator itself.'
+                      ' Use the Zima LAN IP as API base URL.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
         SectionCard(

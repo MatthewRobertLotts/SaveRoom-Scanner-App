@@ -27,6 +27,8 @@ This roadmap keeps the app small until the API has the next backend foundations.
 - All 5 fixture cards verified in tests (47 tests total).
 - Backend not required for any tests.
 
+- `v0.4 real API LAN read-mode testing`: test read-only real API from Android emulator over LAN to Zima API. See [REAL_API_EMULATOR_TESTING.md](REAL_API_EMULATOR_TESTING.md).
+
 No v13 work, billing, login, scanner backend tables, or app-store publishing in current milestone.
 
 ## Links

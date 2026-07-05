@@ -74,3 +74,4 @@ Find the Zima board LAN IP with `hostname -I` or check your router.
 - [README.md](../README.md)
 - [ANDROID_BUILD_SETUP.md](ANDROID_BUILD_SETUP.md)
 - [PHONE_INSTALL.md](PHONE_INSTALL.md)
+- [REAL_API_EMULATOR_TESTING.md](REAL_API_EMULATOR_TESTING.md)
