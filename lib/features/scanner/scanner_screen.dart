@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../config/app_config.dart';
 import '../../app/app_routes.dart';
 import '../../services/fixtures.dart';
 import '../../widgets/saveroom_shell.dart';
@@ -34,7 +35,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
       title: 'Choose a fixture card',
       children: [
         Text(
-          'Fixture mode — camera/OCR not enabled yet',
+          AppConfig.fixtureMode
+              ? 'Fixture mode — camera/OCR not enabled yet'
+              : 'Live API mode — selecting a test card loads detail from the API',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

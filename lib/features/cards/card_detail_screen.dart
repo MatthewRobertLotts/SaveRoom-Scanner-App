@@ -99,7 +99,11 @@ class CardDetailScreen extends StatelessWidget {
           ),
           InfoTile(
             label: 'Rarity',
-            value: rarity == '—' ? 'Unknown / fixture pending' : rarity,
+            value: rarity == '—'
+                ? (AppConfig.fixtureMode
+                      ? 'Unknown / fixture pending'
+                      : 'Unknown')
+                : rarity,
             icon: Icons.star_outline,
           ),
           InfoTile(

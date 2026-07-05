@@ -41,7 +41,7 @@ void main() {
       );
 
       expect(find.text('Pikachu'), findsWidgets);
-      expect(find.text('Fixture image placeholder'), findsOneWidget);
+      expect(find.text('Image pending'), findsOneWidget);
     });
 
     testWidgets('shows set text when available', (tester) async {

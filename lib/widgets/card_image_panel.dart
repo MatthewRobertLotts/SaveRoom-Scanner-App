@@ -70,7 +70,7 @@ class CardImagePanel extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              hasLocalImage ? 'Image pending' : 'Fixture image placeholder',
+              'Image pending',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
               ),
