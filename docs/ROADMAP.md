@@ -27,7 +27,9 @@ This roadmap keeps the app small until the API has the next backend foundations.
 - All 5 fixture cards verified in tests (47 tests total).
 - Backend not required for any tests.
 
-- `v0.4 real API LAN read-mode testing`: test read-only real API from Android emulator over LAN to Zima API. See [REAL_API_EMULATOR_TESTING.md](REAL_API_EMULATOR_TESTING.md).
+- `v0.5 live API card search ✅`: real API card search from emulator to Zima API via `GET /api/v1/search/cards`. Reuses scanner screen with mode-conditional UI. `SearchResult` helper class. Debounced search (400ms). Zima API must be reachable over LAN.
+
+- `v0.6 image loading / scanner planning`: pending Matthew approval.
 
 No v13 work, billing, login, scanner backend tables, or app-store publishing in current milestone.
 

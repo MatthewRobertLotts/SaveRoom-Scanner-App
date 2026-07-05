@@ -1,9 +1,48 @@
+import 'dart:async';
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
 import 'fixture_loader.dart';
+import 'fixtures.dart';
+
+/// ponytail: unified result type for both fixture and API search results.
+class SearchResult {
+  final String cardKey;
+  final String name;
+  final String setText;
+  final String? rarity;
+
+  const SearchResult({
+    required this.cardKey,
+    required this.name,
+    required this.setText,
+    this.rarity,
+  });
+
+  /// Construct from fixture card data (uses the `data.card` / `data.set` shape).
+  factory SearchResult.fromFixtureData(Map<String, dynamic> data) {
+    final card = (data['card'] as Map<String, dynamic>?) ?? const {};
+    final set = (data['set'] as Map<String, dynamic>?) ?? const {};
+    return SearchResult(
+      cardKey: card['card_key'] as String? ?? '',
+      name: card['name'] as String? ?? '',
+      setText: '${set['name'] ?? ''} / ${card['collector_number'] ?? ''}',
+      rarity: card['rarity'] as String?,
+    );
+  }
+
+  /// Construct from API search response item.
+  factory SearchResult.fromApiItem(Map<String, dynamic> item) {
+    final set = (item['set'] as Map<String, dynamic>?) ?? const {};
+    return SearchResult(
+      cardKey: item['card_key'] as String? ?? '',
+      name: item['name'] as String? ?? '',
+      setText: '${set['name'] ?? ''} / ${item['collector_number'] ?? ''}',
+      rarity: item['rarity'] as String?,
+    );
+  }
+}
 
 class SaveRoomApiClient {
   SaveRoomApiClient({
@@ -53,12 +92,51 @@ class SaveRoomApiClient {
     throw Exception('Health check failed: ${response.statusCode}');
   }
 
-  // ponytail: searchCards and getCurrentUserEntitlements stubs kept for interface shape
-  Future<List<Map<String, dynamic>>> searchCards(String query) async {
+  Future<List<SearchResult>> searchCards(String query) async {
+    if (AppConfig.fixtureMode) {
+      final q = query.toLowerCase();
+      return Fixtures.cardKeys
+          .where((key) {
+            final result = SearchResult.fromFixtureData(
+              Fixtures.byKey(key)['data'] as Map<String, dynamic>? ?? const {},
+            );
+            return result.name.toLowerCase().contains(q) ||
+                result.cardKey.toLowerCase().contains(q);
+          })
+          .map(
+            (key) => SearchResult.fromFixtureData(
+              Fixtures.byKey(key)['data'] as Map<String, dynamic>? ?? const {},
+            ),
+          )
+          .toList();
+    }
+    final uri = Uri.parse(
+      '${AppConfig.apiBaseUrl}/api/v1/search/cards'
+      '?q=${Uri.encodeComponent(query)}&limit=50',
+    );
+    final response = await _httpClient
+        .get(uri)
+        .timeout(const Duration(seconds: 10));
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
+      final data = decoded['data'];
+      if (data is List) {
+        return data
+            .cast<Map<String, dynamic>>()
+            .map((item) => SearchResult.fromApiItem(item))
+            .toList();
+      }
+      return [];
+    }
+    throw Exception('Search failed: HTTP ${response.statusCode}');
+  }
+
+  Future<List<Map<String, dynamic>>> legacySearch(String query) async {
+    // ponytail: kept for backward compat; prefer searchCards above.
     if (AppConfig.fixtureMode) {
       return [await _fixtureLoader.loadCardDetail()];
     }
-    throw UnimplementedError('Real API search is not implemented in v0.2.');
+    throw UnimplementedError('legacySearch is replaced by searchCards.');
   }
 
   Future<Map<String, dynamic>> getCurrentUserEntitlements() {

@@ -67,7 +67,13 @@ Find the Zima board LAN IP with `hostname -I` or check your router.
 10. Check rarity shows "Unknown / fixture pending" for Charizard (null rarity).
 11. Search "zzz" — confirm empty state "No fixture cards found".
 12. Search "sv04" — confirm Miraidon ex shown.
-13. Report screenshots/video if anything looks wrong.
+13. Pull latest, run in real API mode (`tools/windows/run-real-api-emulator.ps1`).
+14. Open scanner — confirm title says "Search live API cards", not "Choose a fixture card".
+15. Type "Charizard" — confirm results load from API.
+16. Tap a result — confirm detail opens in live API mode.
+17. Type nonsense — confirm empty state.
+18. Stop the API — confirm friendly error state, not crash.
+19. Switch back to fixture mode (F5) — confirm fixture picker still works.
 
 ## Links
 

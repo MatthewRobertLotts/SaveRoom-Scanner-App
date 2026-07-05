@@ -40,9 +40,12 @@ Replace the IP with the actual Zima LAN IP.
 
 1. Open Settings.
 2. Press "Check API health" — confirm API responds.
-3. Open card detail from scanner picker — confirm data loads from real API.
-4. Try an unreachable IP (stop the Zima API) — confirm graceful error, not crash.
-5. Switch back to fixture mode (`flutter run` with no dart-define) — confirm fixture mode still works.
+3. Go to scanner/search screen — confirm title says "Search live API cards".
+4. Type at least 3 characters — confirm results appear after debounce.
+5. Tap a result — confirm Card detail opens in Live API mode.
+6. Try an unreachable IP (stop the Zima API) — confirm friendly error, not crash.
+7. Try nonsense search — confirm empty state.
+8. Switch back to fixture mode (`flutter run` with no dart-define) — confirm fixture picker still works.
 
 ## Links
 
