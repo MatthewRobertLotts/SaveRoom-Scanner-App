@@ -35,17 +35,27 @@ class SearchResult {
     );
   }
 
-  /// Construct from API search response item.
+  /// Construct from API search response item. Handles both cards/search
+  /// (has card_key, set map) and fuzzy (has card_id + language_code, no set).
   factory SearchResult.fromApiItem(Map<String, dynamic> item) {
     final set = (item['set'] as Map<String, dynamic>?) ?? const {};
     final lang = (item['language'] as Map<String, dynamic>?) ?? const {};
+    final cardKey =
+        item['card_key'] as String? ??
+        _buildKey(item['card_id'] as String?, item['language_code'] as String?);
     return SearchResult(
-      cardKey: item['card_key'] as String? ?? '',
+      cardKey: cardKey,
       name: item['name'] as String? ?? '',
       setText: '${set['name'] ?? ''} / ${item['collector_number'] ?? ''}',
       rarity: item['rarity'] as String?,
       language: lang['code'] as String? ?? item['language_code'] as String?,
     );
+  }
+
+  static String _buildKey(String? cardId, String? lang) {
+    if (cardId == null || cardId.isEmpty) return '';
+    if (lang == null || lang.isEmpty) return cardId;
+    return '$lang:$cardId';
   }
 }
 
@@ -115,6 +125,44 @@ class SaveRoomApiClient {
           )
           .toList();
     }
+    // ponytail: three-way search — primary (English FTS), autocomplete (prefix), fuzzy (trigram)
+    // All three run in parallel; results are merged, deduped, and ranked.
+    final q = query.toLowerCase();
+    final primaryFuture = _searchPrimary(query);
+    final autoFuture = _searchAutocomplete(query);
+    final fuzzyFuture = _searchFuzzy(query);
+
+    final primary = await primaryFuture;
+    final auto = await autoFuture;
+    final fuzzy = await fuzzyFuture;
+
+    final seen = <String>{};
+    final all = <SearchResult>[...primary, ...auto, ...fuzzy];
+    final deduped = <SearchResult>[];
+    for (final r in all) {
+      if (r.cardKey.isNotEmpty && seen.add(r.cardKey)) {
+        deduped.add(r);
+      }
+    }
+    deduped.sort((a, b) {
+      final aName = a.name.toLowerCase();
+      final bName = b.name.toLowerCase();
+      final aScore =
+          (aName == q ? 4 : 0) +
+          (aName.startsWith(q) ? 3 : 0) +
+          (aName.contains(q) ? 2 : 0) +
+          (a.language == 'en' ? 1 : 0);
+      final bScore =
+          (bName == q ? 4 : 0) +
+          (bName.startsWith(q) ? 3 : 0) +
+          (bName.contains(q) ? 2 : 0) +
+          (b.language == 'en' ? 1 : 0);
+      return bScore.compareTo(aScore);
+    });
+    return deduped;
+  }
+
+  Future<List<SearchResult>> _searchPrimary(String query) async {
     final uri = Uri.parse(
       '${AppConfig.apiBaseUrl}/api/v1/search/cards'
       '?q=${Uri.encodeComponent(query)}&language_code=en&limit=200',
@@ -126,42 +174,38 @@ class SaveRoomApiClient {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
       final data = decoded['data'];
       if (data is List) {
-        final results = data
+        return data
             .cast<Map<String, dynamic>>()
             .map((item) => SearchResult.fromApiItem(item))
             .toList();
-        // ponytail: client-side ranking: exact > starts-with > contains > English > others
-        final q = query.toLowerCase();
-        results.sort((a, b) {
-          final aName = a.name.toLowerCase();
-          final bName = b.name.toLowerCase();
-          final aExact = aName == q ? 4 : 0;
-          final bExact = bName == q ? 4 : 0;
-          final aStarts = aName.startsWith(q) ? 3 : 0;
-          final bStarts = bName.startsWith(q) ? 3 : 0;
-          final aContains = aName.contains(q) ? 2 : 0;
-          final bContains = bName.contains(q) ? 2 : 0;
-          final aScore =
-              aExact + aStarts + aContains + (a.language == 'en' ? 1 : 0);
-          final bScore =
-              bExact + bStarts + bContains + (b.language == 'en' ? 1 : 0);
-          return bScore.compareTo(aScore);
-        });
-        return results;
       }
-      // ponytail: primary search empty → try fuzzy fallback
-      final fuzzy = await _searchFuzzy(query);
-      if (fuzzy.isNotEmpty) {
-        final seen = <String>{};
-        return fuzzy.where((r) => seen.add(r.cardKey)).toList();
-      }
-      return [];
     }
-    throw Exception('Search failed: HTTP ${response.statusCode}');
+    return [];
+  }
+
+  Future<List<SearchResult>> _searchAutocomplete(String query) async {
+    if (query.length < 2) return [];
+    final uri = Uri.parse(
+      '${AppConfig.apiBaseUrl}/api/v1/search/autocomplete'
+      '?q=${Uri.encodeComponent(query)}&limit=10',
+    );
+    final response = await _httpClient
+        .get(uri)
+        .timeout(const Duration(seconds: 5));
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
+      final data = decoded['data'];
+      if (data is List) {
+        return data
+            .cast<Map<String, dynamic>>()
+            .map((item) => SearchResult.fromApiItem(item))
+            .toList();
+      }
+    }
+    return [];
   }
 
   Future<List<SearchResult>> _searchFuzzy(String query) async {
-    // ponytail: fuzzy uses trigram similarity, catches misspellings and partials
     if (query.length < 3) return [];
     final uri = Uri.parse(
       '${AppConfig.apiBaseUrl}/api/v1/search/fuzzy'

@@ -41,7 +41,9 @@ class CardImagePanel extends StatelessWidget {
       ]),
       languageCode: _nullableText(card, 'language_code'),
       rarity: _nullableText(card, 'rarity'),
-      imageUrl: _nullableText(images, 'display_image_url'),
+      imageUrl:
+          _nullableText(images, 'primary_image_url') ??
+          _nullableText(images, 'display_image_url'),
       hasLocalImage: images['has_local_image'] == true,
     );
   }
