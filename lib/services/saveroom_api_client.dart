@@ -149,9 +149,38 @@ class SaveRoomApiClient {
         });
         return results;
       }
+      // ponytail: primary search empty → try fuzzy fallback
+      final fuzzy = await _searchFuzzy(query);
+      if (fuzzy.isNotEmpty) {
+        final seen = <String>{};
+        return fuzzy.where((r) => seen.add(r.cardKey)).toList();
+      }
       return [];
     }
     throw Exception('Search failed: HTTP ${response.statusCode}');
+  }
+
+  Future<List<SearchResult>> _searchFuzzy(String query) async {
+    // ponytail: fuzzy uses trigram similarity, catches misspellings and partials
+    if (query.length < 3) return [];
+    final uri = Uri.parse(
+      '${AppConfig.apiBaseUrl}/api/v1/search/fuzzy'
+      '?q=${Uri.encodeComponent(query)}&limit=10',
+    );
+    final response = await _httpClient
+        .get(uri)
+        .timeout(const Duration(seconds: 5));
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
+      final data = decoded['data'];
+      if (data is List) {
+        return data
+            .cast<Map<String, dynamic>>()
+            .map((item) => SearchResult.fromApiItem(item))
+            .toList();
+      }
+    }
+    return [];
   }
 
   Future<List<Map<String, dynamic>>> legacySearch(String query) async {

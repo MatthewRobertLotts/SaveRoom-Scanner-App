@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../services/fixture_loader.dart';
 import 'section_card.dart';
 
-/// A polished card-image placeholder that shows card metadata and an
-/// "Image pending" visual treatment. Uses fixture/API data defensively.
+/// A polished card-image panel that shows either a real image (when imageUrl
+/// is available) or a placeholder with card metadata.
 ///
-/// ponytail: single widget, no image pipeline. Upgrade to real image loading
-/// when a local/network image asset source is added.
+/// ponytail: single widget, no image pipeline. Add caching when images are
+/// used frequently enough to matter.
 class CardImagePanel extends StatelessWidget {
   const CardImagePanel({
     super.key,
@@ -27,8 +27,7 @@ class CardImagePanel extends StatelessWidget {
   final bool hasLocalImage;
 
   /// Construct from a raw fixture/API data map (the `data` field from
-  /// card_detail_response.json). Uses the same defensive helpers as
-  /// the card detail screen.
+  /// card_detail_response.json).
   factory CardImagePanel.fromData(Map<String, dynamic> data) {
     final card = asMap(data['card']);
     final set = asMap(data['set']);
@@ -51,6 +50,8 @@ class CardImagePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final imageUrl = this.imageUrl;
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty && imageUrl != '—';
     final imagePlaceholder = Container(
       height: 200,
       width: double.infinity,
@@ -59,24 +60,19 @@ class CardImagePanel extends StatelessWidget {
         color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         border: Border.all(color: colorScheme.outlineVariant),
       ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.image_outlined,
-              size: 52,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Image pending',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(17),
+        child: hasImage
+            ? Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, __) =>
+                    _placeholderContent(theme, colorScheme),
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : _placeholderContent(theme, colorScheme),
+              )
+            : _placeholderContent(theme, colorScheme),
       ),
     );
 
@@ -132,6 +128,28 @@ class CardImagePanel extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _placeholderContent(ThemeData theme, ColorScheme colorScheme) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.image_outlined,
+            size: 52,
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Image pending',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
