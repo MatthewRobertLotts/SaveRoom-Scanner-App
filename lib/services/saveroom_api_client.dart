@@ -125,26 +125,38 @@ class SaveRoomApiClient {
           )
           .toList();
     }
-    // ponytail: three-way search — primary (English FTS), autocomplete (prefix), fuzzy (trigram)
-    // All three run in parallel; results are merged, deduped, and ranked.
+    // ponytail: primary search first, fallbacks only when primary is weak.
+    // All helpers catch exceptions internally so no single endpoint failure
+    // can break the whole search.
     final q = query.toLowerCase();
-    final primaryFuture = _searchPrimary(query);
-    final autoFuture = _searchAutocomplete(query);
-    final fuzzyFuture = _searchFuzzy(query);
-
-    final primary = await primaryFuture;
-    final auto = await autoFuture;
-    final fuzzy = await fuzzyFuture;
+    final primary = await _searchPrimary(query);
+    final hasStrong = primary.any((r) {
+      final n = r.name.toLowerCase();
+      return n.startsWith(q) || n.contains(q);
+    });
+    if (hasStrong) {
+      primary.sort(_byScore(q));
+      return primary;
+    }
+    // ponytail: fallbacks — autocomplete (prefix) and fuzzy (trigram).
+    // Each is guarded; if one throws, the other may still contribute.
+    final auto = await _searchAutocomplete(query);
+    final fuzzy = await _searchFuzzy(query);
 
     final seen = <String>{};
-    final all = <SearchResult>[...primary, ...auto, ...fuzzy];
+    final all = [...primary, ...auto, ...fuzzy];
     final deduped = <SearchResult>[];
     for (final r in all) {
       if (r.cardKey.isNotEmpty && seen.add(r.cardKey)) {
         deduped.add(r);
       }
     }
-    deduped.sort((a, b) {
+    deduped.sort(_byScore(q));
+    return deduped;
+  }
+
+  int Function(SearchResult, SearchResult) _byScore(String q) {
+    return (a, b) {
       final aName = a.name.toLowerCase();
       final bName = b.name.toLowerCase();
       final aScore =
@@ -158,72 +170,80 @@ class SaveRoomApiClient {
           (bName.contains(q) ? 2 : 0) +
           (b.language == 'en' ? 1 : 0);
       return bScore.compareTo(aScore);
-    });
-    return deduped;
+    };
   }
 
   Future<List<SearchResult>> _searchPrimary(String query) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiBaseUrl}/api/v1/search/cards'
-      '?q=${Uri.encodeComponent(query)}&language_code=en&limit=200',
-    );
-    final response = await _httpClient
-        .get(uri)
-        .timeout(const Duration(seconds: 10));
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
-      final data = decoded['data'];
-      if (data is List) {
-        return data
-            .cast<Map<String, dynamic>>()
-            .map((item) => SearchResult.fromApiItem(item))
-            .toList();
+    try {
+      final uri = Uri.parse(
+        '${AppConfig.apiBaseUrl}/api/v1/search/cards'
+        '?q=${Uri.encodeComponent(query)}&language_code=en&limit=200',
+      );
+      final response = await _httpClient
+          .get(uri)
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final decoded =
+            jsonDecode(response.body) as Map<String, dynamic>? ?? {};
+        final data = decoded['data'];
+        if (data is List) {
+          return data
+              .cast<Map<String, dynamic>>()
+              .map((item) => SearchResult.fromApiItem(item))
+              .toList();
+        }
       }
-    }
+    } catch (_) {}
     return [];
   }
 
   Future<List<SearchResult>> _searchAutocomplete(String query) async {
     if (query.length < 2) return [];
-    final uri = Uri.parse(
-      '${AppConfig.apiBaseUrl}/api/v1/search/autocomplete'
-      '?q=${Uri.encodeComponent(query)}&limit=10',
-    );
-    final response = await _httpClient
-        .get(uri)
-        .timeout(const Duration(seconds: 5));
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
-      final data = decoded['data'];
-      if (data is List) {
-        return data
-            .cast<Map<String, dynamic>>()
-            .map((item) => SearchResult.fromApiItem(item))
-            .toList();
+    try {
+      final uri = Uri.parse(
+        '${AppConfig.apiBaseUrl}/api/v1/search/autocomplete'
+        '?q=${Uri.encodeComponent(query)}&limit=10',
+      );
+      final response = await _httpClient
+          .get(uri)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final decoded =
+            jsonDecode(response.body) as Map<String, dynamic>? ?? {};
+        final data = decoded['data'];
+        if (data is List) {
+          return data
+              .cast<Map<String, dynamic>>()
+              .map((item) => SearchResult.fromApiItem(item))
+              .toList();
+        }
       }
-    }
+    } catch (_) {}
     return [];
   }
 
   Future<List<SearchResult>> _searchFuzzy(String query) async {
     if (query.length < 3) return [];
-    final uri = Uri.parse(
-      '${AppConfig.apiBaseUrl}/api/v1/search/fuzzy'
-      '?q=${Uri.encodeComponent(query)}&limit=10',
-    );
-    final response = await _httpClient
-        .get(uri)
-        .timeout(const Duration(seconds: 5));
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
-      final data = decoded['data'];
-      if (data is List) {
-        return data
-            .cast<Map<String, dynamic>>()
-            .map((item) => SearchResult.fromApiItem(item))
-            .toList();
+    try {
+      final uri = Uri.parse(
+        '${AppConfig.apiBaseUrl}/api/v1/search/fuzzy'
+        '?q=${Uri.encodeComponent(query)}&limit=10',
+      );
+      final response = await _httpClient
+          .get(uri)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final decoded =
+            jsonDecode(response.body) as Map<String, dynamic>? ?? {};
+        final data = decoded['data'];
+        if (data is List) {
+          return data
+              .cast<Map<String, dynamic>>()
+              .map((item) => SearchResult.fromApiItem(item))
+              .toList();
+        }
       }
-    }
+    } catch (_) {}
     return [];
   }
 
