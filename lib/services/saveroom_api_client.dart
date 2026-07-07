@@ -39,7 +39,11 @@ class SearchResult {
   /// (has card_key, set map) and fuzzy (has card_id + language_code, no set).
   factory SearchResult.fromApiItem(Map<String, dynamic> item) {
     final set = (item['set'] as Map<String, dynamic>?) ?? const {};
-    final lang = (item['language'] as Map<String, dynamic>?) ?? const {};
+    final lang = item['language'];
+    final langCode = lang is String
+        ? lang
+        : (lang is Map ? (lang)['code'] as String? : null) ??
+              item['language_code'] as String?;
     final cardKey =
         item['card_key'] as String? ??
         _buildKey(item['card_id'] as String?, item['language_code'] as String?);
@@ -48,7 +52,7 @@ class SearchResult {
       name: item['name'] as String? ?? '',
       setText: '${set['name'] ?? ''} / ${item['collector_number'] ?? ''}',
       rarity: item['rarity'] as String?,
-      language: lang['code'] as String? ?? item['language_code'] as String?,
+      language: langCode,
     );
   }
 

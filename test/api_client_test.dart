@@ -59,6 +59,41 @@ void main() {
       final result = SearchResult.fromFixtureData(data);
       expect(result.language, 'en');
     });
+
+    test('fromApiItem handles language as string (autocomplete shape)', () {
+      final item = <String, dynamic>{
+        'card_key': 'en:base2-15',
+        'name': 'Vileplume',
+        'language': 'en',
+      };
+      final result = SearchResult.fromApiItem(item);
+      expect(result.cardKey, 'en:base2-15');
+      expect(result.name, 'Vileplume');
+      expect(result.language, 'en');
+    });
+
+    test('fromApiItem handles language as map (primary search shape)', () {
+      final item = <String, dynamic>{
+        'card_key': 'en:sv03-223',
+        'name': 'Charizard ex',
+        'language': <String, dynamic>{'code': 'en', 'name': 'English'},
+      };
+      final result = SearchResult.fromApiItem(item);
+      expect(result.cardKey, 'en:sv03-223');
+      expect(result.language, 'en');
+    });
+
+    test('fromApiItem handles fuzzy shape (card_id + language_code)', () {
+      final item = <String, dynamic>{
+        'card_id': '151-045',
+        'language_code': 'en',
+        'name': 'Vileplume',
+      };
+      final result = SearchResult.fromApiItem(item);
+      expect(result.cardKey, 'en:151-045');
+      expect(result.name, 'Vileplume');
+      expect(result.language, 'en');
+    });
   });
 
   group('Fallback isolation', () {

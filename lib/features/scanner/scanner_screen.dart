@@ -62,12 +62,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
       // ponytail: ignore stale responses from earlier requests
       if (reqId != _reqId) return;
       setState(() {
-        _results = results
-          ..sort((a, b) {
-            if (a.language == 'en' && b.language != 'en') return -1;
-            if (a.language != 'en' && b.language == 'en') return 1;
-            return 0;
-          });
+        // ponytail: results already ranked in searchCards (exact > starts-with > contains > English > others)
+        _results = results;
         _searched = true;
         _loading = false;
       });
