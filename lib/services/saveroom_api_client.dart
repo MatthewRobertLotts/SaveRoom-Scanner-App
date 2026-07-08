@@ -38,7 +38,6 @@ class SearchResult {
   /// Construct from API search response item. Handles both cards/search
   /// (has card_key, set map) and fuzzy (has card_id + language_code, no set).
   factory SearchResult.fromApiItem(Map<String, dynamic> item) {
-    final set = (item['set'] as Map<String, dynamic>?) ?? const {};
     final lang = item['language'];
     final langCode = lang is String
         ? lang
@@ -47,10 +46,27 @@ class SearchResult {
     final cardKey =
         item['card_key'] as String? ??
         _buildKey(item['card_id'] as String?, item['language_code'] as String?);
+    // ponytail: build set text from whatever the endpoint provides.
+    // autocomplete returns 'set' as a flat string, not a map.
+    String setText;
+    final rawSet = item['set'];
+    if (rawSet is String) {
+      setText = rawSet;
+    } else if (rawSet is Map) {
+      final name = (rawSet)['name'] as String? ?? '';
+      final code = (rawSet)['set_code'] as String? ?? '';
+      final num = item['collector_number'] as String? ?? '';
+      setText = joinPresent([name, code, num]);
+    } else {
+      // fuzzy: no set info at all, use card_id or language
+      final cid = item['card_id'] as String?;
+      final lc = item['language_code'] as String?;
+      setText = cid ?? lc ?? '';
+    }
     return SearchResult(
       cardKey: cardKey,
       name: item['name'] as String? ?? '',
-      setText: '${set['name'] ?? ''} / ${item['collector_number'] ?? ''}',
+      setText: setText,
       rarity: item['rarity'] as String?,
       language: langCode,
     );
@@ -60,6 +76,16 @@ class SearchResult {
     if (cardId == null || cardId.isEmpty) return '';
     if (lang == null || lang.isEmpty) return cardId;
     return '$lang:$cardId';
+  }
+
+  /// ponytail: safe display text — never show bare / or null/null.
+  /// Falls back to card key or "Tap to view" when metadata is sparse.
+  String get displayText {
+    final st = setText;
+    if (st.isEmpty || st == '/') {
+      return cardKey.isNotEmpty ? cardKey : 'Tap to view';
+    }
+    return st;
   }
 }
 

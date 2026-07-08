@@ -32,11 +32,19 @@ class CardDetailScreen extends StatelessWidget {
                     const Icon(Icons.error_outline, size: 48),
                     const SizedBox(height: 12),
                     Text(
-                      '${AppConfig.fixtureMode ? 'Fixture' : 'API'} load failed',
+                      'Card detail unavailable',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    Text('${snapshot.error}'),
+                    Text(
+                      'The API could not load this card right now.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Card key: $cardKey',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     if (!AppConfig.fixtureMode) ...[
                       const SizedBox(height: 12),
                       Text(

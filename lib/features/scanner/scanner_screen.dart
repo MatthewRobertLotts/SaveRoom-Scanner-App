@@ -237,8 +237,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
       itemBuilder: (context, i) {
         final r = _results[i];
         final subtitle = r.language != null && r.language != 'en'
-            ? '${r.setText} · ${r.language}'
-            : r.setText;
+            ? '${r.displayText} · ${r.language}'
+            : r.displayText;
         return ListTile(
           leading: CircleAvatar(
             backgroundColor: theme.colorScheme.primaryContainer,
@@ -282,7 +282,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         result.name,
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
-      subtitle: Text(result.setText, style: theme.textTheme.bodySmall),
+      subtitle: Text(result.displayText, style: theme.textTheme.bodySmall),
       trailing: result.rarity != null
           ? Chip(
               label: Text(result.rarity!, style: const TextStyle(fontSize: 10)),
