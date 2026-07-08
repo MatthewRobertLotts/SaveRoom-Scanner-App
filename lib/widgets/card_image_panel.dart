@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../services/fixture_loader.dart';
@@ -65,11 +67,14 @@ class CardImagePanel extends StatefulWidget {
 
 class _CardImagePanelState extends State<CardImagePanel> {
   late int _imageIndex;
+  Timer? _candidateTimer;
+  bool _attemptStarted = false;
 
   @override
   void initState() {
     super.initState();
     _imageIndex = 0;
+    _startCandidateAfterFirstFrame();
   }
 
   @override
@@ -78,7 +83,49 @@ class _CardImagePanelState extends State<CardImagePanel> {
     if (oldWidget.imageUrls.join('|') != widget.imageUrls.join('|') ||
         oldWidget.imageUrl != widget.imageUrl) {
       _imageIndex = 0;
+      _attemptStarted = false;
+      _startCandidateAfterFirstFrame();
     }
+  }
+
+  @override
+  void dispose() {
+    _candidateTimer?.cancel();
+    super.dispose();
+  }
+
+  void _advanceCandidate() {
+    if (!mounted) return;
+    final candidates = _candidates;
+    if (_imageIndex < candidates.length) {
+      setState(() {
+        _imageIndex += 1;
+        _attemptStarted = false;
+      });
+      _startCandidateAfterFirstFrame();
+    }
+  }
+
+  void _startCandidateAfterFirstFrame() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _imageIndex >= _candidates.length) return;
+      setState(() => _attemptStarted = true);
+      _scheduleCandidateTimeout();
+    });
+  }
+
+  void _scheduleCandidateTimeout() {
+    _candidateTimer?.cancel();
+    final candidates = _candidates;
+    if (_imageIndex >= candidates.length) return;
+    final expected = candidates[_imageIndex];
+    _candidateTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      final current = _candidates;
+      if (_imageIndex < current.length && current[_imageIndex] == expected) {
+        _advanceCandidate();
+      }
+    });
   }
 
   @override
@@ -98,26 +145,41 @@ class _CardImagePanelState extends State<CardImagePanel> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(17),
         child: hasImage
-            ? Image.network(
-                candidates[_imageIndex],
-                key: ValueKey(candidates[_imageIndex]),
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && _imageIndex < candidates.length) {
-                      setState(() => _imageIndex += 1);
-                    }
-                  });
-                  return _placeholderContent(
-                    theme,
-                    colorScheme,
-                    'Loading image',
-                  );
-                },
-                loadingBuilder: (_, child, progress) => progress == null
-                    ? child
-                    : _placeholderContent(theme, colorScheme, 'Loading image'),
-              )
+            ? !_attemptStarted
+                  ? _placeholderContent(
+                      theme,
+                      colorScheme,
+                      'Loading image',
+                      loading: true,
+                    )
+                  : Image.network(
+                      candidates[_imageIndex],
+                      key: ValueKey(candidates[_imageIndex]),
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _advanceCandidate();
+                        });
+                        return _placeholderContent(
+                          theme,
+                          colorScheme,
+                          'Loading image',
+                          loading: true,
+                        );
+                      },
+                      loadingBuilder: (_, child, progress) {
+                        if (progress == null) {
+                          _candidateTimer?.cancel();
+                          return child;
+                        }
+                        return _placeholderContent(
+                          theme,
+                          colorScheme,
+                          'Loading image',
+                          loading: true,
+                        );
+                      },
+                    )
             : _placeholderContent(theme, colorScheme, 'Image pending'),
       ),
     );
@@ -193,17 +255,25 @@ class _CardImagePanelState extends State<CardImagePanel> {
   Widget _placeholderContent(
     ThemeData theme,
     ColorScheme colorScheme,
-    String label,
-  ) {
+    String label, {
+    bool loading = false,
+  }) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.image_outlined,
-            size: 52,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
+          if (loading)
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Icon(
+              Icons.image_outlined,
+              size: 52,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
           const SizedBox(height: 8),
           Text(
             label,

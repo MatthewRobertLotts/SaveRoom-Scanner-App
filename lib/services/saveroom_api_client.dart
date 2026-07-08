@@ -195,6 +195,12 @@ class SearchQuality {
     return name == query || name.startsWith(query) || name.contains(query);
   }
 
+  static int strongCount(Iterable<SearchResult> results, String q) => results
+      .where((r) => isStrongNameMatch(r, q))
+      .map((r) => r.cardKey)
+      .toSet()
+      .length;
+
   static int score(SearchResult r, String q) {
     final query = q.toLowerCase();
     final name = r.name.toLowerCase();
@@ -408,18 +414,44 @@ class CardImageResolver {
   }
 }
 
+class SearchConnectionException implements Exception {
+  const SearchConnectionException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+class _SearchEndpointResult {
+  const _SearchEndpointResult({
+    required this.results,
+    this.failed = false,
+    this.timedOut = false,
+  });
+
+  final List<SearchResult> results;
+  final bool failed;
+  final bool timedOut;
+}
+
 class SaveRoomApiClient {
   SaveRoomApiClient({
     FixtureLoader fixtureLoader = const FixtureLoader(),
     http.Client? httpClient,
+    bool? forceFixtureMode,
   }) : _fixtureLoader = fixtureLoader,
-       _httpClient = httpClient ?? http.Client();
+       _httpClient = httpClient ?? http.Client(),
+       _forceFixtureMode = forceFixtureMode;
 
   final FixtureLoader _fixtureLoader;
   final http.Client _httpClient;
+  final bool? _forceFixtureMode;
+
+  bool get _fixtureMode => _forceFixtureMode ?? AppConfig.fixtureMode;
 
   Future<Map<String, dynamic>> getCardDetail(String cardKey) async {
-    if (AppConfig.fixtureMode) {
+    if (_fixtureMode) {
       return _fixtureLoader.loadCardDetailByKey(cardKey);
     }
     final uri = Uri.parse(
@@ -492,7 +524,7 @@ class SaveRoomApiClient {
   }
 
   Future<Map<String, dynamic>> getHealth() async {
-    if (AppConfig.fixtureMode) {
+    if (_fixtureMode) {
       return const <String, dynamic>{
         'data': <String, dynamic>{
           'ok': true,
@@ -512,7 +544,7 @@ class SaveRoomApiClient {
   }
 
   Future<List<SearchResult>> searchCards(String query) async {
-    if (AppConfig.fixtureMode) {
+    if (_fixtureMode) {
       final q = query.toLowerCase();
       return Fixtures.cardKeys
           .where((key) {
@@ -530,108 +562,144 @@ class SaveRoomApiClient {
           .toList();
     }
 
+    final trimmed = query.trim();
+    if (trimmed.length < 3) return const [];
+
     final stopwatch = Stopwatch()..start();
-    final q = query.toLowerCase();
-    final primary = await _searchPrimary(query);
-    final rankedPrimary = SearchQuality.rankAndFilterNoise(primary, q);
-    final hasStrongPrimary = rankedPrimary.any(
-      (r) => SearchQuality.isStrongNameMatch(r, q),
-    );
-    if (hasStrongPrimary) {
-      _debugTiming(
-        'search "$query" primary-only (${rankedPrimary.length})',
-        stopwatch,
-      );
-      return rankedPrimary.take(50).toList();
+    final q = trimmed.toLowerCase();
+    final prefixMode = q.length <= 5;
+    final attempted = <_SearchEndpointResult>[];
+
+    List<SearchResult> merged = [];
+    if (prefixMode) {
+      final initial = await Future.wait([
+        _searchPrimary(trimmed, limit: 100),
+        _searchAutocomplete(trimmed, limit: 100),
+      ]);
+      attempted.addAll(initial);
+      merged = initial.expand((r) => r.results).toList();
+      var ranked = SearchQuality.rankAndFilterNoise(merged, q);
+      if (SearchQuality.strongCount(ranked, q) < 12) {
+        final fuzzy = await _searchFuzzy(trimmed, limit: 50);
+        attempted.add(fuzzy);
+        merged = [...merged, ...fuzzy.results];
+        ranked = SearchQuality.rankAndFilterNoise(merged, q);
+      }
+      _throwIfAllEndpointsFailed(attempted);
+      final result = ranked.take(50).toList();
+      _debugTiming('search "$query" prefix (${result.length})', stopwatch);
+      return result;
     }
 
-    final fallback = await Future.wait([
-      _searchAutocomplete(query),
-      _searchFuzzy(query),
-    ]);
-    final ranked = SearchQuality.rankAndFilterNoise([
-      ...primary,
-      ...fallback.expand((r) => r),
-    ], q).take(50).toList();
-    _debugTiming('search "$query" merged (${ranked.length})', stopwatch);
-    return ranked;
+    final primary = await _searchPrimary(trimmed, limit: 100);
+    attempted.add(primary);
+    var ranked = SearchQuality.rankAndFilterNoise(primary.results, q);
+    if (SearchQuality.strongCount(ranked, q) >= 12) {
+      _debugTiming('search "$query" primary (${ranked.length})', stopwatch);
+      return ranked.take(50).toList();
+    }
+
+    final autocomplete = await _searchAutocomplete(trimmed, limit: 100);
+    attempted.add(autocomplete);
+    merged = [...primary.results, ...autocomplete.results];
+    ranked = SearchQuality.rankAndFilterNoise(merged, q);
+    if (SearchQuality.strongCount(ranked, q) == 0) {
+      final fuzzy = await _searchFuzzy(trimmed, limit: 50);
+      attempted.add(fuzzy);
+      merged = [...merged, ...fuzzy.results];
+      ranked = SearchQuality.rankAndFilterNoise(merged, q);
+    }
+    _throwIfAllEndpointsFailed(attempted);
+    final result = ranked.take(50).toList();
+    _debugTiming('search "$query" enriched (${result.length})', stopwatch);
+    return result;
   }
 
-  Future<List<SearchResult>> _searchPrimary(String query) async {
-    try {
-      final uri = Uri.parse(
-        '${AppConfig.apiBaseUrl}/api/v1/search/cards'
-        '?q=${Uri.encodeComponent(query)}&language_code=en&limit=50',
+  void _throwIfAllEndpointsFailed(List<_SearchEndpointResult> attempted) {
+    if (attempted.isEmpty) return;
+    final failed = attempted.where((r) => r.failed).length;
+    if (failed == attempted.length) {
+      final timedOut = attempted.any((r) => r.timedOut);
+      if (timedOut) {
+        throw TimeoutException('Search timed out');
+      }
+      throw const SearchConnectionException(
+        'Search failed. Check the API connection.',
       );
-      final response = await _httpClient
-          .get(uri)
-          .timeout(const Duration(seconds: 6));
+    }
+  }
+
+  Future<_SearchEndpointResult> _searchPrimary(
+    String query, {
+    int limit = 100,
+  }) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiBaseUrl}/api/v1/search/cards'
+      '?q=${Uri.encodeComponent(query)}&language_code=en&limit=$limit',
+    );
+    return _searchEndpoint(uri, 'primary', const Duration(seconds: 5));
+  }
+
+  Future<_SearchEndpointResult> _searchAutocomplete(
+    String query, {
+    int limit = 100,
+  }) async {
+    if (query.length < 2) return const _SearchEndpointResult(results: []);
+    final uri = Uri.parse(
+      '${AppConfig.apiBaseUrl}/api/v1/search/autocomplete'
+      '?q=${Uri.encodeComponent(query)}&limit=$limit',
+    );
+    return _searchEndpoint(uri, 'autocomplete', const Duration(seconds: 3));
+  }
+
+  Future<_SearchEndpointResult> _searchFuzzy(
+    String query, {
+    int limit = 50,
+  }) async {
+    if (query.length < 3) return const _SearchEndpointResult(results: []);
+    final uri = Uri.parse(
+      '${AppConfig.apiBaseUrl}/api/v1/search/fuzzy'
+      '?q=${Uri.encodeComponent(query)}&limit=$limit',
+    );
+    return _searchEndpoint(uri, 'fuzzy', const Duration(seconds: 3));
+  }
+
+  Future<_SearchEndpointResult> _searchEndpoint(
+    Uri uri,
+    String source,
+    Duration timeout,
+  ) async {
+    try {
+      final response = await _httpClient.get(uri).timeout(timeout);
       if (response.statusCode == 200) {
         final decoded =
             jsonDecode(response.body) as Map<String, dynamic>? ?? {};
         final data = decoded['data'];
         if (data is List) {
-          return data
-              .cast<Map<String, dynamic>>()
-              .map((item) => SearchResult.fromApiItem(item, source: 'primary'))
-              .toList();
+          return _SearchEndpointResult(
+            results: data
+                .whereType<Map>()
+                .map(
+                  (item) => SearchResult.fromApiItem(
+                    Map<String, dynamic>.from(item),
+                    source: source,
+                  ),
+                )
+                .where((r) => r.cardKey.isNotEmpty && r.name.trim().isNotEmpty)
+                .toList(),
+          );
         }
       }
-    } catch (_) {}
-    return [];
-  }
-
-  Future<List<SearchResult>> _searchAutocomplete(String query) async {
-    if (query.length < 2) return [];
-    try {
-      final uri = Uri.parse(
-        '${AppConfig.apiBaseUrl}/api/v1/search/autocomplete'
-        '?q=${Uri.encodeComponent(query)}&limit=15',
+      return const _SearchEndpointResult(results: [], failed: true);
+    } on TimeoutException {
+      return const _SearchEndpointResult(
+        results: [],
+        failed: true,
+        timedOut: true,
       );
-      final response = await _httpClient
-          .get(uri)
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
-        final decoded =
-            jsonDecode(response.body) as Map<String, dynamic>? ?? {};
-        final data = decoded['data'];
-        if (data is List) {
-          return data
-              .cast<Map<String, dynamic>>()
-              .map(
-                (item) =>
-                    SearchResult.fromApiItem(item, source: 'autocomplete'),
-              )
-              .toList();
-        }
-      }
-    } catch (_) {}
-    return [];
-  }
-
-  Future<List<SearchResult>> _searchFuzzy(String query) async {
-    if (query.length < 3) return [];
-    try {
-      final uri = Uri.parse(
-        '${AppConfig.apiBaseUrl}/api/v1/search/fuzzy'
-        '?q=${Uri.encodeComponent(query)}&limit=10',
-      );
-      final response = await _httpClient
-          .get(uri)
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
-        final decoded =
-            jsonDecode(response.body) as Map<String, dynamic>? ?? {};
-        final data = decoded['data'];
-        if (data is List) {
-          return data
-              .cast<Map<String, dynamic>>()
-              .map((item) => SearchResult.fromApiItem(item, source: 'fuzzy'))
-              .toList();
-        }
-      }
-    } catch (_) {}
-    return [];
+    } catch (_) {
+      return const _SearchEndpointResult(results: [], failed: true);
+    }
   }
 
   static void _debugTiming(String label, Stopwatch stopwatch) {

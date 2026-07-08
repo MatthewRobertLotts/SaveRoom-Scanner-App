@@ -431,4 +431,200 @@ void main() {
       expect(ranked.every((r) => r.name.contains('Vileplume')), true);
     });
   });
+
+  group('v0.6.7 partial search breadth strategy', () {
+    Map<String, dynamic> row(String key, String name, {String lang = 'en'}) => {
+      'card_key': key,
+      'card_id': key.contains(':') ? key.split(':').last : key,
+      'name': name,
+      'language': {'code': lang},
+      'set': {'name': 'Test Set'},
+    };
+
+    Map<String, dynamic> fuzzyRow(
+      String key,
+      String name, {
+      String lang = 'en',
+    }) => {
+      'card_id': key.contains(':') ? key.split(':').last : key,
+      'language_code': lang,
+      'name': name,
+    };
+
+    MockClient mockSearchClient({
+      List<Map<String, dynamic>> primary = const [],
+      List<Map<String, dynamic>> autocomplete = const [],
+      List<Map<String, dynamic>> fuzzy = const [],
+      int statusCode = 200,
+    }) {
+      return MockClient((req) async {
+        if (statusCode != 200) return http.Response('unavailable', statusCode);
+        if (req.url.path.contains('/search/cards')) {
+          return http.Response(jsonEncode({'data': primary}), 200);
+        }
+        if (req.url.path.contains('/search/autocomplete')) {
+          return http.Response(jsonEncode({'data': autocomplete}), 200);
+        }
+        if (req.url.path.contains('/search/fuzzy')) {
+          return http.Response(jsonEncode({'data': fuzzy}), 200);
+        }
+        return http.Response(jsonEncode({'data': []}), 200);
+      });
+    }
+
+    test('pika keeps many distinct Pikachu card keys', () async {
+      final client = SaveRoomApiClient(
+        forceFixtureMode: false,
+        httpClient: mockSearchClient(
+          primary: List.generate(30, (i) => row('en:pika-$i', 'Pikachu')),
+        ),
+      );
+      final results = await client.searchCards('pika');
+      expect(results.length, 30);
+      expect(results.map((r) => r.cardKey).toSet().length, 30);
+    });
+
+    test(
+      'chari enriches weak primary results with fuzzy Charizard rows',
+      () async {
+        final client = SaveRoomApiClient(
+          forceFixtureMode: false,
+          httpClient: mockSearchClient(
+            fuzzy: List.generate(
+              18,
+              (i) => fuzzyRow(
+                'en:char-$i',
+                i.isEven ? 'Charizard' : 'Charizard ex',
+              ),
+            ),
+          ),
+        );
+        final results = await client.searchCards('chari');
+        expect(results.length, 18);
+        expect(
+          results.every((r) => r.name.toLowerCase().startsWith('chari')),
+          true,
+        );
+      },
+    );
+
+    test('vile keeps Vileplume rows and filters Weedle noise', () {
+      final ranked = SearchQuality.rankAndFilterNoise([
+        for (var i = 0; i < 8; i++)
+          SearchResult(
+            cardKey: 'en:vile-$i',
+            name: i.isEven ? 'Vileplume' : 'Vileplume GX',
+            setText: 'Set $i',
+            language: 'en',
+            source: 'fuzzy',
+          ),
+        const SearchResult(
+          cardKey: 'en:weedle',
+          name: 'Weedle',
+          setText: 'Noise',
+          language: 'en',
+          source: 'fuzzy',
+        ),
+      ], 'vile');
+      expect(ranked.length, 8);
+      expect(ranked.any((r) => r.name == 'Weedle'), false);
+    });
+
+    test('vilep keeps Vileplume and filters Weedle noise', () {
+      final ranked = SearchQuality.rankAndFilterNoise([
+        const SearchResult(
+          cardKey: 'en:vileplume',
+          name: 'Vileplume',
+          setText: 'Jungle',
+          language: 'en',
+          source: 'fuzzy',
+        ),
+        const SearchResult(
+          cardKey: 'en:weedle',
+          name: 'Weedle',
+          setText: 'Noise',
+          language: 'en',
+          source: 'fuzzy',
+        ),
+      ], 'vilep');
+      expect(ranked.map((r) => r.name), ['Vileplume']);
+    });
+
+    test('cynda and cyndaqui keep Cyndaquil rows', () {
+      final rows = [
+        const SearchResult(
+          cardKey: 'en:cynda-1',
+          name: 'Cyndaquil',
+          setText: 'Neo Genesis',
+          language: 'en',
+          source: 'fuzzy',
+        ),
+      ];
+      expect(
+        SearchQuality.rankAndFilterNoise(rows, 'cynda').single.name,
+        'Cyndaquil',
+      );
+      expect(
+        SearchQuality.rankAndFilterNoise(rows, 'cyndaqui').single.name,
+        'Cyndaquil',
+      );
+    });
+
+    test(
+      'deduplication only removes duplicate card keys, not duplicate names',
+      () {
+        final ranked = SearchQuality.rankAndFilterNoise([
+          const SearchResult(
+            cardKey: 'en:a',
+            name: 'Pikachu',
+            setText: 'A',
+            language: 'en',
+            source: 'primary',
+          ),
+          const SearchResult(
+            cardKey: 'en:b',
+            name: 'Pikachu',
+            setText: 'B',
+            language: 'en',
+            source: 'primary',
+          ),
+          const SearchResult(
+            cardKey: 'en:a',
+            name: 'Pikachu',
+            setText: 'A duplicate',
+            language: 'en',
+            source: 'autocomplete',
+          ),
+        ], 'pika');
+        expect(ranked.length, 2);
+        expect(ranked.map((r) => r.cardKey).toSet(), {'en:a', 'en:b'});
+      },
+    );
+
+    test(
+      'all failed endpoints throw connection exception instead of empty results',
+      () async {
+        final client = SaveRoomApiClient(
+          forceFixtureMode: false,
+          httpClient: mockSearchClient(statusCode: 503),
+        );
+        expect(
+          client.searchCards('chari'),
+          throwsA(isA<SearchConnectionException>()),
+        );
+      },
+    );
+
+    test(
+      'successful empty endpoint responses return empty list for no cards found',
+      () async {
+        final client = SaveRoomApiClient(
+          forceFixtureMode: false,
+          httpClient: mockSearchClient(),
+        );
+        final results = await client.searchCards('nonsense');
+        expect(results, isEmpty);
+      },
+    );
+  });
 }

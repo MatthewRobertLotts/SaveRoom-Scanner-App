@@ -11,14 +11,22 @@ import '../../widgets/saveroom_shell.dart';
 /// ponytail: one screen, two modes. Fixture = local picker. Live = API-backed
 /// search with request-ID guard against stale errors.
 class ScannerScreen extends StatefulWidget {
-  const ScannerScreen({super.key});
+  const ScannerScreen({
+    super.key,
+    SaveRoomApiClient? client,
+    bool? forceLiveMode,
+  }) : _client = client,
+       _forceLiveMode = forceLiveMode;
+
+  final SaveRoomApiClient? _client;
+  final bool? _forceLiveMode;
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
 }
 
 class _ScannerScreenState extends State<ScannerScreen> {
-  final _client = SaveRoomApiClient();
+  late final SaveRoomApiClient _client;
   final _textController = TextEditingController();
   Timer? _debounce;
   int _reqId = 0;
@@ -27,6 +35,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
   bool _loading = false;
   String? _error;
   bool _searched = false;
+
+  bool get _liveMode => widget._forceLiveMode ?? !AppConfig.fixtureMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _client = widget._client ?? SaveRoomApiClient();
+  }
 
   @override
   void dispose() {
@@ -37,17 +53,19 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   void _onSearchChanged(String query) {
     _debounce?.cancel();
-    if (!AppConfig.fixtureMode && query.length >= 3) {
+    if (_liveMode && query.length >= 3) {
       final id = ++_reqId;
       _debounce = Timer(
-        const Duration(milliseconds: 280),
+        const Duration(milliseconds: 240),
         () => _doSearch(query, id),
       );
     } else {
+      ++_reqId;
       setState(() {
         _results = [];
         _error = null;
         _searched = false;
+        _loading = false;
       });
     }
   }
@@ -72,8 +90,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
       setState(() {
         // ponytail: friendly error, no raw exception class names
         _error = e is TimeoutException
-            ? 'Search timed out. Try a more specific search.'
-            : 'Search failed. Try again or check the API connection.';
+            ? 'Search timed out. Try again.'
+            : 'Search failed. Check the API connection.';
         _loading = false;
         _searched = true;
       });
@@ -83,7 +101,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final liveMode = !AppConfig.fixtureMode;
+    final liveMode = _liveMode;
 
     return SaveRoomShell(
       title: liveMode ? 'Search live API cards' : 'Choose a fixture card',
@@ -146,6 +164,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 ],
               ),
             ),
+          if (_loading && _results.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Updating results…', style: theme.textTheme.bodySmall),
+                ],
+              ),
+            ),
           if (_loading && _results.isEmpty)
             const Center(
               child: Padding(
@@ -153,7 +186,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 child: CircularProgressIndicator(),
               ),
             )
-          else if (_searched && _results.isEmpty)
+          else if (_error == null && _searched && _results.isEmpty)
             _emptyState(
               theme,
               'No cards found',
@@ -161,11 +194,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
             )
           else if (_results.isNotEmpty)
             _searchResultsList(theme)
-          else
+          else if (_error == null)
             _emptyState(
               theme,
+              'Keep typing',
               'Type at least 3 characters to search',
-              'Search by English card name, set, or card key',
             ),
         ] else ...[
           _fixtureModeContent(theme),

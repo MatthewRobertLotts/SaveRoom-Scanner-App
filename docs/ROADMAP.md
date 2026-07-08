@@ -16,6 +16,14 @@ This roadmap keeps the app small until the API has the next backend foundations.
 - `v0.6 scanner MVP`: camera/OCR/scan candidate flow.
 - `paid beta`: after v12.5 billing/entitlement enforcement.
 
+### v0.6.7 search breadth + loading UX — completed
+
+- Partial prefix search now feels broader: `pika`, `chari`, `vile`, `vilep`, `cynda`, and `cyndaqui` use conservative primary/autocomplete/fuzzy enrichment instead of returning early after thin results.
+- Ranking keeps multiple cards with the same display name when card keys differ, while still filtering weak fuzzy noise such as Weedle rows for `vilep` and nonsense fuzzy garbage.
+- Search UX keeps previous results during in-flight updates, shows compact updating feedback, and distinguishes API connection/timeouts from a successful empty No cards found result.
+- Image UX keeps fast local candidate ordering and now shows loading/fallback behaviour before Image pending.
+- Validation: 70/70 tests, web debug build, and debug APK build passed.
+
 ### v0.3 fixture card selection — completed
 
 - 5 demo fixture cards: Charizard ex, Miraidon ex, Iono, Greninja ex, Giratina V.

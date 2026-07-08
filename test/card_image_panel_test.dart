@@ -86,5 +86,43 @@ void main() {
       // Just verify no crash and "Image pending" shows for has_local_image
       expect(find.text('Image pending'), findsOneWidget);
     });
+
+    testWidgets(
+      'candidate URL shows loading state instead of immediate Image pending',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: CardImagePanel(
+                cardName: 'Pikachu',
+                imageUrls: ['http://example.invalid/pikachu.png'],
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Loading image'), findsOneWidget);
+        expect(find.text('Image pending'), findsNothing);
+      },
+    );
+
+    testWidgets('failed candidate eventually falls back to Image pending', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: CardImagePanel(
+              cardName: 'Pikachu',
+              imageUrls: ['http://example.invalid/pikachu.png'],
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump();
+      expect(find.text('Image pending'), findsOneWidget);
+    });
   });
 }
