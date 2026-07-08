@@ -187,7 +187,7 @@ class _CardImagePanelState extends State<CardImagePanel> {
     );
 
     return SectionCard(
-      title: widget.showTitle ? widget.cardName : null,
+      title: widget.showTitle ? widget.cardName : '',
       icon: widget.showTitle ? Icons.auto_awesome_outlined : null,
       children: [
         imagePlaceholder,

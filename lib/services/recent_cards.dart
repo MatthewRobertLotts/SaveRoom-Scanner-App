@@ -1,21 +1,28 @@
-import '../services/saveroom_api_client.dart';
+import 'package:flutter/foundation.dart';
+import 'saveroom_api_client.dart';
 
 /// In-memory session storage for recently viewed cards.
-/// Max 5 items, most recent at the front.
-class RecentlyViewed {
+/// Max 5 items, most recent at the front, notifies listeners on change.
+class RecentlyViewed extends ValueNotifier<List<SearchResult>> {
+  RecentlyViewed._() : super(const []);
+
+  static final RecentlyViewed _instance = RecentlyViewed._();
+
+  static RecentlyViewed get instance => _instance;
+
+  static List<SearchResult> get recent => instance.value;
+
   static const _maxItems = 5;
 
-  static final List<SearchResult> _recent = [];
-
-  static List<SearchResult> get recent => List.unmodifiable(_recent);
-
   static void add(SearchResult item) {
-    _recent.removeWhere((i) => i.cardKey == item.cardKey);
-    _recent.insert(0, item);
-    if (_recent.length > _maxItems) {
-      _recent.removeLast();
+    final current = List<SearchResult>.from(instance.value);
+    current.removeWhere((i) => i.cardKey == item.cardKey);
+    current.insert(0, item);
+    if (current.length > _maxItems) {
+      current.removeLast();
     }
+    instance.value = current;
   }
 
-  static void clear() => _recent.clear();
+  static void clear() => instance.value = const [];
 }

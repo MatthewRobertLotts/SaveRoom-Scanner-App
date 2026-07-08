@@ -10,6 +10,7 @@ import '../../services/recent_cards.dart';
 import '../../widgets/card_thumbnail.dart';
 import '../../widgets/card_image_panel.dart';
 import '../../widgets/saveroom_shell.dart';
+import '../../widgets/status_pill.dart';
 
 /// ponytail: one screen, two modes. Fixture = local picker. Live = API-backed
 /// search with request-ID guard against stale errors.
@@ -265,11 +266,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Map<String, dynamic> _fixtureData(String key) => Fixtures.byKey(key);
 
   Widget _searchResultsList(ThemeData theme) {
-    return ListView.separated(
+    return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _results.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, i) {
         final r = _results[i];
         return _buildSearchResultTile(theme, r);
@@ -278,35 +278,58 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   Widget _buildSearchResultTile(ThemeData theme, SearchResult r) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      leading: CardThumbnail(imageUrls: r.imageUrlCandidates, cardName: r.name),
-      title: Text(
-        r.name,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 0),
+      child: InkWell(
+        onTap: () {
+          RecentlyViewed.add(r);
+          Navigator.pushNamed(
+            context,
+            AppRoutes.cardDetail,
+            arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              CardThumbnail(imageUrls: r.imageUrlCandidates, cardName: r.name),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r.name,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _resultSubtitle(r),
+                      style: theme.textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (r.rarity != null && r.rarity != '—')
+                StatusPill(r.rarity!, dense: true),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right,
+                color: Colors.grey,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
       ),
-      subtitle: Text(
-        _resultSubtitle(r),
-        style: theme.textTheme.bodySmall,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: r.rarity != null && r.rarity != '—'
-          ? Chip(
-              label: Text(r.rarity!, style: const TextStyle(fontSize: 10)),
-              visualDensity: VisualDensity.compact,
-            )
-          : null,
-      onTap: () {
-        RecentlyViewed.add(r);
-        Navigator.pushNamed(
-          context,
-          AppRoutes.cardDetail,
-          arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
-        );
-      },
     );
   }
 

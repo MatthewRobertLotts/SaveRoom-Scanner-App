@@ -5,7 +5,6 @@ import '../../services/saveroom_api_client.dart';
 import '../../widgets/card_thumbnail.dart';
 import '../../config/app_config.dart';
 import '../../app/app_routes.dart';
-import '../../widgets/fixture_badge.dart';
 import '../../widgets/primary_action_card.dart';
 import '../../widgets/section_card.dart';
 import '../../widgets/status_pill.dart';
@@ -16,7 +15,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recent = RecentlyViewed.recent;
+    final colors = Theme.of(context).colorScheme;
     return SaveRoomShell(
       title: 'SaveRoom Scanner',
       children: [
@@ -26,18 +25,23 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Your card intelligence platform',
+          'Search and identify Pokémon cards',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: colors.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 14),
-        const Wrap(
+        Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
-            StatusPill('API baseline: v12.2.0', icon: Icons.hub_outlined),
-            FixtureBadge(),
+            StatusPill(
+              AppConfig.fixtureMode ? 'Fixture mode' : 'Live API ready',
+              icon: AppConfig.fixtureMode
+                  ? Icons.developer_mode
+                  : Icons.check_circle_outline,
+              dense: true,
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -50,102 +54,82 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 8),
         PrimaryActionCard(
           title: 'Camera scanner',
-          subtitle: 'Coming soon -- search foundation is ready',
+          subtitle: 'Coming soon',
           icon: Icons.document_scanner_outlined,
           onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
         ),
-        const SizedBox(height: 24),
-        SectionCard(
-          title: 'Recently viewed',
-          icon: Icons.history,
-          children: [
-            if (recent.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  'Cards you open will appear here',
-                  style: TextStyle(color: Colors.grey),
+        const SizedBox(height: 32),
+        ValueListenableBuilder<List<SearchResult>>(
+          valueListenable: RecentlyViewed.instance,
+          builder: (context, recent, _) => SectionCard(
+            title: 'Recently viewed',
+            icon: Icons.history,
+            dense: true,
+            children: [
+              if (recent.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Cards you open will appear here',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: recent.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, i) {
+                    final r = recent[i];
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      leading: CardThumbnail(
+                        imageUrls: r.imageUrlCandidates,
+                        cardName: r.name,
+                      ),
+                      title: Text(
+                        r.name,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        r.displayText,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: const Icon(Icons.chevron_right, size: 20),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.cardDetail,
+                        arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
+                      ),
+                    );
+                  },
                 ),
-              )
-            else
-              _RecentList(),
-          ],
-        ),
-        const SectionCard(
-          title: 'Roadmap status',
-          icon: Icons.route_outlined,
-          children: [
-            _StatusLine('Fixture data ready'),
-            _StatusLine('Real API mode available via dart-define'),
-            _StatusLine('Auth planned v12.3'),
-            _StatusLine('Collection backend planned v12.4'),
-          ],
-        ),
-        // Settings always visible, dev/testing actions in fixture mode only
-        if (AppConfig.fixtureMode) ...[
-          const SizedBox(height: 8),
-          _SmallAction(
-            'View Mock Card',
-            Icons.style_outlined,
-            AppRoutes.cardDetail,
+            ],
           ),
+        ),
+        const SizedBox(height: 24),
+        // Dev/testing actions in fixture mode only
+        if (AppConfig.fixtureMode) ...[
+          SectionCard(
+            title: 'Testing',
+            icon: Icons.developer_mode,
+            dense: true,
+            children: const [
+              _SmallAction('View Mock Card', Icons.style_outlined, AppRoutes.cardDetail),
+            ],
+          ),
+          const SizedBox(height: 8),
         ],
-        const SizedBox(height: 8),
         _SmallAction('Settings', Icons.tune_outlined, AppRoutes.settings),
       ],
-    );
-  }
-}
-
-class _RecentList extends StatelessWidget {
-  const _RecentList();
-
-  @override
-  Widget build(BuildContext context) {
-    final recent = RecentlyViewed.recent;
-    if (recent.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 8),
-        child: Text(
-          'Cards you open will appear here',
-          style: TextStyle(color: Colors.grey),
-        ),
-      );
-    }
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: recent.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, i) {
-        final r = recent[i];
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          leading: CardThumbnail(
-            imageUrls: r.imageUrlCandidates,
-            cardName: r.name,
-          ),
-          title: Text(
-            r.name,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            r.displayText,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          trailing: const Icon(Icons.chevron_right, size: 20),
-          onTap: () => Navigator.pushNamed(
-            context,
-            AppRoutes.cardDetail,
-            arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
-          ),
-        );
-      },
     );
   }
 }
@@ -175,6 +159,7 @@ class _SmallAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
+    elevation: 0,
     child: ListTile(
       leading: Icon(icon),
       title: Text(title),

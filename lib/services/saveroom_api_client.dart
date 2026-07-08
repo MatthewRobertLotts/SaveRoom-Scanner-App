@@ -133,18 +133,22 @@ class SearchResult {
   }
 
   /// ponytail: image URL candidates from raw item for fast thumbnail rendering.
+  /// Uses the same full resolution logic as CardImageResolver for consistency.
   List<String> get imageUrlCandidates {
-    final images = _asStringMap(rawItem['images']);
-    final candidates = <String>[];
-    final local = images['local_display_image_url'];
-    if (local is String && local.isNotEmpty) {
-      candidates.add(local);
-    }
-    final signed = images['signed_image_url'];
-    if (signed is String && signed.isNotEmpty) {
-      candidates.add(signed);
-    }
-    return candidates;
+    final data = <String, dynamic>{
+      'card': <String, dynamic>{
+        'card_key': cardKey,
+        'card_id': rawItem['card_id'],
+        'name': name,
+        'language_code': language,
+      },
+      'set': <String, dynamic>{'name': setName, 'set_code': setId},
+      'images': _asStringMap(rawItem['images']),
+    };
+    return CardImageResolver.candidatesFromDetailData(
+      data,
+      apiBaseUrl: AppConfig.apiBaseUrl,
+    );
   }
 
   bool get hasFallbackDetail => cardKey.isNotEmpty && name.trim().isNotEmpty;

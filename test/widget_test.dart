@@ -8,7 +8,7 @@ void main() {
     await tester.pumpWidget(const SaveRoomScannerApp());
 
     expect(find.text('SaveRoom Scanner'), findsWidgets);
-    expect(find.text('API baseline: v12.2.0'), findsOneWidget);
+    expect(find.text('Fixture mode'), findsOneWidget);
     expect(find.text('Search cards'), findsOneWidget);
   });
 
