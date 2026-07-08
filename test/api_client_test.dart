@@ -254,6 +254,19 @@ void main() {
       ], 'nonsense');
       expect(ranked, isEmpty);
     });
+
+    test('v0.6.8 useful prefix helper matches scanner prefixes', () {
+      expect(SearchQuality.isUsefulPrefixMatch('chari', 'Charizard'), true);
+      expect(SearchQuality.isUsefulPrefixMatch('chari', 'Charizard EX'), true);
+      expect(SearchQuality.isUsefulPrefixMatch('charizard', 'Charizard'), true);
+      expect(SearchQuality.isUsefulPrefixMatch('vile', 'Vileplume'), true);
+      expect(SearchQuality.isUsefulPrefixMatch('vilep', 'Vileplume'), true);
+      expect(SearchQuality.isUsefulPrefixMatch('cynda', 'Cyndaquil'), true);
+      expect(SearchQuality.isUsefulPrefixMatch('cyndaqui', 'Cyndaquil'), true);
+      expect(SearchQuality.isUsefulPrefixMatch('pika', 'Pikachu'), true);
+      expect(SearchQuality.isUsefulPrefixMatch('vilep', 'Weedle'), false);
+      expect(SearchQuality.isUsefulPrefixMatch('zzzzzzzz', 'Pikachu'), false);
+    });
   });
 
   group('CardImageResolver', () {
@@ -567,6 +580,121 @@ void main() {
       expect(
         SearchQuality.rankAndFilterNoise(rows, 'cyndaqui').single.name,
         'Cyndaquil',
+      );
+    });
+
+    test('v0.6.8 chari returns live-shape fuzzy Charizard rows', () async {
+      final client = SaveRoomApiClient(
+        forceFixtureMode: false,
+        httpClient: mockSearchClient(
+          fuzzy: [
+            {
+              'card_id': '151-006',
+              'language_code': 'de',
+              'name': 'Glurak-ex',
+              'name_english': 'Charizard ex',
+              'score': 0.3,
+            },
+            {
+              'card_id': '151-006',
+              'language_code': 'en',
+              'name': 'Charizard ex',
+              'name_english': 'Charizard ex',
+              'score': 0.3,
+            },
+            {
+              'card_id': 'xy2-11',
+              'language_code': 'en',
+              'name': 'Charizard EX',
+              'name_english': 'Charizard EX',
+              'score': 0.3,
+            },
+          ],
+        ),
+      );
+      final results = await client.searchCards('chari');
+      expect(
+        results.map((r) => r.name),
+        containsAll(['Charizard ex', 'Charizard EX']),
+      );
+      expect(
+        results.every((r) => SearchQuality.isUsefulResult(r, 'chari')),
+        true,
+      );
+    });
+
+    test(
+      'v0.6.8 vilep returns live-shape Vileplume and filters Weedle',
+      () async {
+        final client = SaveRoomApiClient(
+          forceFixtureMode: false,
+          httpClient: mockSearchClient(
+            autocomplete: [
+              {
+                'card_key': 'ja:BW6a-003',
+                'language': 'ja',
+                'name': 'Weedle',
+                'type': 'card',
+              },
+            ],
+            fuzzy: [
+              {
+                'card_id': '151-045',
+                'language_code': 'de',
+                'name': 'Giflor',
+                'name_english': 'Vileplume',
+                'score': 0.429,
+              },
+              {
+                'card_id': '151-045',
+                'language_code': 'en',
+                'name': 'Vileplume',
+                'name_english': 'Vileplume',
+                'score': 0.429,
+              },
+              {
+                'card_id': 'BW6a-003',
+                'language_code': 'ja',
+                'name': 'Weedle',
+                'name_english': 'Weedle',
+                'score': 0.2,
+              },
+            ],
+          ),
+        );
+        final results = await client.searchCards('vilep');
+        expect(results.map((r) => r.name), contains('Vileplume'));
+        expect(results.any((r) => r.name == 'Weedle'), false);
+      },
+    );
+
+    test('v0.6.8 cyndaqui length-6 query uses fuzzy rescue', () async {
+      final client = SaveRoomApiClient(
+        forceFixtureMode: false,
+        httpClient: mockSearchClient(
+          fuzzy: [
+            {
+              'card_id': '2021swsh-10',
+              'language_code': 'en',
+              'name': 'Cyndaquil',
+              'name_english': 'Cyndaquil',
+              'score': 0.857,
+            },
+            {
+              'card_id': '2021swsh-10',
+              'language_code': 'fr',
+              'name': 'Héricendre',
+              'name_english': 'Cyndaquil',
+              'score': 0.75,
+            },
+          ],
+        ),
+      );
+      final results = await client.searchCards('cyndaqui');
+      expect(results.map((r) => r.name), contains('Cyndaquil'));
+      expect(
+        results.every((r) => SearchQuality.isUsefulResult(r, 'cyndaqui')),
+        true,
       );
     });
 

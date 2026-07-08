@@ -93,7 +93,11 @@ class SearchResult {
         item['collector_number'] as String? ?? _collectorFromKey(cardKey);
     return SearchResult(
       cardKey: cardKey,
-      name: item['name'] as String? ?? '',
+      name:
+          item['name'] as String? ??
+          item['card_name'] as String? ??
+          item['name_english'] as String? ??
+          '',
       setText: setText,
       rarity: item['rarity'] as String?,
       language: langCode,
@@ -189,21 +193,42 @@ class CardDetailArgs {
 class SearchQuality {
   const SearchQuality._();
 
-  static bool isStrongNameMatch(SearchResult r, String q) {
-    final name = r.name.toLowerCase();
-    final query = q.toLowerCase();
-    return name == query || name.startsWith(query) || name.contains(query);
+  static String _normalizeForPrefix(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+
+  static bool isUsefulPrefixMatch(String query, String name) {
+    final q = _normalizeForPrefix(query);
+    final n = _normalizeForPrefix(name);
+    if (q.isEmpty || n.isEmpty) return false;
+    if (n == q || n.startsWith(q) || n.contains(q)) return true;
+    final compactName = n
+        .replaceAll('ex', '')
+        .replaceAll('gx', '')
+        .replaceAll('vmax', '')
+        .replaceAll('vstar', '')
+        .replaceAll('v', '');
+    return compactName == q ||
+        compactName.startsWith(q) ||
+        compactName.contains(q);
   }
 
+  static bool isUsefulResult(SearchResult r, String q) =>
+      isUsefulPrefixMatch(q, r.name) ||
+      isUsefulPrefixMatch(q, r.rawItem['name_english']?.toString() ?? '') ||
+      isUsefulPrefixMatch(q, r.cardKey);
+
+  static bool isStrongNameMatch(SearchResult r, String q) =>
+      isUsefulResult(r, q);
+
   static int strongCount(Iterable<SearchResult> results, String q) => results
-      .where((r) => isStrongNameMatch(r, q))
+      .where((r) => isUsefulResult(r, q))
       .map((r) => r.cardKey)
       .toSet()
       .length;
 
   static int score(SearchResult r, String q) {
-    final query = q.toLowerCase();
-    final name = r.name.toLowerCase();
+    final query = _normalizeForPrefix(q);
+    final name = _normalizeForPrefix(r.name);
     final key = r.cardKey.toLowerCase();
     final sourceScore = switch (r.source) {
       'primary' => 80,
@@ -226,13 +251,14 @@ class SearchQuality {
     final q = query.toLowerCase();
     final seen = <String>{};
     final all = results.toList();
-    final hasStrong = all.any((r) => isStrongNameMatch(r, q));
+    final hasStrong = all.any((r) => isUsefulResult(r, q));
     final deduped = <SearchResult>[];
     for (final r in all) {
-      if (r.source == 'fuzzy' && !isStrongNameMatch(r, q)) {
+      if (r.source == 'fuzzy' &&
+          (r.language != 'en' || !isUsefulPrefixMatch(q, r.name))) {
         continue;
       }
-      if (r.source == 'autocomplete' && hasStrong && !isStrongNameMatch(r, q)) {
+      if (r.source == 'autocomplete' && hasStrong && !isUsefulResult(r, q)) {
         continue;
       }
       if (r.cardKey.isNotEmpty && seen.add(r.cardKey)) {
@@ -567,7 +593,7 @@ class SaveRoomApiClient {
 
     final stopwatch = Stopwatch()..start();
     final q = trimmed.toLowerCase();
-    final prefixMode = q.length <= 5;
+    final prefixMode = q.length <= 6;
     final attempted = <_SearchEndpointResult>[];
 
     List<SearchResult> merged = [];
@@ -575,15 +601,23 @@ class SaveRoomApiClient {
       final initial = await Future.wait([
         _searchPrimary(trimmed, limit: 100),
         _searchAutocomplete(trimmed, limit: 100),
+        _searchFuzzy(trimmed, limit: 50),
       ]);
       attempted.addAll(initial);
-      merged = initial.expand((r) => r.results).toList();
+      final primaryAutocomplete = initial
+          .take(2)
+          .expand((r) => r.results)
+          .toList();
+      final fuzzy = initial[2];
+      merged = primaryAutocomplete;
       var ranked = SearchQuality.rankAndFilterNoise(merged, q);
-      if (SearchQuality.strongCount(ranked, q) < 12) {
-        final fuzzy = await _searchFuzzy(trimmed, limit: 50);
-        attempted.add(fuzzy);
-        merged = [...merged, ...fuzzy.results];
+      if (SearchQuality.strongCount(ranked, q) < 8) {
+        final rescue = _fuzzyPrefixRescue(fuzzy.results, q);
+        merged = [...merged, ...rescue];
         ranked = SearchQuality.rankAndFilterNoise(merged, q);
+        if (ranked.isEmpty && rescue.isNotEmpty) {
+          ranked = SearchQuality.rankAndFilterNoise(rescue, q);
+        }
       }
       _throwIfAllEndpointsFailed(attempted);
       final result = ranked.take(50).toList();
@@ -603,16 +637,43 @@ class SaveRoomApiClient {
     attempted.add(autocomplete);
     merged = [...primary.results, ...autocomplete.results];
     ranked = SearchQuality.rankAndFilterNoise(merged, q);
-    if (SearchQuality.strongCount(ranked, q) == 0) {
+    if (SearchQuality.strongCount(ranked, q) < 8) {
       final fuzzy = await _searchFuzzy(trimmed, limit: 50);
       attempted.add(fuzzy);
-      merged = [...merged, ...fuzzy.results];
+      final rescue = _fuzzyPrefixRescue(fuzzy.results, q);
+      merged = [...merged, ...rescue];
       ranked = SearchQuality.rankAndFilterNoise(merged, q);
+      if (ranked.isEmpty && rescue.isNotEmpty) {
+        ranked = SearchQuality.rankAndFilterNoise(rescue, q);
+      }
     }
     _throwIfAllEndpointsFailed(attempted);
     final result = ranked.take(50).toList();
     _debugTiming('search "$query" enriched (${result.length})', stopwatch);
     return result;
+  }
+
+  List<SearchResult> _fuzzyPrefixRescue(
+    List<SearchResult> results,
+    String query,
+  ) {
+    final rescued = <SearchResult>[];
+    final seen = <String>{};
+    for (final r in results) {
+      if (r.language != 'en') continue;
+      final n = SearchQuality._normalizeForPrefix(r.name);
+      final q = SearchQuality._normalizeForPrefix(query);
+      // startsWith always accepted, contains only if startsWith already has matches
+      if (!n.startsWith(q)) continue;
+      if (r.cardKey.isNotEmpty && seen.add(r.cardKey)) rescued.add(r);
+    }
+    rescued.sort(
+      (a, b) => SearchQuality.score(
+        b,
+        query,
+      ).compareTo(SearchQuality.score(a, query)),
+    );
+    return rescued;
   }
 
   void _throwIfAllEndpointsFailed(List<_SearchEndpointResult> attempted) {
@@ -649,7 +710,7 @@ class SaveRoomApiClient {
       '${AppConfig.apiBaseUrl}/api/v1/search/autocomplete'
       '?q=${Uri.encodeComponent(query)}&limit=$limit',
     );
-    return _searchEndpoint(uri, 'autocomplete', const Duration(seconds: 3));
+    return _searchEndpoint(uri, 'autocomplete', const Duration(seconds: 8));
   }
 
   Future<_SearchEndpointResult> _searchFuzzy(
@@ -661,7 +722,7 @@ class SaveRoomApiClient {
       '${AppConfig.apiBaseUrl}/api/v1/search/fuzzy'
       '?q=${Uri.encodeComponent(query)}&limit=$limit',
     );
-    return _searchEndpoint(uri, 'fuzzy', const Duration(seconds: 3));
+    return _searchEndpoint(uri, 'fuzzy', const Duration(seconds: 8));
   }
 
   Future<_SearchEndpointResult> _searchEndpoint(
