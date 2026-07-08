@@ -612,12 +612,16 @@ class SaveRoomApiClient {
       merged = primaryAutocomplete;
       var ranked = SearchQuality.rankAndFilterNoise(merged, q);
       if (SearchQuality.strongCount(ranked, q) < 8) {
-        final rescue = _fuzzyPrefixRescue(fuzzy.results, q);
-        merged = [...merged, ...rescue];
-        ranked = SearchQuality.rankAndFilterNoise(merged, q);
-        if (ranked.isEmpty && rescue.isNotEmpty) {
-          ranked = SearchQuality.rankAndFilterNoise(rescue, q);
+        // ponytail: run expanded primary search for candidate names from fuzzy
+        final expanded = await _expandedPrimarySearch(trimmed, fuzzy.results);
+        if (expanded.isNotEmpty) {
+          merged = [...primaryAutocomplete, ...expanded];
+        } else {
+          // fallback to raw fuzzy if no expansion candidates
+          final rescue = _fuzzyPrefixRescue(fuzzy.results, q);
+          merged = [...merged, ...rescue];
         }
+        ranked = SearchQuality.rankAndFilterNoise(merged, q);
       }
       _throwIfAllEndpointsFailed(attempted);
       final result = ranked.take(50).toList();
@@ -640,12 +644,15 @@ class SaveRoomApiClient {
     if (SearchQuality.strongCount(ranked, q) < 8) {
       final fuzzy = await _searchFuzzy(trimmed, limit: 50);
       attempted.add(fuzzy);
-      final rescue = _fuzzyPrefixRescue(fuzzy.results, q);
-      merged = [...merged, ...rescue];
-      ranked = SearchQuality.rankAndFilterNoise(merged, q);
-      if (ranked.isEmpty && rescue.isNotEmpty) {
-        ranked = SearchQuality.rankAndFilterNoise(rescue, q);
+      // ponytail: try expanded primary search for candidate names from fuzzy
+      final expanded = await _expandedPrimarySearch(trimmed, fuzzy.results);
+      if (expanded.isNotEmpty) {
+        merged = [...merged, ...expanded];
+      } else {
+        final rescue = _fuzzyPrefixRescue(fuzzy.results, q);
+        merged = [...merged, ...rescue];
       }
+      ranked = SearchQuality.rankAndFilterNoise(merged, q);
     }
     _throwIfAllEndpointsFailed(attempted);
     final result = ranked.take(50).toList();
@@ -653,6 +660,34 @@ class SaveRoomApiClient {
     return result;
   }
 
+  /// ponytail: extract canonical name candidates from fuzzy for prefix expansion.
+  List<String> _extractCandidateNames(
+    String query,
+    List<SearchResult> fuzzyResults,
+  ) {
+    final candidates = <String>{};
+    final q = SearchQuality._normalizeForPrefix(query);
+    for (final r in fuzzyResults) {
+      final langCode = r.language ?? r.rawItem['language_code'] as String?;
+      final englishName = r.rawItem['name_english'] as String? ?? '';
+      final effectiveName = englishName.isNotEmpty ? englishName : r.name;
+      if (langCode != 'en' && englishName.isEmpty) continue;
+      final n = SearchQuality._normalizeForPrefix(effectiveName);
+      // accept if query is prefix of name (n starts with q) OR name is prefix of query (q starts with n)
+      final nStartsQ = n.startsWith(q);
+      final qStartsN = q.startsWith(n);
+      if (!nStartsQ && !qStartsN) continue;
+      // accept if name meaningfully expands the query
+      // n starts with q: expansion (vile -> vileplume)
+      // q starts with n: partial typing (cyndaqui -> cyndaquil - user typed too much)
+      if (n.startsWith(q) || q.startsWith(n)) {
+        candidates.add(effectiveName);
+      }
+    }
+    return candidates.toList();
+  }
+
+  /// ponytail: keep fuzzy rows as fallback when expansion gives nothing.
   List<SearchResult> _fuzzyPrefixRescue(
     List<SearchResult> results,
     String query,
@@ -663,7 +698,6 @@ class SaveRoomApiClient {
       if (r.language != 'en') continue;
       final n = SearchQuality._normalizeForPrefix(r.name);
       final q = SearchQuality._normalizeForPrefix(query);
-      // startsWith always accepted, contains only if startsWith already has matches
       if (!n.startsWith(q)) continue;
       if (r.cardKey.isNotEmpty && seen.add(r.cardKey)) rescued.add(r);
     }
@@ -674,6 +708,29 @@ class SaveRoomApiClient {
       ).compareTo(SearchQuality.score(a, query)),
     );
     return rescued;
+  }
+
+  /// ponytail: run expanded primary search for candidate names from fuzzy.
+  Future<List<SearchResult>> _expandedPrimarySearch(
+    String query,
+    List<SearchResult> fuzzyResults,
+  ) async {
+    final names = _extractCandidateNames(query, fuzzyResults);
+    if (names.isEmpty) return const [];
+    final futures = names.take(2).map((name) => _searchPrimaryByName(name));
+    final expandedResults = await Future.wait(futures);
+    return expandedResults.expand((r) => r.results).toList();
+  }
+
+  Future<_SearchEndpointResult> _searchPrimaryByName(
+    String name, {
+    int limit = 100,
+  }) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiBaseUrl}/api/v1/search/cards'
+      '?q=${Uri.encodeComponent(name)}&language_code=en&limit=$limit',
+    );
+    return _searchEndpoint(uri, 'primary', const Duration(seconds: 5));
   }
 
   void _throwIfAllEndpointsFailed(List<_SearchEndpointResult> attempted) {
