@@ -40,7 +40,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (!AppConfig.fixtureMode && query.length >= 3) {
       final id = ++_reqId;
       _debounce = Timer(
-        const Duration(milliseconds: 400),
+        const Duration(milliseconds: 280),
         () => _doSearch(query, id),
       );
     } else {
@@ -261,7 +261,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           onTap: () => Navigator.pushNamed(
             context,
             AppRoutes.cardDetail,
-            arguments: r.cardKey,
+            arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
           ),
         );
       },

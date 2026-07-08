@@ -11,53 +11,37 @@ import '../../widgets/saveroom_shell.dart';
 
 /// ponytail: cardKey passed via route args.
 class CardDetailScreen extends StatelessWidget {
-  const CardDetailScreen({super.key});
+  const CardDetailScreen({super.key, SaveRoomApiClient? client})
+    : _client = client;
+
+  final SaveRoomApiClient? _client;
 
   @override
   Widget build(BuildContext context) {
-    final cardKey =
-        ModalRoute.of(context)?.settings.arguments as String? ?? 'en:sv03-223';
-    final client = SaveRoomApiClient(fixtureLoader: const FixtureLoader());
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final cardKey = switch (args) {
+      CardDetailArgs(:final cardKey) => cardKey,
+      String value => value,
+      _ => 'en:sv03-223',
+    };
+    final fallback = args is CardDetailArgs ? args.fallback : null;
+    final client =
+        _client ?? SaveRoomApiClient(fixtureLoader: const FixtureLoader());
     return FutureBuilder<Map<String, dynamic>>(
       future: client.getCardDetail(cardKey),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return SaveRoomShell(
-            title: 'Card detail',
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    const Icon(Icons.error_outline, size: 48),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Card detail unavailable',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'The API could not load this card right now.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Card key: $cardKey',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    if (!AppConfig.fixtureMode) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Start local API at ${AppConfig.apiBaseUrl} '
-                        'or switch back to fixture mode.',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ],
-                ),
+          if (fallback != null && fallback.hasFallbackDetail) {
+            return SaveRoomShell(
+              title: 'Card detail',
+              children: _content(
+                context,
+                fallback.toFallbackDetailResponse(),
+                isFallbackPreview: true,
               ),
-            ],
-          );
+            );
+          }
+          return _unavailable(context, cardKey);
         }
         if (!snapshot.hasData) {
           return const SaveRoomShell(
@@ -73,7 +57,50 @@ class CardDetailScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _content(BuildContext context, Map<String, dynamic> fixture) {
+  Widget _unavailable(BuildContext context, String cardKey) {
+    return SaveRoomShell(
+      title: 'Card detail',
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const Icon(Icons.error_outline, size: 48),
+              const SizedBox(height: 12),
+              Text(
+                'Card detail unavailable',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'The API could not load this card right now.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Card key: $cardKey',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (!AppConfig.fixtureMode) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Start local API at ${AppConfig.apiBaseUrl} '
+                  'or switch back to fixture mode.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _content(
+    BuildContext context,
+    Map<String, dynamic> fixture, {
+    bool isFallbackPreview = false,
+  }) {
     final data = asMap(fixture['data']);
     final card = asMap(data['card']);
     final pricing = asMap(data['pricing']);
@@ -91,6 +118,14 @@ class CardDetailScreen extends StatelessWidget {
           child: Chip(
             avatar: Icon(Icons.cloud_done_outlined, size: 18),
             label: Text('Live API mode'),
+          ),
+        ),
+      if (isFallbackPreview)
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Chip(
+            avatar: Icon(Icons.info_outline, size: 18),
+            label: Text('Preview from search result'),
           ),
         ),
       const SizedBox(height: 12),
@@ -131,6 +166,16 @@ class CardDetailScreen extends StatelessWidget {
         icon: Icons.sell_outlined,
         children: _commercialRows(commercial),
       ),
+      if (isFallbackPreview)
+        SectionCard(
+          title: 'Detail status',
+          icon: Icons.info_outline,
+          children: const [
+            Text(
+              'Full card detail is temporarily unavailable. Showing the tapped search result instead.',
+            ),
+          ],
+        ),
       SectionCard(
         title: 'Source / provenance',
         icon: Icons.verified_outlined,

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
@@ -14,6 +15,10 @@ class SearchResult {
   final String? rarity;
   final String? language;
   final String source;
+  final String? setName;
+  final String? setId;
+  final String? collectorNumber;
+  final Map<String, dynamic> rawItem;
 
   const SearchResult({
     required this.cardKey,
@@ -22,6 +27,10 @@ class SearchResult {
     this.rarity,
     this.language,
     this.source = 'fixture',
+    this.setName,
+    this.setId,
+    this.collectorNumber,
+    this.rawItem = const <String, dynamic>{},
   });
 
   /// Construct from fixture card data (uses the `data.card` / `data.set` shape).
@@ -35,11 +44,16 @@ class SearchResult {
       rarity: card['rarity'] as String?,
       language: card['language_code'] as String?,
       source: 'fixture',
+      setName: set['name'] as String?,
+      setId: set['set_code'] as String?,
+      collectorNumber: card['collector_number'] as String?,
+      rawItem: data,
     );
   }
 
-  /// Construct from API search response item. Handles both cards/search
-  /// (has card_key, set map) and fuzzy (has card_id + language_code, no set).
+  /// Construct from API search response item. Handles primary, autocomplete,
+  /// and fuzzy shapes. Keeps the raw item so detail screens can render a
+  /// fallback preview if `/cards/{key}/detail` has an API-side data gap.
   factory SearchResult.fromApiItem(
     Map<String, dynamic> item, {
     String source = 'api',
@@ -49,26 +63,34 @@ class SearchResult {
         ? lang
         : (lang is Map ? (lang)['code'] as String? : null) ??
               item['language_code'] as String?;
+    final cardId = item['card_id'] as String?;
     final cardKey =
         item['card_key'] as String? ??
-        _buildKey(item['card_id'] as String?, item['language_code'] as String?);
-    // ponytail: build set text from whatever the endpoint provides.
-    // autocomplete returns 'set' as a flat string, not a map.
-    String setText;
+        _buildKey(cardId, item['language_code'] as String?);
     final rawSet = item['set'];
+    String setText;
+    String? setName;
+    String? setId;
     if (rawSet is String) {
       setText = rawSet;
+      setName = rawSet;
     } else if (rawSet is Map) {
-      final name = (rawSet)['name'] as String? ?? '';
-      final code = (rawSet)['set_code'] as String? ?? '';
-      final num = item['collector_number'] as String? ?? '';
-      setText = joinPresent([name, code, num]);
+      setName = (rawSet)['name'] as String? ?? (rawSet)['core_name'] as String?;
+      setId =
+          (rawSet)['set_id'] as String? ??
+          (rawSet)['core_set_id'] as String? ??
+          (rawSet)['set_code'] as String?;
+      final num = item['collector_number'] as String?;
+      setText = joinPresent([
+        if (setName != null) setName,
+        if (setId != null) setId,
+        if (num != null) num,
+      ]);
     } else {
-      // fuzzy: no set info at all, use card_id or language
-      final cid = item['card_id'] as String?;
-      final lc = item['language_code'] as String?;
-      setText = cid ?? lc ?? '';
+      setText = cardId ?? langCode ?? '';
     }
+    final collectorNumber =
+        item['collector_number'] as String? ?? _collectorFromKey(cardKey);
     return SearchResult(
       cardKey: cardKey,
       name: item['name'] as String? ?? '',
@@ -76,6 +98,10 @@ class SearchResult {
       rarity: item['rarity'] as String?,
       language: langCode,
       source: source,
+      setName: setName,
+      setId: setId,
+      collectorNumber: collectorNumber,
+      rawItem: Map<String, dynamic>.from(item),
     );
   }
 
@@ -83,6 +109,13 @@ class SearchResult {
     if (cardId == null || cardId.isEmpty) return '';
     if (lang == null || lang.isEmpty) return cardId;
     return '$lang:$cardId';
+  }
+
+  static String? _collectorFromKey(String key) {
+    final id = key.contains(':') ? key.split(':').last : key;
+    final dash = id.lastIndexOf('-');
+    if (dash < 0 || dash == id.length - 1) return null;
+    return id.substring(dash + 1);
   }
 
   /// ponytail: safe display text — never show bare / or null/null.
@@ -94,6 +127,63 @@ class SearchResult {
     }
     return st;
   }
+
+  bool get hasFallbackDetail => cardKey.isNotEmpty && name.trim().isNotEmpty;
+
+  Map<String, dynamic> toFallbackDetailResponse({
+    String apiBaseUrl = AppConfig.apiBaseUrl,
+  }) {
+    final item = rawItem;
+    final rawImages = _asStringMap(item['images']);
+    final images = <String, dynamic>{...rawImages};
+    final data = <String, dynamic>{
+      'card': <String, dynamic>{
+        'card_key': cardKey,
+        'card_id':
+            item['card_id'] ??
+            (cardKey.contains(':') ? cardKey.split(':').last : cardKey),
+        'name': name,
+        'language_code': language,
+        'rarity': rarity,
+        'collector_number': collectorNumber,
+      },
+      'set': <String, dynamic>{'name': setName, 'set_code': setId},
+      'images': images,
+      'pricing': item['pricing'] ?? const <String, dynamic>{},
+      'commercial': const <String, dynamic>{},
+      'provider_status': const <String, dynamic>{},
+      'fallback_preview': true,
+    };
+    final candidates = CardImageResolver.candidatesFromDetailData(
+      data,
+      apiBaseUrl: apiBaseUrl,
+    );
+    images['image_url_candidates'] = candidates;
+    images['resolved_image_url'] = candidates.isNotEmpty
+        ? candidates.first
+        : null;
+    return <String, dynamic>{
+      'data': data,
+      'metadata': const <String, dynamic>{
+        'contract': 'search-result-fallback',
+        'api_version': 'v12.2.0',
+        'sanitized': true,
+      },
+    };
+  }
+
+  static Map<String, dynamic> _asStringMap(Object? value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return const <String, dynamic>{};
+  }
+}
+
+class CardDetailArgs {
+  final String cardKey;
+  final SearchResult? fallback;
+
+  const CardDetailArgs({required this.cardKey, this.fallback});
 }
 
 class SearchQuality {
@@ -163,26 +253,94 @@ class CardImageResolver {
     final metadataImages = metadataData.isNotEmpty
         ? metadataData
         : _asStringMap(imageMetadata);
-    final urls = <String>[];
 
-    void add(Object? value) {
+    final local = <String>[];
+    final signed = <String>[];
+    final direct = <String>[];
+    final tcgdexExpanded = <String>[];
+    final bareUseful = <String>[];
+
+    void addTo(List<String> bucket, Object? value) {
       final raw = value?.toString().trim();
       if (raw == null || raw.isEmpty || raw == '—') return;
       for (final url in _normalizeUrl(raw, apiBaseUrl)) {
-        if (!urls.contains(url)) urls.add(url);
+        if (!bucket.contains(url)) bucket.add(url);
+      }
+    }
+
+    void addLocal(Object? value) => addTo(local, value);
+    void addSigned(Object? value) => addTo(signed, value);
+    void addImage(Object? value) {
+      final raw = value?.toString().trim();
+      if (raw == null || raw.isEmpty || raw == '—') return;
+      final normalized = _normalizeUrl(raw, apiBaseUrl);
+      if (_isBareTcgdexRaw(raw)) {
+        if (normalized.length >= 2) {
+          for (final url in normalized.take(normalized.length - 1)) {
+            if (!tcgdexExpanded.contains(url)) tcgdexExpanded.add(url);
+          }
+          final original = normalized.last;
+          if (!bareUseful.contains(original)) bareUseful.add(original);
+        }
+      } else {
+        for (final url in normalized) {
+          if (_isDirectImageUrl(url) || url.contains('/api/v1/images/card/')) {
+            if (!direct.contains(url)) direct.add(url);
+          } else if (!bareUseful.contains(url)) {
+            bareUseful.add(url);
+          }
+        }
       }
     }
 
     for (final map in [metadataImages, detailImages, cardImages, card]) {
-      add(map['signed_image_url']);
-      add(map['local_display_image_url']);
-      add(map['primary_image_url']);
-      add(map['display_image_url']);
-      add(map['exact_image_url']);
-      add(map['image_url']);
-      add(map['url']);
+      addLocal(map['local_display_image_url']);
+    }
+    for (final map in [metadataImages, detailImages, cardImages, card]) {
+      addSigned(map['signed_image_url']);
+    }
+    for (final map in [metadataImages, detailImages, cardImages, card]) {
+      addImage(map['primary_image_url']);
+      addImage(map['display_image_url']);
+      addImage(map['exact_image_url']);
+      addImage(map['image_url']);
+      addImage(map['url']);
+    }
+
+    final urls = <String>[];
+    for (final url in [
+      ...local,
+      ...signed,
+      ...direct,
+      ...tcgdexExpanded,
+      ...bareUseful,
+    ]) {
+      if (!urls.contains(url)) urls.add(url);
     }
     return urls;
+  }
+
+  static bool hasFastCandidate(Map<String, dynamic> data) {
+    final images = _asStringMap(data['images']);
+    final card = _asStringMap(data['card']);
+    final cardImages = _asStringMap(card['images']);
+    for (final map in [images, cardImages, card]) {
+      for (final key in [
+        'local_display_image_url',
+        'signed_image_url',
+        'primary_image_url',
+        'display_image_url',
+        'exact_image_url',
+        'image_url',
+        'url',
+      ]) {
+        final raw = map[key]?.toString().trim();
+        if (raw == null || raw.isEmpty || raw == '—') continue;
+        if (raw.startsWith('/') && !raw.startsWith('/media/')) return true;
+        if (_isDirectImageUrl(raw)) return true;
+      }
+    }
+    return false;
   }
 
   static List<String> _normalizeUrl(String raw, String apiBaseUrl) {
@@ -212,6 +370,11 @@ class CardImageResolver {
     return [url];
   }
 
+  static bool _isBareTcgdexRaw(String raw) {
+    if (!raw.startsWith('http://') && !raw.startsWith('https://')) return false;
+    return _isBareTcgdexAsset(Uri.parse(raw));
+  }
+
   static bool _isBareTcgdexAsset(Uri uri) {
     if (uri.host != 'assets.tcgdex.net') return false;
     final path = uri.path.toLowerCase();
@@ -221,6 +384,14 @@ class CardImageResolver {
         !path.endsWith('.webp') &&
         !path.endsWith('/high.png') &&
         !path.endsWith('/low.png');
+  }
+
+  static bool _isDirectImageUrl(String url) {
+    final lower = url.toLowerCase().split('?').first;
+    return lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp');
   }
 
   static String _joinApiBase(String apiBaseUrl, String path) {
@@ -254,13 +425,15 @@ class SaveRoomApiClient {
     final uri = Uri.parse(
       '${AppConfig.apiBaseUrl}/api/v1/cards/${Uri.encodeComponent(cardKey)}/detail',
     );
+    final stopwatch = Stopwatch()..start();
     final response = await _httpClient.get(uri);
+    _debugTiming('detail $cardKey', stopwatch);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) {
         return _withImageCandidates(cardKey, decoded);
       }
-      throw FormatException('Card detail response is not a JSON object');
+      throw const FormatException('Card detail response is not a JSON object');
     }
     throw Exception(
       'API error ${response.statusCode}: ${response.reasonPhrase}',
@@ -273,11 +446,21 @@ class SaveRoomApiClient {
   ) async {
     final data = detail['data'];
     if (data is! Map<String, dynamic>) return detail;
-    final metadata = await _getImageMetadata(cardKey);
+    Map<String, dynamic>? metadata;
+    final hasFast = CardImageResolver.hasFastCandidate(data);
+    if (!hasFast) {
+      metadata = await _getImageMetadata(
+        cardKey,
+        timeout: const Duration(seconds: 2),
+      );
+    }
     final candidates = CardImageResolver.candidatesFromDetailData(
       data,
       imageMetadata: metadata,
     );
+    if (kDebugMode) {
+      debugPrint('[SaveRoom] image candidates $cardKey: ${candidates.length}');
+    }
     final images = Map<String, dynamic>.from(
       (data['images'] as Map<String, dynamic>?) ?? const {},
     );
@@ -289,14 +472,17 @@ class SaveRoomApiClient {
     return detail;
   }
 
-  Future<Map<String, dynamic>?> _getImageMetadata(String cardKey) async {
+  Future<Map<String, dynamic>?> _getImageMetadata(
+    String cardKey, {
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
     try {
       final uri = Uri.parse(
         '${AppConfig.apiBaseUrl}/api/v1/images/cards/${Uri.encodeComponent(cardKey)}',
       );
-      final response = await _httpClient
-          .get(uri)
-          .timeout(const Duration(seconds: 5));
+      final stopwatch = Stopwatch()..start();
+      final response = await _httpClient.get(uri).timeout(timeout);
+      _debugTiming('image metadata $cardKey', stopwatch);
       if (response.statusCode != 200) return null;
       final decoded = jsonDecode(response.body);
       return decoded is Map<String, dynamic> ? decoded : null;
@@ -344,25 +530,42 @@ class SaveRoomApiClient {
           .toList();
     }
 
+    final stopwatch = Stopwatch()..start();
     final q = query.toLowerCase();
-    // ponytail: always merge primary + autocomplete + fuzzy. Every helper
-    // catches internally so fallback failures cannot break primary results.
     final primary = await _searchPrimary(query);
-    final auto = await _searchAutocomplete(query);
-    final fuzzy = await _searchFuzzy(query);
+    final rankedPrimary = SearchQuality.rankAndFilterNoise(primary, q);
+    final hasStrongPrimary = rankedPrimary.any(
+      (r) => SearchQuality.isStrongNameMatch(r, q),
+    );
+    if (hasStrongPrimary) {
+      _debugTiming(
+        'search "$query" primary-only (${rankedPrimary.length})',
+        stopwatch,
+      );
+      return rankedPrimary.take(50).toList();
+    }
 
-    return SearchQuality.rankAndFilterNoise([...primary, ...auto, ...fuzzy], q);
+    final fallback = await Future.wait([
+      _searchAutocomplete(query),
+      _searchFuzzy(query),
+    ]);
+    final ranked = SearchQuality.rankAndFilterNoise([
+      ...primary,
+      ...fallback.expand((r) => r),
+    ], q).take(50).toList();
+    _debugTiming('search "$query" merged (${ranked.length})', stopwatch);
+    return ranked;
   }
 
   Future<List<SearchResult>> _searchPrimary(String query) async {
     try {
       final uri = Uri.parse(
         '${AppConfig.apiBaseUrl}/api/v1/search/cards'
-        '?q=${Uri.encodeComponent(query)}&language_code=en&limit=200',
+        '?q=${Uri.encodeComponent(query)}&language_code=en&limit=50',
       );
       final response = await _httpClient
           .get(uri)
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 6));
       if (response.statusCode == 200) {
         final decoded =
             jsonDecode(response.body) as Map<String, dynamic>? ?? {};
@@ -383,11 +586,11 @@ class SaveRoomApiClient {
     try {
       final uri = Uri.parse(
         '${AppConfig.apiBaseUrl}/api/v1/search/autocomplete'
-        '?q=${Uri.encodeComponent(query)}&limit=10',
+        '?q=${Uri.encodeComponent(query)}&limit=15',
       );
       final response = await _httpClient
           .get(uri)
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final decoded =
             jsonDecode(response.body) as Map<String, dynamic>? ?? {};
@@ -415,7 +618,7 @@ class SaveRoomApiClient {
       );
       final response = await _httpClient
           .get(uri)
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final decoded =
             jsonDecode(response.body) as Map<String, dynamic>? ?? {};
@@ -429,6 +632,12 @@ class SaveRoomApiClient {
       }
     } catch (_) {}
     return [];
+  }
+
+  static void _debugTiming(String label, Stopwatch stopwatch) {
+    if (!kDebugMode) return;
+    stopwatch.stop();
+    debugPrint('[SaveRoom] $label: ${stopwatch.elapsedMilliseconds}ms');
   }
 
   Future<List<Map<String, dynamic>>> legacySearch(String query) async {

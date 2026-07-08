@@ -334,4 +334,101 @@ void main() {
       expect(urls, isNot(contains('/media/matt/private/image.webp')));
     });
   });
+
+  group('v0.6.6 image resolver ordering', () {
+    test('local_display_image_url ranks before bare TCGdex', () {
+      final urls = CardImageResolver.candidatesFromDetailData({
+        'card': {'card_key': 'en:ex3-100'},
+        'images': {
+          'local_display_image_url': '/images/en/ex3/ex3-100.webp',
+          'display_image_url': 'https://assets.tcgdex.net/en/ex/ex3/100',
+        },
+      }, apiBaseUrl: 'http://192.168.178.29:8765');
+      expect(
+        urls.first,
+        'http://192.168.178.29:8765/images/en/ex3/ex3-100.webp',
+      );
+      expect(urls[1], 'https://assets.tcgdex.net/en/ex/ex3/100/high.png');
+      expect(urls[2], 'https://assets.tcgdex.net/en/ex/ex3/100/low.png');
+      expect(urls.last, 'https://assets.tcgdex.net/en/ex/ex3/100');
+    });
+
+    test('image candidate order is deterministic and de-duplicated', () {
+      final data = {
+        'card': {'card_key': 'en:ex3-100'},
+        'images': {
+          'local_display_image_url': '/images/en/ex3/ex3-100.webp',
+          'primary_image_url': 'https://assets.tcgdex.net/en/ex/ex3/100',
+          'display_image_url': 'https://assets.tcgdex.net/en/ex/ex3/100',
+        },
+      };
+      final first = CardImageResolver.candidatesFromDetailData(
+        data,
+        apiBaseUrl: 'http://192.168.178.29:8765',
+      );
+      final second = CardImageResolver.candidatesFromDetailData(
+        data,
+        apiBaseUrl: 'http://192.168.178.29:8765',
+      );
+      expect(second, first);
+      expect(first.toSet().length, first.length);
+    });
+  });
+
+  group('v0.6.6 search ranking rules', () {
+    test('charizard and chari keep strong Charizard matches', () {
+      final rows = [
+        const SearchResult(
+          cardKey: 'en:ex3-100',
+          name: 'Charizard',
+          setText: 'Dragon / ex3 / 100',
+          language: 'en',
+          source: 'primary',
+        ),
+        const SearchResult(
+          cardKey: 'en:xy2-11',
+          name: 'Charizard EX',
+          setText: 'Flashfire / xy2 / 11',
+          language: 'en',
+          source: 'primary',
+        ),
+      ];
+      expect(SearchQuality.rankAndFilterNoise(rows, 'charizard'), isNotEmpty);
+      expect(SearchQuality.rankAndFilterNoise(rows, 'chari'), isNotEmpty);
+    });
+
+    test('cyndaqui returns Cyndaquil', () {
+      final ranked = SearchQuality.rankAndFilterNoise([
+        const SearchResult(
+          cardKey: 'en:ex2-59',
+          name: 'Cyndaquil',
+          setText: 'Sandstorm / ex2 / 59',
+          language: 'en',
+          source: 'autocomplete',
+        ),
+      ], 'cyndaqui');
+      expect(ranked.single.name, 'Cyndaquil');
+    });
+
+    test('filtering never discards all strong matches', () {
+      final ranked = SearchQuality.rankAndFilterNoise([
+        const SearchResult(
+          cardKey: 'en:base2-15',
+          name: 'Vileplume',
+          setText: 'Base Set 2 / base2 / 15',
+          language: 'en',
+          source: 'autocomplete',
+        ),
+        const SearchResult(
+          cardKey: 'ja:weedle',
+          name: 'Weedle',
+          setText: 'Japanese',
+          language: 'ja',
+          source: 'fuzzy',
+        ),
+      ], 'vilep');
+      expect(ranked, isNotEmpty);
+      expect(ranked.every((r) => r.name.contains('Vileplume')), true);
+    });
+  });
 }
