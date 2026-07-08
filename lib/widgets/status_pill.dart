@@ -16,7 +16,7 @@ class StatusPill extends StatelessWidget {
         vertical: dense ? 5 : 7,
       ),
       decoration: BoxDecoration(
-        color: colors.surfaceVariant.withValues(alpha: 0.6),
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(100),
         border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
       ),

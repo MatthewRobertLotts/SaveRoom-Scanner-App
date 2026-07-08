@@ -8,7 +8,6 @@ import '../../services/fixtures.dart';
 import '../../services/saveroom_api_client.dart';
 import '../../services/recent_cards.dart';
 import '../../widgets/card_thumbnail.dart';
-import '../../widgets/card_image_panel.dart';
 import '../../widgets/saveroom_shell.dart';
 import '../../widgets/status_pill.dart';
 

@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveroom_scanner_app/app/app.dart';
-import 'package:saveroom_scanner_app/services/recent_cards.dart';
 
 void main() {
   testWidgets('home screen recently viewed section visible when empty', (

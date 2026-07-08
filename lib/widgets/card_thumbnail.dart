@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
-class CardThumbnail extends StatefulWidget {
+class CardThumbnail extends StatelessWidget {
   const CardThumbnail({
     super.key,
     required this.imageUrls,
@@ -15,57 +14,36 @@ class CardThumbnail extends StatefulWidget {
   final double width;
   final double height;
 
-  @override
-  State<CardThumbnail> createState() => _CardThumbnailState();
-}
-
-class _CardThumbnailState extends State<CardThumbnail> {
-  int _currentIndex = 0;
-  bool _failed = false;
-
-  @override
-  void didUpdateWidget(covariant CardThumbnail old) {
-    super.didUpdateWidget(old);
-    if (old.imageUrls != widget.imageUrls) {
-      setState(() {
-        _currentIndex = 0;
-        _failed = false;
-      });
+  String? get _firstValidUrl {
+    for (final url in imageUrls) {
+      final trimmed = url.trim();
+      if (trimmed.isNotEmpty && trimmed != '—') return url;
     }
-  }
-
-  List<String> get _validUrls => widget.imageUrls
-      .where((url) => url.trim().isNotEmpty && url != '—')
-      .toSet()
-      .toList();
-
-  void _tryNext() {
-    if (_currentIndex + 1 < _validUrls.length) {
-      setState(() => _currentIndex++);
-    } else {
-      setState(() => _failed = true);
-    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final validUrls = _validUrls;
-    if (validUrls.isEmpty || _failed) {
-      return _placeholder(context);
-    }
-
-    final currentUrl = validUrls[_currentIndex];
+    final url = _firstValidUrl;
     return SizedBox(
-      width: widget.width,
-      height: widget.height,
+      width: width,
+      height: height,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(6),
-        child: Image.network(
-          currentUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) { _tryNext(); return _placeholder(context); },
-        ),
+        child: url != null ? _imageContent(context) : _placeholder(context),
       ),
+    );
+  }
+
+  Widget _imageContent(BuildContext context) {
+    return Image.network(
+      _firstValidUrl!,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _placeholder(context),
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return _placeholder(context);
+      },
     );
   }
 

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveroom_scanner_app/app/app.dart';
 import 'package:saveroom_scanner_app/config/app_config.dart';

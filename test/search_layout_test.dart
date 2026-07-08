@@ -125,4 +125,49 @@ void main() {
     // No overflow
     expect(tester.takeException(), isNull);
   });
+
+
+  testWidgets('failed thumbnail shows placeholder without setState during build error', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360 * 2, 640 * 2);
+    addTearDown(tester.view.reset);
+
+    final client = SaveRoomApiClient(
+      forceFixtureMode: false,
+      httpClient: MockClient((req) async {
+        return http.Response(
+          jsonEncode({
+            'data': [
+              {
+                'card_key': 'en:test-fail',
+                'name': 'Test Card Bad Image',
+                'language': {'code': 'en'},
+                'display_text': 'Test Set / test / 1',
+                'image_url_candidates': [
+                  'https://broken.url/that/will/fail.png'
+                ],
+              }
+            ]
+          }),
+          200,
+        );
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ScannerScreen(client: client, forceLiveMode: true)),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'test');
+    await tester.pump(const Duration(milliseconds: 260));
+    await tester.pumpAndSettle();
+
+    // No setState during build error should occur
+    expect(tester.takeException(), isNull);
+    // Should show placeholder icon instead of error text
+    expect(find.byIcon(Icons.style_outlined), findsWidgets);
+  });
 }

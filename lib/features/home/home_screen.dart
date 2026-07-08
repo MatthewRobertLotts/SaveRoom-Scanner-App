@@ -134,22 +134,6 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _StatusLine extends StatelessWidget {
-  const _StatusLine(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Row(
-      children: [
-        const Icon(Icons.check_circle_outline, size: 18),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text)),
-      ],
-    ),
-  );
-}
 
 class _SmallAction extends StatelessWidget {
   const _SmallAction(this.title, this.icon, this.route);
