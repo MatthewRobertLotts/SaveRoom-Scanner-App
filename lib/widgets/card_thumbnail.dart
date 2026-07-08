@@ -16,7 +16,7 @@ class CardThumbnail extends StatelessWidget {
 
   String? get _firstValidUrl {
     for (final url in imageUrls) {
-      final trimmed = url.trim();
+      final String trimmed = url.trim();
       if (trimmed.isNotEmpty && trimmed != '—') return url;
     }
     return null;
