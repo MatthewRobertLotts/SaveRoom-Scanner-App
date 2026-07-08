@@ -13,6 +13,7 @@ class SearchResult {
   final String setText;
   final String? rarity;
   final String? language;
+  final String source;
 
   const SearchResult({
     required this.cardKey,
@@ -20,6 +21,7 @@ class SearchResult {
     required this.setText,
     this.rarity,
     this.language,
+    this.source = 'fixture',
   });
 
   /// Construct from fixture card data (uses the `data.card` / `data.set` shape).
@@ -32,12 +34,16 @@ class SearchResult {
       setText: '${set['name'] ?? ''} / ${card['collector_number'] ?? ''}',
       rarity: card['rarity'] as String?,
       language: card['language_code'] as String?,
+      source: 'fixture',
     );
   }
 
   /// Construct from API search response item. Handles both cards/search
   /// (has card_key, set map) and fuzzy (has card_id + language_code, no set).
-  factory SearchResult.fromApiItem(Map<String, dynamic> item) {
+  factory SearchResult.fromApiItem(
+    Map<String, dynamic> item, {
+    String source = 'api',
+  }) {
     final lang = item['language'];
     final langCode = lang is String
         ? lang
@@ -69,6 +75,7 @@ class SearchResult {
       setText: setText,
       rarity: item['rarity'] as String?,
       language: langCode,
+      source: source,
     );
   }
 
@@ -86,6 +93,147 @@ class SearchResult {
       return cardKey.isNotEmpty ? cardKey : 'Tap to view';
     }
     return st;
+  }
+}
+
+class SearchQuality {
+  const SearchQuality._();
+
+  static bool isStrongNameMatch(SearchResult r, String q) {
+    final name = r.name.toLowerCase();
+    final query = q.toLowerCase();
+    return name == query || name.startsWith(query) || name.contains(query);
+  }
+
+  static int score(SearchResult r, String q) {
+    final query = q.toLowerCase();
+    final name = r.name.toLowerCase();
+    final key = r.cardKey.toLowerCase();
+    final sourceScore = switch (r.source) {
+      'primary' => 80,
+      'autocomplete' => 60,
+      'fuzzy' => 20,
+      _ => 0,
+    };
+    return (name == query ? 1000 : 0) +
+        (name.startsWith(query) ? 700 : 0) +
+        (name.contains(query) ? 400 : 0) +
+        (key.contains(query) ? 200 : 0) +
+        (r.language == 'en' ? 100 : -50) +
+        sourceScore;
+  }
+
+  static List<SearchResult> rankAndFilterNoise(
+    Iterable<SearchResult> results,
+    String query,
+  ) {
+    final q = query.toLowerCase();
+    final seen = <String>{};
+    final all = results.toList();
+    final hasStrong = all.any((r) => isStrongNameMatch(r, q));
+    final deduped = <SearchResult>[];
+    for (final r in all) {
+      if (r.source == 'fuzzy' && !isStrongNameMatch(r, q)) {
+        continue;
+      }
+      if (r.source == 'autocomplete' && hasStrong && !isStrongNameMatch(r, q)) {
+        continue;
+      }
+      if (r.cardKey.isNotEmpty && seen.add(r.cardKey)) {
+        deduped.add(r);
+      }
+    }
+    deduped.sort((a, b) => score(b, q).compareTo(score(a, q)));
+    return deduped;
+  }
+}
+
+class CardImageResolver {
+  const CardImageResolver._();
+
+  static List<String> candidatesFromDetailData(
+    Map<String, dynamic> data, {
+    String apiBaseUrl = AppConfig.apiBaseUrl,
+    Map<String, dynamic>? imageMetadata,
+  }) {
+    final card = _asStringMap(data['card']);
+    final detailImages = _asStringMap(data['images']);
+    final cardImages = _asStringMap(card['images']);
+    final metadataData = _asStringMap(imageMetadata?['data']);
+    final metadataImages = metadataData.isNotEmpty
+        ? metadataData
+        : _asStringMap(imageMetadata);
+    final urls = <String>[];
+
+    void add(Object? value) {
+      final raw = value?.toString().trim();
+      if (raw == null || raw.isEmpty || raw == '—') return;
+      for (final url in _normalizeUrl(raw, apiBaseUrl)) {
+        if (!urls.contains(url)) urls.add(url);
+      }
+    }
+
+    for (final map in [metadataImages, detailImages, cardImages, card]) {
+      add(map['signed_image_url']);
+      add(map['local_display_image_url']);
+      add(map['primary_image_url']);
+      add(map['display_image_url']);
+      add(map['exact_image_url']);
+      add(map['image_url']);
+      add(map['url']);
+    }
+    return urls;
+  }
+
+  static List<String> _normalizeUrl(String raw, String apiBaseUrl) {
+    final apiBase = Uri.parse(apiBaseUrl);
+    if (raw.startsWith('/media/') || raw.startsWith('file://')) {
+      return const [];
+    }
+    if (raw.startsWith('/')) {
+      return [_joinApiBase(apiBaseUrl, raw)];
+    }
+    if (!raw.startsWith('http://') && !raw.startsWith('https://')) {
+      return [_joinApiBase(apiBaseUrl, '/$raw')];
+    }
+    final uri = Uri.parse(raw);
+    final rewritten = (uri.host == '127.0.0.1' || uri.host == 'localhost')
+        ? uri.replace(
+            scheme: apiBase.scheme,
+            host: apiBase.host,
+            port: apiBase.port,
+          )
+        : uri;
+    final url = rewritten.toString();
+    if (_isBareTcgdexAsset(rewritten)) {
+      final base = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
+      return ['$base/high.png', '$base/low.png', url];
+    }
+    return [url];
+  }
+
+  static bool _isBareTcgdexAsset(Uri uri) {
+    if (uri.host != 'assets.tcgdex.net') return false;
+    final path = uri.path.toLowerCase();
+    return !path.endsWith('.png') &&
+        !path.endsWith('.jpg') &&
+        !path.endsWith('.jpeg') &&
+        !path.endsWith('.webp') &&
+        !path.endsWith('/high.png') &&
+        !path.endsWith('/low.png');
+  }
+
+  static String _joinApiBase(String apiBaseUrl, String path) {
+    final base = apiBaseUrl.endsWith('/')
+        ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)
+        : apiBaseUrl;
+    return '$base$path';
+  }
+
+  static Map<String, dynamic> _asStringMap(Object? value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return const <String, dynamic>{};
   }
 }
 
@@ -109,12 +257,52 @@ class SaveRoomApiClient {
     final response = await _httpClient.get(uri);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map<String, dynamic>) {
+        return _withImageCandidates(cardKey, decoded);
+      }
       throw FormatException('Card detail response is not a JSON object');
     }
     throw Exception(
       'API error ${response.statusCode}: ${response.reasonPhrase}',
     );
+  }
+
+  Future<Map<String, dynamic>> _withImageCandidates(
+    String cardKey,
+    Map<String, dynamic> detail,
+  ) async {
+    final data = detail['data'];
+    if (data is! Map<String, dynamic>) return detail;
+    final metadata = await _getImageMetadata(cardKey);
+    final candidates = CardImageResolver.candidatesFromDetailData(
+      data,
+      imageMetadata: metadata,
+    );
+    final images = Map<String, dynamic>.from(
+      (data['images'] as Map<String, dynamic>?) ?? const {},
+    );
+    images['image_url_candidates'] = candidates;
+    images['resolved_image_url'] = candidates.isNotEmpty
+        ? candidates.first
+        : null;
+    detail['data'] = Map<String, dynamic>.from(data)..['images'] = images;
+    return detail;
+  }
+
+  Future<Map<String, dynamic>?> _getImageMetadata(String cardKey) async {
+    try {
+      final uri = Uri.parse(
+        '${AppConfig.apiBaseUrl}/api/v1/images/cards/${Uri.encodeComponent(cardKey)}',
+      );
+      final response = await _httpClient
+          .get(uri)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) return null;
+      final decoded = jsonDecode(response.body);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<Map<String, dynamic>> getHealth() async {
@@ -155,52 +343,15 @@ class SaveRoomApiClient {
           )
           .toList();
     }
-    // ponytail: primary search first, fallbacks only when primary is weak.
-    // All helpers catch exceptions internally so no single endpoint failure
-    // can break the whole search.
+
     final q = query.toLowerCase();
+    // ponytail: always merge primary + autocomplete + fuzzy. Every helper
+    // catches internally so fallback failures cannot break primary results.
     final primary = await _searchPrimary(query);
-    final hasStrong = primary.any((r) {
-      final n = r.name.toLowerCase();
-      return n.startsWith(q) || n.contains(q);
-    });
-    if (hasStrong) {
-      primary.sort(_byScore(q));
-      return primary;
-    }
-    // ponytail: fallbacks — autocomplete (prefix) and fuzzy (trigram).
-    // Each is guarded; if one throws, the other may still contribute.
     final auto = await _searchAutocomplete(query);
     final fuzzy = await _searchFuzzy(query);
 
-    final seen = <String>{};
-    final all = [...primary, ...auto, ...fuzzy];
-    final deduped = <SearchResult>[];
-    for (final r in all) {
-      if (r.cardKey.isNotEmpty && seen.add(r.cardKey)) {
-        deduped.add(r);
-      }
-    }
-    deduped.sort(_byScore(q));
-    return deduped;
-  }
-
-  int Function(SearchResult, SearchResult) _byScore(String q) {
-    return (a, b) {
-      final aName = a.name.toLowerCase();
-      final bName = b.name.toLowerCase();
-      final aScore =
-          (aName == q ? 4 : 0) +
-          (aName.startsWith(q) ? 3 : 0) +
-          (aName.contains(q) ? 2 : 0) +
-          (a.language == 'en' ? 1 : 0);
-      final bScore =
-          (bName == q ? 4 : 0) +
-          (bName.startsWith(q) ? 3 : 0) +
-          (bName.contains(q) ? 2 : 0) +
-          (b.language == 'en' ? 1 : 0);
-      return bScore.compareTo(aScore);
-    };
+    return SearchQuality.rankAndFilterNoise([...primary, ...auto, ...fuzzy], q);
   }
 
   Future<List<SearchResult>> _searchPrimary(String query) async {
@@ -219,7 +370,7 @@ class SaveRoomApiClient {
         if (data is List) {
           return data
               .cast<Map<String, dynamic>>()
-              .map((item) => SearchResult.fromApiItem(item))
+              .map((item) => SearchResult.fromApiItem(item, source: 'primary'))
               .toList();
         }
       }
@@ -244,7 +395,10 @@ class SaveRoomApiClient {
         if (data is List) {
           return data
               .cast<Map<String, dynamic>>()
-              .map((item) => SearchResult.fromApiItem(item))
+              .map(
+                (item) =>
+                    SearchResult.fromApiItem(item, source: 'autocomplete'),
+              )
               .toList();
         }
       }
@@ -269,7 +423,7 @@ class SaveRoomApiClient {
         if (data is List) {
           return data
               .cast<Map<String, dynamic>>()
-              .map((item) => SearchResult.fromApiItem(item))
+              .map((item) => SearchResult.fromApiItem(item, source: 'fuzzy'))
               .toList();
         }
       }

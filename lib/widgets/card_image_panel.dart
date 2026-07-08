@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../services/fixture_loader.dart';
+import '../services/saveroom_api_client.dart';
 import 'section_card.dart';
 
-/// A polished card-image panel that shows either a real image (when imageUrl
-/// is available) or a placeholder with card metadata.
-///
-/// ponytail: single widget, no image pipeline. Add caching when images are
-/// used frequently enough to matter.
-class CardImagePanel extends StatelessWidget {
+/// A polished card-image panel that shows either a real image (when image URLs
+/// are available) or a placeholder with card metadata.
+class CardImagePanel extends StatefulWidget {
   const CardImagePanel({
     super.key,
     required this.cardName,
@@ -16,6 +14,7 @@ class CardImagePanel extends StatelessWidget {
     this.languageCode,
     this.rarity,
     this.imageUrl,
+    this.imageUrls = const [],
     this.hasLocalImage = false,
   });
 
@@ -24,6 +23,7 @@ class CardImagePanel extends StatelessWidget {
   final String? languageCode;
   final String? rarity;
   final String? imageUrl;
+  final List<String> imageUrls;
   final bool hasLocalImage;
 
   /// Construct from a raw fixture/API data map (the `data` field from
@@ -32,6 +32,18 @@ class CardImagePanel extends StatelessWidget {
     final card = asMap(data['card']);
     final set = asMap(data['set']);
     final images = asMap(data['images']);
+    final rawCandidates = images['image_url_candidates'];
+    final candidates = rawCandidates is List
+        ? rawCandidates
+              .map((v) => v.toString())
+              .where((v) => v.isNotEmpty)
+              .toList()
+        : CardImageResolver.candidatesFromDetailData(data);
+    final legacyUrl =
+        _nullableText(images, 'resolved_image_url') ??
+        _nullableText(images, 'primary_image_url') ??
+        _nullableText(images, 'display_image_url');
+    final urls = <String>[...candidates, if (legacyUrl != null) legacyUrl];
     return CardImagePanel(
       cardName: textAt(card, 'name', 'Unknown card'),
       setText: joinPresent([
@@ -41,19 +53,40 @@ class CardImagePanel extends StatelessWidget {
       ]),
       languageCode: _nullableText(card, 'language_code'),
       rarity: _nullableText(card, 'rarity'),
-      imageUrl:
-          _nullableText(images, 'primary_image_url') ??
-          _nullableText(images, 'display_image_url'),
+      imageUrl: urls.isNotEmpty ? urls.first : null,
+      imageUrls: urls.toSet().toList(),
       hasLocalImage: images['has_local_image'] == true,
     );
+  }
+
+  @override
+  State<CardImagePanel> createState() => _CardImagePanelState();
+}
+
+class _CardImagePanelState extends State<CardImagePanel> {
+  late int _imageIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageIndex = 0;
+  }
+
+  @override
+  void didUpdateWidget(covariant CardImagePanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrls.join('|') != widget.imageUrls.join('|') ||
+        oldWidget.imageUrl != widget.imageUrl) {
+      _imageIndex = 0;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final imageUrl = this.imageUrl;
-    final hasImage = imageUrl != null && imageUrl.isNotEmpty && imageUrl != '—';
+    final candidates = _candidates;
+    final hasImage = _imageIndex < candidates.length;
     final imagePlaceholder = Container(
       height: 200,
       width: double.infinity,
@@ -66,25 +99,38 @@ class CardImagePanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(17),
         child: hasImage
             ? Image.network(
-                imageUrl,
+                candidates[_imageIndex],
+                key: ValueKey(candidates[_imageIndex]),
                 fit: BoxFit.contain,
-                errorBuilder: (_, _, __) =>
-                    _placeholderContent(theme, colorScheme),
+                errorBuilder: (_, _, _) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && _imageIndex < candidates.length) {
+                      setState(() => _imageIndex += 1);
+                    }
+                  });
+                  return _placeholderContent(
+                    theme,
+                    colorScheme,
+                    'Loading image',
+                  );
+                },
                 loadingBuilder: (_, child, progress) => progress == null
                     ? child
-                    : _placeholderContent(theme, colorScheme),
+                    : _placeholderContent(theme, colorScheme, 'Loading image'),
               )
-            : _placeholderContent(theme, colorScheme),
+            : _placeholderContent(theme, colorScheme, 'Image pending'),
       ),
     );
 
     return SectionCard(
-      title: cardName,
+      title: widget.cardName,
       icon: Icons.auto_awesome_outlined,
       children: [
         imagePlaceholder,
         const SizedBox(height: 12),
-        if (setText != null && setText!.isNotEmpty && setText != '—')
+        if (widget.setText != null &&
+            widget.setText!.isNotEmpty &&
+            widget.setText != '—')
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
@@ -95,11 +141,11 @@ class CardImagePanel extends StatelessWidget {
                   color: colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 6),
-                Text(setText!, style: theme.textTheme.bodyMedium),
+                Text(widget.setText!, style: theme.textTheme.bodyMedium),
               ],
             ),
           ),
-        if (languageCode != null && languageCode != '—')
+        if (widget.languageCode != null && widget.languageCode != '—')
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
@@ -110,11 +156,11 @@ class CardImagePanel extends StatelessWidget {
                   color: colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 6),
-                Text(languageCode!, style: theme.textTheme.bodySmall),
+                Text(widget.languageCode!, style: theme.textTheme.bodySmall),
               ],
             ),
           ),
-        if (rarity != null && rarity != '—')
+        if (widget.rarity != null && widget.rarity != '—')
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
@@ -125,7 +171,7 @@ class CardImagePanel extends StatelessWidget {
                   color: colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 6),
-                Text(rarity!, style: theme.textTheme.bodySmall),
+                Text(widget.rarity!, style: theme.textTheme.bodySmall),
               ],
             ),
           ),
@@ -133,7 +179,22 @@ class CardImagePanel extends StatelessWidget {
     );
   }
 
-  Widget _placeholderContent(ThemeData theme, ColorScheme colorScheme) {
+  List<String> get _candidates {
+    final urls = <String>[
+      ...widget.imageUrls,
+      if (widget.imageUrl != null) widget.imageUrl!,
+    ];
+    return urls
+        .where((url) => url.trim().isNotEmpty && url != '—')
+        .toSet()
+        .toList();
+  }
+
+  Widget _placeholderContent(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    String label,
+  ) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -145,7 +206,7 @@ class CardImagePanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Image pending',
+            label,
             style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
             ),

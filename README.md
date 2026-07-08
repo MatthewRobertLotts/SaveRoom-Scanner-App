@@ -73,9 +73,19 @@ Android SDK is installed on the secondary drive at `/media/matt/Storage/DevTools
 | `dart format lib test` | ✅ |
 | `flutter pub get` | ✅ |
 | `flutter analyze --no-fatal-infos` | ✅ (2 infos) |
-| `flutter test` | ✅ 7/7 |
+| `flutter test` | ✅ 49/49 |
 | `flutter build web --debug` | ✅ |
-| `flutter build apk --debug` | ✅ 140MB debug APK |
+| `flutter build apk --debug` | ✅ debug APK |
+
+### v0.6.5 image parity + search quality
+
+- Current app consumes API baseline `v12.2.0`; no API repo changes required.
+- Matthew-confirmed v0.6.4 behavior preserved: live API mode connects, prefix searches work, bare `/` subtitles are fixed, Special Delivery Charizard image loads, and live detail renders.
+- Image root cause: older/normal cards often expose bare TCGdex asset URLs such as `https://assets.tcgdex.net/en/base/base4/4`, which return HTML at the bare path. Special Delivery-style cards expose direct `.png` URLs, so they worked while Base/Cyndaquil/Vileplume-style cards showed `Image pending`.
+- Flutter now enriches detail responses with `GET /api/v1/images/cards/{card_key}` metadata and builds a candidate chain: served relative image routes, direct HTTPS URLs, TCGdex `/high.png`, TCGdex `/low.png`, then fallback.
+- Local filesystem paths are ignored for mobile; `localhost`/`127.0.0.1` image URLs are rewritten to the configured API host.
+- `CardImagePanel` now attempts image candidates in order and only shows `Image pending` after candidates are exhausted.
+- Search ranking is deterministic and source-aware: exact/prefix/contains English results outrank fallback rows; weak fuzzy/autocomplete noise is filtered when strong matches exist; fuzzy-only nonsense rows are suppressed.
 
 ## Links
 

@@ -141,26 +141,6 @@ void main() {
   });
 
   group('SearchResult ranking', () {
-    List<SearchResult> rankResults(List<SearchResult> items, String query) {
-      final q = query.toLowerCase();
-      items.sort((a, b) {
-        final aName = a.name.toLowerCase();
-        final bName = b.name.toLowerCase();
-        final aScore =
-            (aName == q ? 4 : 0) +
-            (aName.startsWith(q) ? 3 : 0) +
-            (aName.contains(q) ? 2 : 0) +
-            (a.language == 'en' ? 1 : 0);
-        final bScore =
-            (bName == q ? 4 : 0) +
-            (bName.startsWith(q) ? 3 : 0) +
-            (bName.contains(q) ? 2 : 0) +
-            (b.language == 'en' ? 1 : 0);
-        return bScore.compareTo(aScore);
-      });
-      return items;
-    }
-
     test('English exact match ranks first', () {
       final items = [
         SearchResult(
@@ -168,15 +148,17 @@ void main() {
           name: 'Pikachu',
           setText: '',
           language: 'de',
+          source: 'autocomplete',
         ),
         SearchResult(
           cardKey: 'en:x',
           name: 'Pikachu',
           setText: '',
           language: 'en',
+          source: 'autocomplete',
         ),
       ];
-      final ranked = rankResults(items, 'Pikachu');
+      final ranked = SearchQuality.rankAndFilterNoise(items, 'Pikachu');
       expect(ranked.first.language, 'en');
     });
 
@@ -187,43 +169,169 @@ void main() {
           name: 'Pikachu',
           setText: '',
           language: 'de',
+          source: 'autocomplete',
         ),
         SearchResult(
           cardKey: 'en:x',
           name: 'Pika',
           setText: '',
           language: 'en',
+          source: 'autocomplete',
         ),
       ];
-      final ranked = rankResults(items, 'Pika');
+      final ranked = SearchQuality.rankAndFilterNoise(items, 'Pika');
       expect(ranked.first.language, 'en');
       expect(ranked.first.name, 'Pika');
     });
 
-    test('non-English results are retained after English', () {
-      final items = [
-        SearchResult(
-          cardKey: 'de:x',
+    test(
+      'vilep filters weak fallback Weedle noise when Vileplume is strong',
+      () {
+        final ranked = SearchQuality.rankAndFilterNoise([
+          const SearchResult(
+            cardKey: 'en:base2-15',
+            name: 'Vileplume',
+            setText: 'Jungle',
+            language: 'en',
+            source: 'autocomplete',
+          ),
+          const SearchResult(
+            cardKey: 'ja:BW6a-003',
+            name: 'Weedle',
+            setText: 'BW6a-003',
+            language: 'ja',
+            source: 'autocomplete',
+          ),
+          const SearchResult(
+            cardKey: 'en:base1-69',
+            name: 'Weedle',
+            setText: 'base1-69',
+            language: 'en',
+            source: 'fuzzy',
+          ),
+        ], 'vilep');
+        expect(ranked.map((r) => r.name), ['Vileplume']);
+      },
+    );
+
+    test('pika keeps multiple strong Pikachu rows', () {
+      final ranked = SearchQuality.rankAndFilterNoise([
+        const SearchResult(
+          cardKey: 'en:a',
           name: 'Pikachu',
-          setText: '',
-          language: 'de',
-        ),
-        SearchResult(
-          cardKey: 'en:x',
-          name: 'Pikachu',
-          setText: '',
+          setText: 'A',
           language: 'en',
+          source: 'primary',
         ),
-        SearchResult(
-          cardKey: 'fr:x',
-          name: 'Pikachu',
-          setText: '',
-          language: 'fr',
+        const SearchResult(
+          cardKey: 'en:b',
+          name: 'Pikachu V',
+          setText: 'B',
+          language: 'en',
+          source: 'primary',
         ),
-      ];
-      final ranked = rankResults(items, 'Pikachu');
-      expect(ranked.length, 3);
-      expect(ranked[0].language, 'en');
+      ], 'pika');
+      expect(ranked.length, 2);
+      expect(ranked.first.name, 'Pikachu');
+    });
+
+    test('nonsense query filters weak fuzzy-only noise', () {
+      final ranked = SearchQuality.rankAndFilterNoise([
+        const SearchResult(
+          cardKey: 'zh-cn:x',
+          name: '进化熏香',
+          setText: 'x',
+          language: 'zh-cn',
+          source: 'fuzzy',
+        ),
+        const SearchResult(
+          cardKey: 'de:y',
+          name: 'Schutzzone des Æther-Paradieses',
+          setText: 'y',
+          language: 'de',
+          source: 'fuzzy',
+        ),
+      ], 'nonsense');
+      expect(ranked, isEmpty);
+    });
+  });
+
+  group('CardImageResolver', () {
+    test('Special Delivery direct primary_image_url resolves as-is', () {
+      final urls = CardImageResolver.candidatesFromDetailData({
+        'card': {'card_key': 'en:swshp-SWSH075'},
+        'images': {
+          'primary_image_url':
+              'https://images.pokemontcg.io/swshp/SWSH075_hires.png',
+        },
+      }, apiBaseUrl: 'http://192.168.178.29:8765');
+      expect(
+        urls,
+        contains('https://images.pokemontcg.io/swshp/SWSH075_hires.png'),
+      );
+    });
+
+    test('bare TCGdex URL expands to high and low png candidates', () {
+      final urls = CardImageResolver.candidatesFromDetailData({
+        'card': {'card_key': 'en:base4-4'},
+        'images': {
+          'primary_image_url': 'https://assets.tcgdex.net/en/base/base4/4',
+        },
+      }, apiBaseUrl: 'http://192.168.178.29:8765');
+      expect(
+        urls,
+        contains('https://assets.tcgdex.net/en/base/base4/4/high.png'),
+      );
+      expect(
+        urls,
+        contains('https://assets.tcgdex.net/en/base/base4/4/low.png'),
+      );
+    });
+
+    test('image endpoint local_display_image_url is prefixed with API base', () {
+      final urls = CardImageResolver.candidatesFromDetailData(
+        {
+          'card': {'card_key': 'en:base4-4'},
+          'images': {},
+        },
+        apiBaseUrl: 'http://192.168.178.29:8765',
+        imageMetadata: {
+          'data': {
+            'local_display_image_url':
+                '/api/v1/images/card/en:base4-4/content?size=medium',
+          },
+        },
+      );
+      expect(
+        urls,
+        contains(
+          'http://192.168.178.29:8765/api/v1/images/card/en:base4-4/content?size=medium',
+        ),
+      );
+    });
+
+    test('localhost image URLs are rewritten to configured API host', () {
+      final urls = CardImageResolver.candidatesFromDetailData({
+        'card': {'card_key': 'en:base4-4'},
+        'images': {
+          'display_image_url':
+              'http://127.0.0.1:8765/api/v1/images/card/en:base4-4/content',
+        },
+      }, apiBaseUrl: 'http://192.168.178.29:8765');
+      expect(
+        urls,
+        contains(
+          'http://192.168.178.29:8765/api/v1/images/card/en:base4-4/content',
+        ),
+      );
+    });
+
+    test('local filesystem paths are not used directly', () {
+      final urls = CardImageResolver.candidatesFromDetailData({
+        'card': {'card_key': 'en:base4-4'},
+        'images': {'display_image_url': '/media/matt/private/image.webp'},
+      }, apiBaseUrl: 'http://192.168.178.29:8765');
+      expect(urls, isNot(contains('/media/matt/private/image.webp')));
     });
   });
 }

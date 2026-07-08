@@ -43,9 +43,16 @@ Replace the IP with the actual Zima LAN IP.
 3. Go to scanner/search screen — confirm title says "Search live API cards".
 4. Type at least 3 characters — confirm results appear after debounce.
 5. Tap a result — confirm Card detail opens in Live API mode.
-6. Try an unreachable IP (stop the Zima API) — confirm friendly error, not crash.
-7. Try nonsense search — confirm empty state.
-8. Switch back to fixture mode (`flutter run` with no dart-define) — confirm fixture picker still works.
+6. Search Special Delivery Charizard — confirm its image still loads.
+7. Search/open Base Set, Base Set 2, Cyndaquil, Vileplume, and normal Pikachu rows — confirm images load when the API web UI has images.
+8. Search `vilep` — confirm Vileplume appears without weak Weedle noise when strong results exist.
+9. Try nonsense search — confirm empty state.
+10. Try an unreachable IP (stop the Zima API) — confirm friendly error, not crash.
+11. Switch back to fixture mode (`flutter run` with no dart-define) — confirm fixture picker still works.
+
+## v0.6.5 image fallback notes
+
+The API detail endpoint can return bare TCGdex asset URLs such as `https://assets.tcgdex.net/en/base/base4/4`. Those URLs return HTML at the bare path; usable image bytes are at `/high.png` or `/low.png`. The API web UI also checks `GET /api/v1/images/cards/{card_key}` for local/served image metadata. Flutter now follows the same broad chain: API image metadata, local served routes, direct HTTPS URLs, and TCGdex high/low fallbacks. Local filesystem paths are never passed to `Image.network`.
 
 ## Links
 

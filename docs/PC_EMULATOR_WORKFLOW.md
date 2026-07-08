@@ -53,27 +53,19 @@ Find the Zima board LAN IP with `hostname -I` or check your router.
 - Use the Samba/network share as the active Flutter build workspace — copy/clone the repo locally on the Windows PC.
 - Commit build outputs, APKs, caches, or generated platform noise from either machine.
 
-## Matthew testing checklist (v0.3)
+## Matthew testing checklist (v0.6.5)
 
 1. Pull latest: `git pull origin main`.
-2. Open VS Code.
-3. Select Android emulator (not Windows).
-4. Press F5.
-5. Tap Start Scanner.
-6. Search "char" — confirm only Charizard appears.
-7. Clear search — all 5 cards visible.
-8. Tap each fixture card — confirm detail updates for each.
-9. Scroll to Pricing / evidence — confirm formatted £ amounts, no raw `{amount:...}` text.
-10. Check rarity shows "Unknown / fixture pending" for Charizard (null rarity).
-11. Search "zzz" — confirm empty state "No fixture cards found".
-12. Search "sv04" — confirm Miraidon ex shown.
-13. Pull latest, run in real API mode (`tools/windows/run-real-api-emulator.ps1`).
-14. Open scanner — confirm title says "Search live API cards", not "Choose a fixture card".
-15. Type "Charizard" — confirm results load from API.
-16. Tap a result — confirm detail opens in live API mode.
-17. Type nonsense — confirm empty state.
-18. Stop the API — confirm friendly error state, not crash.
-19. Switch back to fixture mode (F5) — confirm fixture picker still works.
+2. Run real API mode (`tools/windows/run-real-api-emulator.ps1` or the dart-define command above).
+3. Open Settings and confirm API health.
+4. Search Special Delivery Charizard and confirm image still loads.
+5. Search Charizard and open Base/Base2/Base-style Charizard rows; confirm images load if the web UI has them.
+6. Search Cyndaquil and open it; confirm image loads if the web UI has one.
+7. Search Vileplume and open it; confirm image loads if the web UI has one.
+8. Search `pika` and open several normal Pikachu rows; confirm images load where the web UI has them.
+9. Search `vilep`; confirm Vileplume appears without weak Weedle noise when strong results exist.
+10. Search nonsense; confirm "No cards found".
+11. Confirm no bare `/`, no `null/null`, no raw API exception body, no login, no billing, no camera/OCR, no API key prompt, no raw map/debug section.
 
 ## Links
 

@@ -29,7 +29,8 @@ This roadmap keeps the app small until the API has the next backend foundations.
 
 - `v0.5 live API card search ✅`: real API card search from emulator to Zima API via `GET /api/v1/search/cards`. Reuses scanner screen with mode-conditional UI. `SearchResult` helper class. Debounced search (400ms). Zima API must be reachable over LAN.
 
-- `v0.6 image loading / scanner planning`: pending Matthew approval.
+- `v0.6 image loading / scanner planning ✅`: real API search/detail plus image rendering polish.
+- `v0.6.5 image parity + search quality ✅`: Flutter now mirrors the API web UI image strategy more closely: detail image fields are supplemented by `GET /api/v1/images/cards/{card_key}` metadata, relative image routes are prefixed with the configured API host, localhost URLs are rewritten for emulator use, bare TCGdex asset URLs expand to `/high.png` and `/low.png`, and the image widget tries fallback candidates before showing `Image pending`. Search ranking is source-aware and filters weak fallback noise such as `vilep` → Weedle and fuzzy-only nonsense rows.
 
 No v13 work, billing, login, scanner backend tables, or app-store publishing in current milestone.
 
