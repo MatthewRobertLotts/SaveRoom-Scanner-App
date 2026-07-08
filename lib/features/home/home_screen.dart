@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../services/recent_cards.dart';
 import '../../services/saveroom_api_client.dart';
+import '../../widgets/card_thumbnail.dart';
+import '../../config/app_config.dart';
 import '../../app/app_routes.dart';
 import '../../widgets/fixture_badge.dart';
 import '../../widgets/primary_action_card.dart';
 import '../../widgets/section_card.dart';
 import '../../widgets/status_pill.dart';
 import '../../widgets/saveroom_shell.dart';
-import '../../widgets/card_image_panel.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -53,15 +54,23 @@ class HomeScreen extends StatelessWidget {
           icon: Icons.document_scanner_outlined,
           onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
         ),
-        if (recent.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          const SectionCard(
-            title: 'Recently viewed',
-            icon: Icons.history,
-            children: [_RecentList()],
-          ),
-        ],
         const SizedBox(height: 24),
+        SectionCard(
+          title: 'Recently viewed',
+          icon: Icons.history,
+          children: [
+            if (recent.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Cards you open will appear here',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              )
+            else
+              _RecentList(),
+          ],
+        ),
         const SectionCard(
           title: 'Roadmap status',
           icon: Icons.route_outlined,
@@ -72,31 +81,17 @@ class HomeScreen extends StatelessWidget {
             _StatusLine('Collection backend planned v12.4'),
           ],
         ),
+        // Settings always visible, dev/testing actions in fixture mode only
+        if (AppConfig.fixtureMode) ...[
+          const SizedBox(height: 8),
+          _SmallAction(
+            'View Mock Card',
+            Icons.style_outlined,
+            AppRoutes.cardDetail,
+          ),
+        ],
         const SizedBox(height: 8),
-        _SmallAction(
-          'View Mock Card',
-          Icons.style_outlined,
-          AppRoutes.cardDetail,
-        ),
-        const Row(
-          children: [
-            Expanded(
-              child: _SmallAction(
-                'Collection',
-                Icons.collections_bookmark_outlined,
-                AppRoutes.collection,
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: _SmallAction(
-                'Settings',
-                Icons.tune_outlined,
-                AppRoutes.settings,
-              ),
-            ),
-          ],
-        ),
+        _SmallAction('Settings', Icons.tune_outlined, AppRoutes.settings),
       ],
     );
   }
@@ -112,7 +107,7 @@ class _RecentList extends StatelessWidget {
       return const Padding(
         padding: EdgeInsets.only(top: 8),
         child: Text(
-          'Cards you opened this session',
+          'Cards you open will appear here',
           style: TextStyle(color: Colors.grey),
         ),
       );
@@ -125,21 +120,19 @@ class _RecentList extends StatelessWidget {
       itemBuilder: (context, i) {
         final r = recent[i];
         return ListTile(
-          leading: SizedBox(
-            width: 40,
-            height: 56,
-            child: CardImagePanel(
-              cardName: r.name,
-              setText: r.displayText,
-              languageCode: r.language,
-              rarity: r.rarity,
-              imageUrls: r.imageUrlCandidates,
-              showTitle: false,
-            ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          leading: CardThumbnail(
+            imageUrls: r.imageUrlCandidates,
+            cardName: r.name,
           ),
           title: Text(
             r.name,
             style: const TextStyle(fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(
             r.displayText,

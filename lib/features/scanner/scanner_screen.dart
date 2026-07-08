@@ -7,6 +7,7 @@ import '../../app/app_routes.dart';
 import '../../services/fixtures.dart';
 import '../../services/saveroom_api_client.dart';
 import '../../services/recent_cards.dart';
+import '../../widgets/card_thumbnail.dart';
 import '../../widgets/card_image_panel.dart';
 import '../../widgets/saveroom_shell.dart';
 
@@ -278,26 +279,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   Widget _buildSearchResultTile(ThemeData theme, SearchResult r) {
     return ListTile(
-      leading: SizedBox(
-        width: 40,
-        height: 56,
-        child: CardImagePanel(
-          cardName: r.name,
-          setText: r.displayText,
-          languageCode: r.language,
-          rarity: r.rarity,
-          imageUrls: r.imageUrlCandidates,
-          showTitle: false,
-        ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      leading: CardThumbnail(imageUrls: r.imageUrlCandidates, cardName: r.name),
+      title: Text(
+        r.name,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
-      title: Text(r.name, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Text(
-        r.language != null && r.language != 'en'
-            ? '${r.displayText} · ${r.language}'
-            : r.displayText,
+        _resultSubtitle(r),
         style: theme.textTheme.bodySmall,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
-      trailing: r.rarity != null
+      trailing: r.rarity != null && r.rarity != '—'
           ? Chip(
               label: Text(r.rarity!, style: const TextStyle(fontSize: 10)),
               visualDensity: VisualDensity.compact,
@@ -312,6 +308,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
         );
       },
     );
+  }
+
+  String _resultSubtitle(SearchResult r) {
+    final parts = <String>[];
+    if (r.displayText.isNotEmpty && r.displayText != '—') {
+      parts.add(r.displayText);
+    }
+    if (r.language != null && r.language != 'en') {
+      parts.add(r.language!);
+    }
+    return parts.isEmpty ? '' : parts.join(' · ');
   }
 
   Widget _buildResultTile(
