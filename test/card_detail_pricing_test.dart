@@ -6,7 +6,7 @@ void main() {
   Future<void> goToCardDetail(WidgetTester tester, {int cardIndex = 0}) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start Scanner'));
+    await tester.tap(find.text('Search cards'));
     await tester.pumpAndSettle();
     final tiles = find.byType(ListTile);
     expect(tiles, findsWidgets);
@@ -101,7 +101,7 @@ void main() {
   group('Scanner picker', () {
     testWidgets('shows all 5 cards', (tester) async {
       await tester.pumpWidget(const SaveRoomScannerApp());
-      await tester.tap(find.text('Start Scanner'));
+      await tester.tap(find.text('Search cards'));
       await tester.pumpAndSettle();
 
       for (final name in [
@@ -117,7 +117,7 @@ void main() {
 
     testWidgets('search filters by card key', (tester) async {
       await tester.pumpWidget(const SaveRoomScannerApp());
-      await tester.tap(find.text('Start Scanner'));
+      await tester.tap(find.text('Search cards'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField), 'sv04');
@@ -129,7 +129,7 @@ void main() {
 
     testWidgets('empty search state', (tester) async {
       await tester.pumpWidget(const SaveRoomScannerApp());
-      await tester.tap(find.text('Start Scanner'));
+      await tester.tap(find.text('Search cards'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField), 'zzznotexist');

@@ -6,6 +6,8 @@ import '../../config/app_config.dart';
 import '../../app/app_routes.dart';
 import '../../services/fixtures.dart';
 import '../../services/saveroom_api_client.dart';
+import '../../services/recent_cards.dart';
+import '../../widgets/card_image_panel.dart';
 import '../../widgets/saveroom_shell.dart';
 
 /// ponytail: one screen, two modes. Fixture = local picker. Live = API-backed
@@ -269,33 +271,44 @@ class _ScannerScreenState extends State<ScannerScreen> {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, i) {
         final r = _results[i];
-        final subtitle = r.language != null && r.language != 'en'
+        return _buildSearchResultTile(theme, r);
+      },
+    );
+  }
+
+  Widget _buildSearchResultTile(ThemeData theme, SearchResult r) {
+    return ListTile(
+      leading: SizedBox(
+        width: 40,
+        height: 56,
+        child: CardImagePanel(
+          cardName: r.name,
+          setText: r.displayText,
+          languageCode: r.language,
+          rarity: r.rarity,
+          imageUrls: r.imageUrlCandidates,
+          showTitle: false,
+        ),
+      ),
+      title: Text(r.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(
+        r.language != null && r.language != 'en'
             ? '${r.displayText} · ${r.language}'
-            : r.displayText;
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: theme.colorScheme.primaryContainer,
-            child: Icon(
-              Icons.style,
-              color: theme.colorScheme.onPrimaryContainer,
-            ),
-          ),
-          title: Text(
-            r.name,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
-          trailing: r.rarity != null
-              ? Chip(
-                  label: Text(r.rarity!, style: const TextStyle(fontSize: 10)),
-                  visualDensity: VisualDensity.compact,
-                )
-              : null,
-          onTap: () => Navigator.pushNamed(
-            context,
-            AppRoutes.cardDetail,
-            arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
-          ),
+            : r.displayText,
+        style: theme.textTheme.bodySmall,
+      ),
+      trailing: r.rarity != null
+          ? Chip(
+              label: Text(r.rarity!, style: const TextStyle(fontSize: 10)),
+              visualDensity: VisualDensity.compact,
+            )
+          : null,
+      onTap: () {
+        RecentlyViewed.add(r);
+        Navigator.pushNamed(
+          context,
+          AppRoutes.cardDetail,
+          arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
         );
       },
     );

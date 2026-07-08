@@ -132,6 +132,21 @@ class SearchResult {
     return st;
   }
 
+  /// ponytail: image URL candidates from raw item for fast thumbnail rendering.
+  List<String> get imageUrlCandidates {
+    final images = _asStringMap(rawItem['images']);
+    final candidates = <String>[];
+    final local = images['local_display_image_url'];
+    if (local is String && local.isNotEmpty) {
+      candidates.add(local);
+    }
+    final signed = images['signed_image_url'];
+    if (signed is String && signed.isNotEmpty) {
+      candidates.add(signed);
+    }
+    return candidates;
+  }
+
   bool get hasFallbackDetail => cardKey.isNotEmpty && name.trim().isNotEmpty;
 
   Map<String, dynamic> toFallbackDetailResponse({

@@ -18,6 +18,7 @@ class CardImagePanel extends StatefulWidget {
     this.imageUrl,
     this.imageUrls = const [],
     this.hasLocalImage = false,
+    this.showTitle = true,
   });
 
   final String cardName;
@@ -27,6 +28,7 @@ class CardImagePanel extends StatefulWidget {
   final String? imageUrl;
   final List<String> imageUrls;
   final bool hasLocalImage;
+  final bool showTitle;
 
   /// Construct from a raw fixture/API data map (the `data` field from
   /// card_detail_response.json).
@@ -185,8 +187,8 @@ class _CardImagePanelState extends State<CardImagePanel> {
     );
 
     return SectionCard(
-      title: widget.cardName,
-      icon: Icons.auto_awesome_outlined,
+      title: widget.showTitle ? widget.cardName : null,
+      icon: widget.showTitle ? Icons.auto_awesome_outlined : null,
       children: [
         imagePlaceholder,
         const SizedBox(height: 12),

@@ -79,7 +79,7 @@ Android SDK is installed on the secondary drive at `/media/matt/Storage/DevTools
 
 ### v0.6.7 search breadth + loading UX
 
-- Current app milestone: v0.6.7 on `main`.
+- Current app milestone: v0.7 on `main`.
 - Partial search diagnostics showed API baseline `v12.2.0` primary search is broad for `pika`/`pikachu`, `charizard`, `vileplume`, and `cyndaquil`, but returns 0 for partial `chari`, `vile`, `vilep`, `cynda`, and `cyndaqui`; autocomplete returned 0 for tested terms; fuzzy is useful for those prefixes but noisy.
 - Live search now uses prefix mode for 3–5 character queries: primary + autocomplete together, fuzzy only when the strong merged count is thin, with a final 50-result cap.
 - Ranking preserves breadth by distinct card key, not name, so many Pikachu/Charizard/Vileplume/Cyndaquil rows survive while weak fuzzy noise is still filtered.

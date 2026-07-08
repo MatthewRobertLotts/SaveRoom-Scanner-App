@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../../services/recent_cards.dart';
+import '../../services/saveroom_api_client.dart';
 import '../../app/app_routes.dart';
 import '../../widgets/fixture_badge.dart';
 import '../../widgets/primary_action_card.dart';
 import '../../widgets/section_card.dart';
-import '../../widgets/saveroom_shell.dart';
 import '../../widgets/status_pill.dart';
+import '../../widgets/saveroom_shell.dart';
+import '../../widgets/card_image_panel.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final recent = RecentlyViewed.recent;
     return SaveRoomShell(
       title: 'SaveRoom Scanner',
       children: [
@@ -22,7 +26,9 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           'Your card intelligence platform',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 14),
         const Wrap(
@@ -35,31 +41,27 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         PrimaryActionCard(
-          title: 'Start Scanner',
-          subtitle: 'Choose a fixture card to simulate a scan',
+          title: 'Search cards',
+          subtitle: 'Find cards by name, set, or partial name',
+          icon: Icons.search,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
+        ),
+        const SizedBox(height: 8),
+        PrimaryActionCard(
+          title: 'Camera scanner',
+          subtitle: 'Coming soon -- search foundation is ready',
           icon: Icons.document_scanner_outlined,
           onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
         ),
-        const Row(
-          children: [
-            Expanded(
-              child: _SmallAction(
-                'View Mock Card',
-                Icons.style_outlined,
-                AppRoutes.cardDetail,
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: _SmallAction(
-                'Collection',
-                Icons.collections_bookmark_outlined,
-                AppRoutes.collection,
-              ),
-            ),
-          ],
-        ),
-        const _SmallAction('Settings', Icons.tune_outlined, AppRoutes.settings),
+        if (recent.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          const SectionCard(
+            title: 'Recently viewed',
+            icon: Icons.history,
+            children: [_RecentList()],
+          ),
+        ],
+        const SizedBox(height: 24),
         const SectionCard(
           title: 'Roadmap status',
           icon: Icons.route_outlined,
@@ -70,26 +72,89 @@ class HomeScreen extends StatelessWidget {
             _StatusLine('Collection backend planned v12.4'),
           ],
         ),
+        const SizedBox(height: 8),
+        _SmallAction(
+          'View Mock Card',
+          Icons.style_outlined,
+          AppRoutes.cardDetail,
+        ),
+        const Row(
+          children: [
+            Expanded(
+              child: _SmallAction(
+                'Collection',
+                Icons.collections_bookmark_outlined,
+                AppRoutes.collection,
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: _SmallAction(
+                'Settings',
+                Icons.tune_outlined,
+                AppRoutes.settings,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 }
 
-class _SmallAction extends StatelessWidget {
-  const _SmallAction(this.title, this.icon, this.route);
-  final String title;
-  final IconData icon;
-  final String route;
+class _RecentList extends StatelessWidget {
+  const _RecentList();
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => Navigator.pushNamed(context, route),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final recent = RecentlyViewed.recent;
+    if (recent.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 8),
+        child: Text(
+          'Cards you opened this session',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: recent.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, i) {
+        final r = recent[i];
+        return ListTile(
+          leading: SizedBox(
+            width: 40,
+            height: 56,
+            child: CardImagePanel(
+              cardName: r.name,
+              setText: r.displayText,
+              languageCode: r.language,
+              rarity: r.rarity,
+              imageUrls: r.imageUrlCandidates,
+              showTitle: false,
+            ),
+          ),
+          title: Text(
+            r.name,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text(
+            r.displayText,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          trailing: const Icon(Icons.chevron_right, size: 20),
+          onTap: () => Navigator.pushNamed(
+            context,
+            AppRoutes.cardDetail,
+            arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _StatusLine extends StatelessWidget {
@@ -105,6 +170,23 @@ class _StatusLine extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(child: Text(text)),
       ],
+    ),
+  );
+}
+
+class _SmallAction extends StatelessWidget {
+  const _SmallAction(this.title, this.icon, this.route);
+  final String title;
+  final IconData icon;
+  final String route;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => Navigator.pushNamed(context, route),
     ),
   );
 }

@@ -5,7 +5,7 @@ import 'package:saveroom_scanner_app/app/app.dart';
 void main() {
   testWidgets('scanner screen shows fixture card picker', (tester) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
-    await tester.tap(find.text('Start Scanner'));
+    await tester.tap(find.text('Search cards'));
     await tester.pumpAndSettle();
 
     expect(
@@ -19,7 +19,7 @@ void main() {
 
   testWidgets('scanner search filters card list', (tester) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
-    await tester.tap(find.text('Start Scanner'));
+    await tester.tap(find.text('Search cards'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'char');
@@ -31,7 +31,7 @@ void main() {
 
   testWidgets('tapping fixture card navigates to card detail', (tester) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
-    await tester.tap(find.text('Start Scanner'));
+    await tester.tap(find.text('Search cards'));
     await tester.pumpAndSettle();
 
     // Tap the first list tile (Charizard ex)
