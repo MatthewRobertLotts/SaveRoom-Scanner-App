@@ -16,6 +16,15 @@ This roadmap keeps the app small until the API has the next backend foundations.
 - `v0.6 scanner MVP`: camera/OCR/scan candidate flow.
 - `paid beta`: after v12.5 billing/entitlement enforcement.
 
+
+### v0.7.4 thumbnail image parity fix — completed
+
+- v0.7.3 restored partial search and removed thumbnail framework error text, but list/recent thumbnails still showed placeholders.
+- Search and recent cards now prepend the deterministic API content route derived from `cardKey`: `/api/v1/images/card/{encodedCardKey}/content?size=small`.
+- Thumbnail URLs use `AppConfig.apiBaseUrl`, preserving Windows emulator LAN mode and avoiding hardcoded localhost/127.0.0.1 image URLs.
+- Existing image candidates remain as fallback after the API route; result visibility does not depend on thumbnails loading.
+- Camera/OCR remains out of scope.
+
 ### v0.6.7 search breadth + loading UX — completed
 
 - Partial prefix search now feels broader: `pika`, `chari`, `vile`, `vilep`, `cynda`, and `cyndaqui` use conservative primary/autocomplete/fuzzy enrichment instead of returning early after thin results.

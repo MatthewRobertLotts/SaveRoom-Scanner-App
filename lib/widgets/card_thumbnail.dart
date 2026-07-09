@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CardThumbnail extends StatelessWidget {
+class CardThumbnail extends StatefulWidget {
   const CardThumbnail({
     super.key,
     required this.imageUrls,
@@ -14,37 +14,76 @@ class CardThumbnail extends StatelessWidget {
   final double width;
   final double height;
 
-  String? get _firstValidUrl {
-    for (final url in imageUrls) {
-      final String trimmed = url.trim();
-      if (trimmed.isNotEmpty && trimmed != '—') return url;
+  @override
+  State<CardThumbnail> createState() => _CardThumbnailState();
+}
+
+class _CardThumbnailState extends State<CardThumbnail> {
+  int _index = 0;
+  String? _pendingFailedUrl;
+
+  List<String> get _candidates => widget.imageUrls
+      .map((url) => url.trim())
+      .where((url) => url.isNotEmpty && url != '—')
+      .toSet()
+      .toList();
+
+  @override
+  void didUpdateWidget(covariant CardThumbnail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrls.join('|') != widget.imageUrls.join('|')) {
+      _index = 0;
+      _pendingFailedUrl = null;
     }
-    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final url = _firstValidUrl;
+    final candidates = _candidates;
+    final url = _index < candidates.length ? candidates[_index] : null;
     return SizedBox(
-      width: width,
-      height: height,
+      width: widget.width,
+      height: widget.height,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(6),
-        child: url != null ? _imageContent(context) : _placeholder(context),
+        child: url != null
+            ? _imageContent(context, url)
+            : _placeholder(context),
       ),
     );
   }
 
-  Widget _imageContent(BuildContext context) {
+  Widget _imageContent(BuildContext context, String url) {
     return Image.network(
-      _firstValidUrl!,
+      url,
+      key: ValueKey(url),
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _placeholder(context),
+      errorBuilder: (_, _, _) {
+        _scheduleAdvance(url);
+        return _placeholder(context);
+      },
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
         return _placeholder(context);
       },
     );
+  }
+
+  void _scheduleAdvance(String failedUrl) {
+    if (_pendingFailedUrl == failedUrl) return;
+    _pendingFailedUrl = failedUrl;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final candidates = _candidates;
+      if (_index < candidates.length && candidates[_index] == failedUrl) {
+        setState(() {
+          _index += 1;
+          _pendingFailedUrl = null;
+        });
+      } else {
+        _pendingFailedUrl = null;
+      }
+    });
   }
 
   Widget _placeholder(BuildContext context) {

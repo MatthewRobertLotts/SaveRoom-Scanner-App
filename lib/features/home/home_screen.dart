@@ -26,9 +26,9 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           'Search and identify Pokémon cards',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: colors.onSurfaceVariant,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: colors.onSurfaceVariant),
         ),
         const SizedBox(height: 14),
         Wrap(
@@ -107,7 +107,10 @@ class HomeScreen extends StatelessWidget {
                       onTap: () => Navigator.pushNamed(
                         context,
                         AppRoutes.cardDetail,
-                        arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
+                        arguments: CardDetailArgs(
+                          cardKey: r.cardKey,
+                          fallback: r,
+                        ),
                       ),
                     );
                   },
@@ -123,7 +126,11 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.developer_mode,
             dense: true,
             children: const [
-              _SmallAction('View Mock Card', Icons.style_outlined, AppRoutes.cardDetail),
+              _SmallAction(
+                'View Mock Card',
+                Icons.style_outlined,
+                AppRoutes.cardDetail,
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -133,7 +140,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
 
 class _SmallAction extends StatelessWidget {
   const _SmallAction(this.title, this.icon, this.route);

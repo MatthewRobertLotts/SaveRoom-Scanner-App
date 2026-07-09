@@ -133,7 +133,7 @@ class SearchResult {
   }
 
   /// ponytail: image URL candidates from raw item for fast thumbnail rendering.
-  /// Uses the same full resolution logic as CardImageResolver for consistency.
+  /// Prepends deterministic API image route (/content?size=small) as first choice.
   List<String> get imageUrlCandidates {
     final data = <String, dynamic>{
       'card': <String, dynamic>{
@@ -145,10 +145,23 @@ class SearchResult {
       'set': <String, dynamic>{'name': setName, 'set_code': setId},
       'images': _asStringMap(rawItem['images']),
     };
-    return CardImageResolver.candidatesFromDetailData(
+    final resolved = CardImageResolver.candidatesFromDetailData(
       data,
       apiBaseUrl: AppConfig.apiBaseUrl,
     );
+    final thumbUrl = thumbnailUrlForCardKey(cardKey);
+    final urls = <String>[if (thumbUrl != null) thumbUrl, ...resolved];
+    return urls.toSet().toList();
+  }
+
+  static String? thumbnailUrlForCardKey(
+    String cardKey, {
+    String apiBaseUrl = AppConfig.apiBaseUrl,
+  }) {
+    final key = cardKey.trim();
+    if (key.isEmpty || key == '—') return null;
+    final base = apiBaseUrl.replaceFirst(RegExp(r'/+$'), '');
+    return '$base/api/v1/images/card/${Uri.encodeComponent(key)}/content?size=small';
   }
 
   bool get hasFallbackDetail => cardKey.isNotEmpty && name.trim().isNotEmpty;

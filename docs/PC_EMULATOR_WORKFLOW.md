@@ -53,6 +53,22 @@ Find the Zima board LAN IP with `hostname -I` or check your router.
 - Use the Samba/network share as the active Flutter build workspace — copy/clone the repo locally on the Windows PC.
 - Commit build outputs, APKs, caches, or generated platform noise from either machine.
 
+
+## Matthew testing checklist (v0.7.4)
+
+1. Pull latest: `git pull origin main`.
+2. Ensure Zima API is running and reachable over LAN.
+3. Run real API mode with the Zima LAN IP, not emulator localhost:
+   ```bash
+   flutter run --dart-define=SAVEROOM_FIXTURE_MODE=false \
+     --dart-define=SAVEROOM_API_BASE_URL=http://192.168.178.29:8765
+   ```
+4. Search `pika`; confirm Pikachu rows appear and thumbnails load where the API has images.
+5. Search `pikachu`, `chari`, `vile`, and `cynda`; confirm rows still appear and thumbnails load where images exist.
+6. Open several cards; confirm detail images still load.
+7. Return home; confirm Recently viewed appears and recent thumbnails load where images exist.
+8. Confirm no thumbnail Flutter framework error text, no overflow, no camera/OCR permission prompt, no login/billing/API-key prompt, and no raw map/debug section.
+
 ## Matthew testing checklist (v0.6.5)
 
 1. Pull latest: `git pull origin main`.

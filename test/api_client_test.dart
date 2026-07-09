@@ -755,4 +755,89 @@ void main() {
       },
     );
   });
+
+  test(
+    'SearchResult imageUrlCandidates includes deterministic API thumbnail route',
+    () {
+      // Test that a SearchResult with cardKey gets the API image route first
+      final result = SearchResult(
+        cardKey: 'en:test-card',
+        name: 'Test Card',
+        setText: 'Test Set',
+        language: 'en',
+        source: 'primary',
+        rawItem: const {},
+      );
+      final candidates = result.imageUrlCandidates;
+      expect(
+        candidates.isNotEmpty,
+        true,
+        reason: 'Should have at least the deterministic API route',
+      );
+      expect(
+        candidates.first,
+        contains('/api/v1/images/card/'),
+        reason: 'First candidate should be the API image endpoint',
+      );
+      expect(
+        candidates.first,
+        contains('en%3Atest-card'),
+        reason: 'Card key should be URI encoded in the URL',
+      );
+      expect(
+        candidates.first,
+        contains('size=small'),
+        reason: 'Thumbnail size parameter should be present',
+      );
+    },
+  );
+
+  test(
+    'SearchResult imageUrlCandidates preserves metadata fallbacks after API route',
+    () {
+      final result = SearchResult(
+        cardKey: 'en:base2-60',
+        name: 'Pikachu',
+        setText: 'Base Set 2 / 60',
+        language: 'en',
+        source: 'primary',
+        rawItem: const {
+          'images': {
+            'display_image_url': 'https://assets.tcgdex.net/en/base/base2/60',
+            'local_display_image_url': '/images/en/base2/base2-60.webp',
+          },
+        },
+      );
+      final candidates = result.imageUrlCandidates;
+      expect(
+        candidates.first,
+        contains('/api/v1/images/card/en%3Abase2-60/content?size=small'),
+      );
+      expect(
+        candidates,
+        contains('http://127.0.0.1:8765/images/en/base2/base2-60.webp'),
+      );
+      expect(
+        candidates,
+        contains('https://assets.tcgdex.net/en/base/base2/60/high.png'),
+      );
+      expect(
+        candidates,
+        contains('https://assets.tcgdex.net/en/base/base2/60/low.png'),
+      );
+    },
+  );
+
+  test('thumbnailUrlForCardKey uses supplied LAN base URL without 127 leak', () {
+    final url = SearchResult.thumbnailUrlForCardKey(
+      'en:test-card',
+      apiBaseUrl: 'http://192.168.1.100:8765',
+    );
+    expect(
+      url,
+      'http://192.168.1.100:8765/api/v1/images/card/en%3Atest-card/content?size=small',
+    );
+    expect(url, isNot(contains('127.0.0.1')));
+    expect(url, isNot(contains('localhost')));
+  });
 }

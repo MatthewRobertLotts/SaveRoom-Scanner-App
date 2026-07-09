@@ -320,11 +320,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               if (r.rarity != null && r.rarity != '—')
                 StatusPill(r.rarity!, dense: true),
               const SizedBox(width: 8),
-              const Icon(
-                Icons.chevron_right,
-                color: Colors.grey,
-                size: 20,
-              ),
+              const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
             ],
           ),
         ),

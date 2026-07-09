@@ -73,9 +73,21 @@ Android SDK is installed on the secondary drive at `/media/matt/Storage/DevTools
 | `dart format lib test` | ✅ |
 | `flutter pub get` | ✅ |
 | `flutter analyze --no-fatal-infos` | ✅ (10 info-only suggestions) |
-| `flutter test` | ✅ 70/70 |
+| `flutter test` | ✅ 80/80 |
 | `flutter build web --debug` | ✅ |
 | `flutter build apk --debug` | ✅ debug APK |
+
+
+### v0.7.4 thumbnail image parity fix
+
+- v0.7.3 removed the Flutter framework error text from search thumbnails and restored accepted partial-search behaviour, but Matthew confirmed search-result thumbnails still showed placeholders only.
+- v0.7.4 prepends a deterministic API image route for every search/recent row with a `cardKey`:
+  `GET /api/v1/images/card/{Uri.encodeComponent(cardKey)}/content?size=small`.
+- The route uses `AppConfig.apiBaseUrl`, so Windows/Android real API mode uses the Zima LAN host such as `http://192.168.178.29:8765`, not hardcoded `127.0.0.1`.
+- Existing local/signed/direct/TCGdex image candidates are preserved after the deterministic API route.
+- `CardThumbnail` keeps fixed-size list layout, safely advances candidates after the frame on image failure, and falls back to a clean placeholder without Flutter error text.
+- Detail image behaviour remains unchanged; `CardImagePanel` still owns the full detail-view retry path.
+- No camera/OCR, auth, billing, provider calls, inventory writes, or API/database copies were added.
 
 ### v0.6.7 search breadth + loading UX
 

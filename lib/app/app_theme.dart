@@ -8,15 +8,16 @@ ThemeData buildAppTheme() {
   const surfaceVariant = Color(0xFF1E1E1E); // list items
 
   return ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: seed,
-      brightness: Brightness.dark,
-    ).copyWith(
-      surface: surface,
-      surfaceContainerHighest: surfaceVariant,
-      primary: const Color(0xFF007AFF), // iOS blue
-      onPrimary: Colors.white,
-    ),
+    colorScheme:
+        ColorScheme.fromSeed(
+          seedColor: seed,
+          brightness: Brightness.dark,
+        ).copyWith(
+          surface: surface,
+          surfaceContainerHighest: surfaceVariant,
+          primary: const Color(0xFF007AFF), // iOS blue
+          onPrimary: Colors.white,
+        ),
     scaffoldBackgroundColor: bg,
     useMaterial3: true,
     appBarTheme: const AppBarTheme(
@@ -62,10 +63,7 @@ ThemeData buildAppTheme() {
         fontSize: 16,
         fontWeight: FontWeight.w400,
       ),
-      bodyMedium: TextStyle(
-        color: Colors.white70,
-        fontSize: 14,
-      ),
+      bodyMedium: TextStyle(color: Colors.white70, fontSize: 14),
     ).apply(bodyColor: Colors.white),
   );
 }

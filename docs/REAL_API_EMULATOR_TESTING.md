@@ -50,6 +50,19 @@ Replace the IP with the actual Zima LAN IP.
 10. Try an unreachable IP (stop the Zima API) — confirm friendly error, not crash.
 11. Switch back to fixture mode (`flutter run` with no dart-define) — confirm fixture picker still works.
 
+
+## v0.7.4 thumbnail route notes
+
+Search-result and Recently viewed thumbnails use the deterministic API image content route first:
+
+```text
+{SAVEROOM_API_BASE_URL}/api/v1/images/card/{Uri.encodeComponent(cardKey)}/content?size=small
+```
+
+For Android emulator testing, `SAVEROOM_API_BASE_URL` must be the Zima LAN URL (for example `http://192.168.178.29:8765`). If the app is run with `127.0.0.1`, thumbnail requests also target emulator localhost and will not reach the Zima API.
+
+v0.7.3 fixed the thumbnail crash/error text. v0.7.4 fixes thumbnail parity by deriving a known API image route from each search result card key before trying existing metadata candidates. Camera/OCR remains out of scope.
+
 ## v0.6.5 image fallback notes
 
 The API detail endpoint can return bare TCGdex asset URLs such as `https://assets.tcgdex.net/en/base/base4/4`. Those URLs return HTML at the bare path; usable image bytes are at `/high.png` or `/low.png`. The API web UI also checks `GET /api/v1/images/cards/{card_key}` for local/served image metadata. Flutter now follows the same broad chain: API image metadata, local served routes, direct HTTPS URLs, and TCGdex high/low fallbacks. Local filesystem paths are never passed to `Image.network`.
