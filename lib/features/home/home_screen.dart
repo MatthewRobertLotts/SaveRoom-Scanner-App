@@ -31,7 +31,7 @@ class HomeScreen extends StatelessWidget {
           ).textTheme.titleMedium?.copyWith(color: colors.onSurfaceVariant),
         ),
         const SizedBox(height: 14),
-        Wrap(
+        const Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
@@ -121,11 +121,11 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 24),
         // Dev/testing actions in fixture mode only
         if (AppConfig.fixtureMode) ...[
-          SectionCard(
+          const SectionCard(
             title: 'Testing',
             icon: Icons.developer_mode,
             dense: true,
-            children: const [
+            children: [
               _SmallAction(
                 'View Mock Card',
                 Icons.style_outlined,
@@ -135,7 +135,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
         ],
-        _SmallAction('Settings', Icons.tune_outlined, AppRoutes.settings),
+        const _SmallAction('Settings', Icons.tune_outlined, AppRoutes.settings),
       ],
     );
   }

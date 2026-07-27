@@ -167,10 +167,10 @@ class CardDetailScreen extends StatelessWidget {
         children: _commercialRows(commercial),
       ),
       if (isFallbackPreview)
-        SectionCard(
+        const SectionCard(
           title: 'Detail status',
           icon: Icons.info_outline,
-          children: const [
+          children: [
             Text(
               'Full card detail is temporarily unavailable. Showing the tapped search result instead.',
             ),

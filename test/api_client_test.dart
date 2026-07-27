@@ -143,14 +143,14 @@ void main() {
   group('SearchResult ranking', () {
     test('English exact match ranks first', () {
       final items = [
-        SearchResult(
+        const SearchResult(
           cardKey: 'de:x',
           name: 'Pikachu',
           setText: '',
           language: 'de',
           source: 'autocomplete',
         ),
-        SearchResult(
+        const SearchResult(
           cardKey: 'en:x',
           name: 'Pikachu',
           setText: '',
@@ -164,14 +164,14 @@ void main() {
 
     test('English starts-with beats non-English contains', () {
       final items = [
-        SearchResult(
+        const SearchResult(
           cardKey: 'de:x',
           name: 'Pikachu',
           setText: '',
           language: 'de',
           source: 'autocomplete',
         ),
-        SearchResult(
+        const SearchResult(
           cardKey: 'en:x',
           name: 'Pika',
           setText: '',
@@ -760,13 +760,13 @@ void main() {
     'SearchResult imageUrlCandidates includes deterministic API thumbnail route',
     () {
       // Test that a SearchResult with cardKey gets the API image route first
-      final result = SearchResult(
+      final result = const SearchResult(
         cardKey: 'en:test-card',
         name: 'Test Card',
         setText: 'Test Set',
         language: 'en',
         source: 'primary',
-        rawItem: const {},
+        rawItem: {},
       );
       final candidates = result.imageUrlCandidates;
       expect(
@@ -795,13 +795,13 @@ void main() {
   test(
     'SearchResult imageUrlCandidates preserves metadata fallbacks after API route',
     () {
-      final result = SearchResult(
+      final result = const SearchResult(
         cardKey: 'en:base2-60',
         name: 'Pikachu',
         setText: 'Base Set 2 / 60',
         language: 'en',
         source: 'primary',
-        rawItem: const {
+        rawItem: {
           'images': {
             'display_image_url': 'https://assets.tcgdex.net/en/base/base2/60',
             'local_display_image_url': '/images/en/base2/base2-60.webp',

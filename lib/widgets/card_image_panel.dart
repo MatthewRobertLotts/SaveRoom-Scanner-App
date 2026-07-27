@@ -47,7 +47,7 @@ class CardImagePanel extends StatefulWidget {
         _nullableText(images, 'resolved_image_url') ??
         _nullableText(images, 'primary_image_url') ??
         _nullableText(images, 'display_image_url');
-    final urls = <String>[...candidates, if (legacyUrl != null) legacyUrl];
+    final urls = <String>[...candidates, ?legacyUrl];
     return CardImagePanel(
       cardName: textAt(card, 'name', 'Unknown card'),
       setText: joinPresent([

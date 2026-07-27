@@ -81,11 +81,7 @@ class SearchResult {
           (rawSet)['core_set_id'] as String? ??
           (rawSet)['set_code'] as String?;
       final num = item['collector_number'] as String?;
-      setText = joinPresent([
-        if (setName != null) setName,
-        if (setId != null) setId,
-        if (num != null) num,
-      ]);
+      setText = joinPresent([?setName, ?setId, ?num]);
     } else {
       setText = cardId ?? langCode ?? '';
     }
@@ -150,7 +146,7 @@ class SearchResult {
       apiBaseUrl: AppConfig.apiBaseUrl,
     );
     final thumbUrl = thumbnailUrlForCardKey(cardKey);
-    final urls = <String>[if (thumbUrl != null) thumbUrl, ...resolved];
+    final urls = <String>[?thumbUrl, ...resolved];
     return urls.toSet().toList();
   }
 
@@ -596,7 +592,7 @@ class SaveRoomApiClient {
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) return decoded;
-      throw FormatException('Health response is not a JSON object');
+      throw const FormatException('Health response is not a JSON object');
     }
     throw Exception('Health check failed: ${response.statusCode}');
   }
