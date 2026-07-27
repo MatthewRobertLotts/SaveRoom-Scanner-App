@@ -24,14 +24,9 @@ Default rule: Matthew should not need manual terminal commands for normal pull/t
 10. Matthew says `save all` when the change is accepted.
 11. Hermes finalizes: status/diff check, tests, commit/push, repo docs, SaveRoom Brain notes, and next-iteration recommendation.
 
-### VS Code run options
+### VS Code run
 
-The repo provides named VS Code launch configurations:
-
-- `SaveRoom Scanner — Live Zima API` — normal Matthew testing mode when the Zima API is running.
-- `SaveRoom Scanner — Fixture Mode` — offline/dev fallback mode when the API is not needed or unavailable.
-
-Matthew normally uses `SaveRoom Scanner — Live Zima API`.
+Matthew normally tests with the Zima API running, so use the regular VS Code Play button with the Android emulator selected. Keep this boring unless there is a real reason to add custom run profiles.
 
 ### Hot reload / hot restart
 

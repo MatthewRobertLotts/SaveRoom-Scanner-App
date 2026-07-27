@@ -27,8 +27,7 @@ Use UI first:
 1. GitHub Desktop → `Fetch origin` → `Pull origin`.
 2. VS Code → open `SaveRoom-Scanner-App`.
 3. Select the Android emulator target.
-4. Choose `SaveRoom Scanner — Live Zima API` in Run and Debug.
-5. Press Play.
+4. Press Play.
 
 Manual terminal commands are exception-only. If Hermes asks Matthew to run one, it must state why, where to run it, the folder, the exact command, and expected result.
 
