@@ -28,13 +28,13 @@ Example: `192.168.178.29`
 
 ## Run
 
-On the Windows PC, from the app repo directory:
+The app now defaults to the Zima LAN API in normal VS Code Play mode:
 
-```powershell
-flutter run --dart-define=SAVEROOM_FIXTURE_MODE=false --dart-define=SAVEROOM_API_BASE_URL=http://192.168.178.29:8765
+```text
+http://192.168.178.29:8765
 ```
 
-Replace the IP with the actual Zima LAN IP.
+Matthew's normal flow is GitHub Desktop Pull → VS Code Play with the Android emulator selected. Manual `flutter run --dart-define` commands are only needed if testing a different API host or fixture mode.
 
 ## What to test
 

@@ -11,10 +11,14 @@ import '../../widgets/saveroom_shell.dart';
 
 /// ponytail: cardKey passed via route args.
 class CardDetailScreen extends StatelessWidget {
-  const CardDetailScreen({super.key, SaveRoomApiClient? client})
-    : _client = client;
+  const CardDetailScreen({
+    super.key,
+    SaveRoomApiClient? client,
+    this.forceFixtureMode,
+  }) : _client = client;
 
   final SaveRoomApiClient? _client;
+  final bool? forceFixtureMode;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +30,11 @@ class CardDetailScreen extends StatelessWidget {
     };
     final fallback = args is CardDetailArgs ? args.fallback : null;
     final client =
-        _client ?? SaveRoomApiClient(fixtureLoader: const FixtureLoader());
+        _client ??
+        SaveRoomApiClient(
+          fixtureLoader: const FixtureLoader(),
+          forceFixtureMode: forceFixtureMode,
+        );
     return FutureBuilder<Map<String, dynamic>>(
       future: client.getCardDetail(cardKey),
       builder: (context, snapshot) {

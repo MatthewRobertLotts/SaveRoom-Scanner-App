@@ -12,21 +12,30 @@ void main() {
 
   group('SaveRoomApiClient (fixture mode)', () {
     test('getCardDetail returns fixture data in fixture mode', () async {
-      final client = SaveRoomApiClient(fixtureLoader: const FixtureLoader());
+      final client = SaveRoomApiClient(
+        fixtureLoader: const FixtureLoader(),
+        forceFixtureMode: true,
+      );
       final result = await client.getCardDetail('en:sv03-223');
       expect(result, isA<Map<String, dynamic>>());
       expect(result['data']['card']['name'], 'Charizard ex');
     });
 
     test('getHealth returns fixture-mode object in fixture mode', () async {
-      final client = SaveRoomApiClient(fixtureLoader: const FixtureLoader());
+      final client = SaveRoomApiClient(
+        fixtureLoader: const FixtureLoader(),
+        forceFixtureMode: true,
+      );
       final result = await client.getHealth();
       expect(result['data']['service'], 'fixture-mode');
       expect(result['data']['ok'], true);
     });
 
     test('searchCards returns SearchResult list in fixture mode', () async {
-      final client = SaveRoomApiClient(fixtureLoader: const FixtureLoader());
+      final client = SaveRoomApiClient(
+        fixtureLoader: const FixtureLoader(),
+        forceFixtureMode: true,
+      );
       final results = await client.searchCards('char');
       expect(results, isA<List<SearchResult>>());
       expect(results.isNotEmpty, true);
@@ -34,7 +43,10 @@ void main() {
     });
 
     test('searchCards empty query returns all 5 fixture cards', () async {
-      final client = SaveRoomApiClient(fixtureLoader: const FixtureLoader());
+      final client = SaveRoomApiClient(
+        fixtureLoader: const FixtureLoader(),
+        forceFixtureMode: true,
+      );
       final results = await client.searchCards('');
       expect(results.length, 5);
     });
@@ -124,6 +136,7 @@ void main() {
       });
       final client = SaveRoomApiClient(
         fixtureLoader: const FixtureLoader(),
+        forceFixtureMode: true,
         httpClient: mockClient,
       );
       // Override fixtureMode — tests run with fixtureMode=true by default.
@@ -815,7 +828,7 @@ void main() {
       );
       expect(
         candidates,
-        contains('http://127.0.0.1:8765/images/en/base2/base2-60.webp'),
+        contains('http://192.168.178.29:8765/images/en/base2/base2-60.webp'),
       );
       expect(
         candidates,

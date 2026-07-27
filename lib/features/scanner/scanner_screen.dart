@@ -18,11 +18,14 @@ class ScannerScreen extends StatefulWidget {
     super.key,
     SaveRoomApiClient? client,
     bool? forceLiveMode,
+    bool? forceFixtureMode,
   }) : _client = client,
-       _forceLiveMode = forceLiveMode;
+       _forceLiveMode = forceLiveMode,
+       _forceFixtureMode = forceFixtureMode;
 
   final SaveRoomApiClient? _client;
   final bool? _forceLiveMode;
+  final bool? _forceFixtureMode;
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
@@ -39,12 +42,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
   String? _error;
   bool _searched = false;
 
-  bool get _liveMode => widget._forceLiveMode ?? !AppConfig.fixtureMode;
+  bool get _liveMode =>
+      widget._forceLiveMode ??
+      !(widget._forceFixtureMode ?? AppConfig.fixtureMode);
 
   @override
   void initState() {
     super.initState();
-    _client = widget._client ?? SaveRoomApiClient();
+    _client =
+        widget._client ??
+        SaveRoomApiClient(forceFixtureMode: widget._forceFixtureMode);
   }
 
   @override

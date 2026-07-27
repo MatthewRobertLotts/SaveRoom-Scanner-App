@@ -16,8 +16,8 @@ void main() {
       expect(AppConfig.fixtureMode, true);
     });
 
-    test('apiBaseUrl defaults to http://127.0.0.1:8765', () {
-      expect(AppConfig.apiBaseUrl, 'http://127.0.0.1:8765');
+    test('apiBaseUrl defaults to Zima LAN API', () {
+      expect(AppConfig.apiBaseUrl, 'http://192.168.178.29:8765');
     });
   });
 }

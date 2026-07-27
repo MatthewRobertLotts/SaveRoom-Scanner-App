@@ -15,11 +15,11 @@ class AppRoutes {
   static const collection = '/collection';
   static const settings = '/settings';
 
-  static Map<String, WidgetBuilder> get routes => {
-    home: (_) => const HomeScreen(),
-    scanner: (_) => const ScannerScreen(),
+  static Map<String, WidgetBuilder> routes({bool? forceFixtureMode}) => {
+    home: (_) => HomeScreen(forceFixtureMode: forceFixtureMode),
+    scanner: (_) => ScannerScreen(forceFixtureMode: forceFixtureMode),
     mockScanResult: (_) => const MockScanResultScreen(),
-    cardDetail: (_) => const CardDetailScreen(),
+    cardDetail: (_) => CardDetailScreen(forceFixtureMode: forceFixtureMode),
     collection: (_) => const CollectionScreen(),
     settings: (_) => const SettingsScreen(),
   };

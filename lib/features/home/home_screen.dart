@@ -11,11 +11,14 @@ import '../../widgets/status_pill.dart';
 import '../../widgets/saveroom_shell.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.forceFixtureMode});
+
+  final bool? forceFixtureMode;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final fixtureMode = forceFixtureMode ?? AppConfig.fixtureMode;
     return SaveRoomShell(
       title: 'SaveRoom Scanner',
       children: [
@@ -31,13 +34,13 @@ class HomeScreen extends StatelessWidget {
           ).textTheme.titleMedium?.copyWith(color: colors.onSurfaceVariant),
         ),
         const SizedBox(height: 14),
-        const Wrap(
+        Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
             StatusPill(
-              AppConfig.fixtureMode ? 'Fixture mode' : 'Live API ready',
-              icon: AppConfig.fixtureMode
+              fixtureMode ? 'Fixture mode' : 'Live API ready',
+              icon: fixtureMode
                   ? Icons.developer_mode
                   : Icons.check_circle_outline,
               dense: true,
@@ -120,7 +123,7 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         // Dev/testing actions in fixture mode only
-        if (AppConfig.fixtureMode) ...[
+        if (fixtureMode) ...[
           const SectionCard(
             title: 'Testing',
             icon: Icons.developer_mode,
