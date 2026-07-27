@@ -10,7 +10,9 @@ coverage/
 
 # IDE/OS
 .idea/
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/extensions.json
 *.iml
 .DS_Store
 

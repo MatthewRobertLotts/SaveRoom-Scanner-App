@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "SaveRoom Scanner — Live Zima API",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--dart-define=SAVEROOM_FIXTURE_MODE=false",
+        "--dart-define=SAVEROOM_API_BASE_URL=http://192.168.178.29:8765"
+      ]
+    },
+    {
+      "name": "SaveRoom Scanner — Fixture Mode",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug"
+    }
+  ]
+}

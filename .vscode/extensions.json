@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "Dart-Code.dart-code",
+    "Dart-Code.flutter",
+    "usernamehw.errorlens",
+    "eamodio.gitlens",
+    "kisstkondoros.vscode-gutter-preview",
+    "jeroen-meijer.pubspec-assist",
+    "redhat.vscode-yaml",
+    "yzhang.markdown-all-in-one",
+    "DavidAnson.vscode-markdownlint",
+    "Gruntfuggly.todo-tree",
+    "aaron-bond.better-comments",
+    "localizely.flutter-intl",
+    "ryanluker.vscode-coverage-gutters"
+  ]
+}

@@ -20,14 +20,17 @@ The SaveRoom Scanner App now uses a two-machine split:
 4. Matthew runs in VS Code + Android emulator.
 5. Matthew reports screenshots, videos, or errors back.
 
-## PC commands
+## Matthew's normal PC flow
 
-```bash
-git pull origin main
-flutter pub get
-flutter devices           # confirm emulator is listed
-flutter run               # starts on connected emulator
-```
+Use UI first:
+
+1. GitHub Desktop → `Fetch origin` → `Pull origin`.
+2. VS Code → open `SaveRoom-Scanner-App`.
+3. Select the Android emulator target.
+4. Choose `SaveRoom Scanner — Live Zima API` in Run and Debug.
+5. Press Play.
+
+Manual terminal commands are exception-only. If Hermes asks Matthew to run one, it must state why, where to run it, the folder, the exact command, and expected result.
 
 ## Avoiding Windows-generated noise
 
