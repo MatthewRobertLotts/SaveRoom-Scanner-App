@@ -179,9 +179,9 @@ class CardDetailScreen extends StatelessWidget {
         : rarity;
     return LayoutBuilder(
       builder: (context, constraints) {
-        // ponytail: hero owns half the screen; keep a sliver for side facts.
+        // ponytail: hero owns half the screen; let the card take the marked gap.
         final heroHeight = MediaQuery.sizeOf(context).height * 0.5;
-        final maxImageHeight = (constraints.maxWidth - 106) * 7 / 5;
+        final maxImageHeight = (constraints.maxWidth - 78) * 7 / 5;
         final imageHeight = heroHeight.clamp(300.0, maxImageHeight);
         final imageWidth = imageHeight * 5 / 7;
         return SizedBox(
