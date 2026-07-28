@@ -19,6 +19,7 @@ class CardImagePanel extends StatefulWidget {
     this.imageUrls = const [],
     this.hasLocalImage = false,
     this.showTitle = true,
+    this.imageHeight = 200,
   });
 
   final String cardName;
@@ -29,10 +30,15 @@ class CardImagePanel extends StatefulWidget {
   final List<String> imageUrls;
   final bool hasLocalImage;
   final bool showTitle;
+  final double imageHeight;
 
   /// Construct from a raw fixture/API data map (the `data` field from
   /// card_detail_response.json).
-  factory CardImagePanel.fromData(Map<String, dynamic> data) {
+  factory CardImagePanel.fromData(
+    Map<String, dynamic> data, {
+    double imageHeight = 200,
+    bool showTitle = true,
+  }) {
     final card = asMap(data['card']);
     final set = asMap(data['set']);
     final images = asMap(data['images']);
@@ -60,6 +66,8 @@ class CardImagePanel extends StatefulWidget {
       imageUrl: urls.isNotEmpty ? urls.first : null,
       imageUrls: urls.toSet().toList(),
       hasLocalImage: images['has_local_image'] == true,
+      imageHeight: imageHeight,
+      showTitle: showTitle,
     );
   }
 
@@ -137,7 +145,7 @@ class _CardImagePanelState extends State<CardImagePanel> {
     final candidates = _candidates;
     final hasImage = _imageIndex < candidates.length;
     final imagePlaceholder = Container(
-      height: 200,
+      height: widget.imageHeight,
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),

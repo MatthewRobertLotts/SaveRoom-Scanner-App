@@ -112,22 +112,17 @@ class CardDetailScreen extends StatelessWidget {
     final data = asMap(fixture['data']);
     final card = asMap(data['card']);
     final pricing = asMap(data['pricing']);
-    final commercial = asMap(data['commercial']);
-    final metadata = asMap(fixture['metadata']);
     final providers = asMap(data['provider_status']);
 
+    final set = asMap(data['set']);
+    final name = textAt(card, 'name', 'Unknown card');
+    final setName = textAt(set, 'name');
+    final number = textAt(card, 'collector_number');
+    final language = _humanLanguage(textAt(card, 'language_code'));
     final rarity = textAt(card, 'rarity');
 
     return [
       if (AppConfig.fixtureMode) const FixtureBadge(),
-      if (!AppConfig.fixtureMode)
-        const Padding(
-          padding: EdgeInsets.only(bottom: 8),
-          child: Chip(
-            avatar: Icon(Icons.cloud_done_outlined, size: 18),
-            label: Text('Live API mode'),
-          ),
-        ),
       if (isFallbackPreview)
         const Padding(
           padding: EdgeInsets.only(bottom: 8),
@@ -137,15 +132,25 @@ class CardDetailScreen extends StatelessWidget {
           ),
         ),
       const SizedBox(height: 12),
-      CardImagePanel.fromData(data),
+      CardImagePanel.fromData(
+        data,
+        imageHeight: 320,
+        showTitle: isFallbackPreview,
+      ),
       const SizedBox(height: 8),
       SectionCard(
-        title: 'Card facts',
+        title: name,
         icon: Icons.style_outlined,
         children: [
           InfoTile(
+            label: 'Set',
+            value: setName,
+            icon: Icons.inventory_2_outlined,
+          ),
+          InfoTile(label: 'Number', value: number, icon: Icons.tag_outlined),
+          InfoTile(
             label: 'Language',
-            value: textAt(card, 'language_code'),
+            value: language,
             icon: Icons.language_outlined,
           ),
           InfoTile(
@@ -157,22 +162,12 @@ class CardDetailScreen extends StatelessWidget {
                 : rarity,
             icon: Icons.star_outline,
           ),
-          InfoTile(
-            label: 'Card key',
-            value: textAt(card, 'card_key'),
-            icon: Icons.key_outlined,
-          ),
         ],
       ),
       SectionCard(
         title: 'Pricing / evidence',
         icon: Icons.query_stats_outlined,
-        children: _pricingRows(pricing),
-      ),
-      SectionCard(
-        title: 'Inventory / commercial',
-        icon: Icons.sell_outlined,
-        children: _commercialRows(commercial),
+        children: _pricingRows(context, pricing, providers),
       ),
       if (isFallbackPreview)
         const SectionCard(
@@ -184,72 +179,73 @@ class CardDetailScreen extends StatelessWidget {
             ),
           ],
         ),
-      SectionCard(
-        title: 'Source / provenance',
-        icon: Icons.verified_outlined,
-        children: [
-          InfoTile(label: 'Contract', value: textAt(metadata, 'contract')),
-          InfoTile(
-            label: 'API version',
-            value: textAt(metadata, 'api_version'),
-          ),
-          InfoTile(label: 'Sanitized', value: textAt(metadata, 'sanitized')),
-          InfoTile(
-            label: 'Providers',
-            value: providers.keys
-                .map(
-                  (s) => s
-                      .replaceAll('justtcg', 'JustTCG')
-                      .replaceAll('cardmarket', 'Cardmarket')
-                      .replaceAll('tcgplayer', 'TCGplayer')
-                      .replaceAll('uk_ebay_sold', 'UK eBay sold')
-                      .replaceAll('tcgdex', 'TCGdex'),
-                )
-                .join(', '),
-          ),
-        ],
-      ),
     ];
   }
 
-  // ponytail: _pricingRows replaces raw map textAt calls with formatted widgets.
-  List<Widget> _pricingRows(Map<String, dynamic> pricing) {
+  // ponytail: one readable summary beats backend primary/fallback/debug sections.
+  List<Widget> _pricingRows(
+    BuildContext context,
+    Map<String, dynamic> pricing,
+    Map<String, dynamic> providers,
+  ) {
     final evidence = asMap(pricing['evidence_summary']);
     final pp = asMap(pricing['primary_price']);
     final fp = asMap(pricing['fallback_price']);
-    return [
-      _PriceRow(
-        label: 'Primary price',
-        price: pp,
-        icon: Icons.trending_up_outlined,
-      ),
-      _PriceRow(
-        label: 'Fallback price',
-        price: fp,
-        icon: Icons.trending_down_outlined,
-      ),
-      SectionCard(
-        title: 'Evidence',
-        icon: Icons.fact_check_outlined,
-        children: [
-          InfoTile(
-            label: 'Total',
-            value: _orDash(evidence['total_evidence']),
-            icon: Icons.numbers_outlined,
-          ),
-          InfoTile(
-            label: 'UK evidence',
-            value: _orDash(evidence['uk_evidence']),
-            icon: Icons.language_outlined,
-          ),
-          InfoTile(
-            label: 'Source',
-            value: _humanSource(textAt(evidence, 'source')),
-            icon: Icons.source_outlined,
-          ),
-        ],
-      ),
-    ];
+    final rows = <Widget>[];
+    if (pp.isNotEmpty) {
+      rows.add(
+        _PriceRow(
+          label: 'Market price',
+          price: pp,
+          icon: Icons.trending_up_outlined,
+        ),
+      );
+    } else if (fp.isNotEmpty) {
+      rows.add(
+        _PriceRow(
+          label: 'Estimated price',
+          price: fp,
+          icon: Icons.trending_up_outlined,
+        ),
+      );
+    }
+    if (evidence.isNotEmpty) {
+      rows.addAll([
+        Text('Evidence', style: Theme.of(context).textTheme.titleSmall),
+        InfoTile(
+          label: 'Total',
+          value: _evidenceCount(evidence['total_evidence']),
+          icon: Icons.fact_check_outlined,
+        ),
+        InfoTile(
+          label: 'UK evidence',
+          value: _evidenceCount(evidence['uk_evidence'], zeroText: 'None yet'),
+          icon: Icons.language_outlined,
+        ),
+        InfoTile(
+          label: 'Source',
+          value: _humanSource(textAt(evidence, 'source')),
+          icon: Icons.source_outlined,
+        ),
+      ]);
+    }
+    if (providers.isNotEmpty) {
+      rows.add(
+        InfoTile(
+          label: 'Data sources',
+          value: providers.keys
+              .map((s) => _humanSource(s.toString()))
+              .join(', '),
+          icon: Icons.verified_outlined,
+        ),
+      );
+    }
+    if (rows.isEmpty) {
+      rows.add(
+        const Text('No pricing or evidence is available for this card yet.'),
+      );
+    }
+    return rows;
   }
 
   static String _orDash(Object? value) {
@@ -258,23 +254,11 @@ class CardDetailScreen extends StatelessWidget {
     return s.isEmpty ? '—' : s;
   }
 
-  List<Widget> _commercialRows(Map<String, dynamic> commercial) {
-    final skus = asList(commercial['sellable_skus']);
-    final firstSku = skus.isNotEmpty
-        ? asMap(skus.first)
-        : const <String, dynamic>{};
-    return [
-      InfoTile(
-        label: 'Default SKU',
-        value: textAt(commercial, 'default_sku_id'),
-      ),
-      InfoTile(label: 'Sellable SKUs', value: '${skus.length}'),
-      InfoTile(
-        label: 'First condition',
-        value: textAt(firstSku, 'condition_code'),
-      ),
-      InfoTile(label: 'SKU status', value: textAt(firstSku, 'status')),
-    ];
+  static String _evidenceCount(Object? value, {String zeroText = 'None'}) {
+    final text = _orDash(value);
+    if (text == '—') return 'No evidence available yet';
+    if (text == '0') return zeroText;
+    return '$text market observations';
   }
 }
 
@@ -298,6 +282,19 @@ String _humanSource(String raw) {
       .join(' ');
 }
 
+String _humanLanguage(String raw) => switch (raw.toLowerCase()) {
+  'en' => 'English',
+  'ja' => 'Japanese',
+  'fr' => 'French',
+  'de' => 'German',
+  'es' => 'Spanish',
+  'it' => 'Italian',
+  'pt' => 'Portuguese',
+  'ko' => 'Korean',
+  'zh' => 'Chinese',
+  _ => raw,
+};
+
 class _PriceRow extends StatelessWidget {
   const _PriceRow({required this.label, required this.price, this.icon});
 
@@ -307,39 +304,21 @@ class _PriceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (price.isEmpty) {
-      return SectionCard(
-        title: label,
-        icon: icon ?? Icons.attach_money_outlined,
-        children: const [Text('—')],
-      );
-    }
     final amount = price['amount'];
     final currency = textAt(price, 'currency', 'GBP');
     final source = _humanSource(textAt(price, 'source'));
     final formattedAmount = amount is num
         ? '${currency == 'GBP' ? '£' : ''}${amount.toStringAsFixed(2)} $currency'
         : '$amount $currency';
-    return SectionCard(
-      title: label,
-      icon: icon ?? Icons.attach_money_outlined,
-      children: [
-        Text(
-          formattedAmount,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        if (source != '—' && source.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Row(
-              children: [
-                const Icon(Icons.source_outlined, size: 14),
-                const SizedBox(width: 4),
-                Expanded(child: Text(source)),
-              ],
-            ),
-          ),
-      ],
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon ?? Icons.attach_money_outlined),
+      title: Text(label, style: Theme.of(context).textTheme.labelLarge),
+      subtitle: Text(source == '—' ? 'Pricing evidence available' : source),
+      trailing: Text(
+        formattedAmount,
+        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }
