@@ -144,6 +144,8 @@ class CardDetailScreen extends StatelessWidget {
         isFallbackPreview: isFallbackPreview,
       ),
       const SizedBox(height: 12),
+      const _HeroActions(),
+      const SizedBox(height: 12),
       SectionCard(
         title: 'Pricing / evidence',
         icon: Icons.query_stats_outlined,
@@ -179,7 +181,7 @@ class CardDetailScreen extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         // ponytail: one proportion bump; responsive later if tablets matter.
-        final imageHeight = constraints.maxWidth >= 360 ? 300.0 : 270.0;
+        final imageHeight = constraints.maxWidth >= 360 ? 320.0 : 290.0;
         final imageWidth = imageHeight * 5 / 7;
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,10 +205,11 @@ class CardDetailScreen extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontSize: 22,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   _GlanceLine(label: 'Set', value: setName),
                   _GlanceLine(label: 'No.', value: number),
                   _GlanceLine(label: 'Lang', value: language),
@@ -355,6 +358,23 @@ class CardDetailScreen extends StatelessWidget {
   }
 }
 
+class _HeroActions extends StatelessWidget {
+  const _HeroActions();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        FilledButton.tonal(onPressed: null, child: Text('Add to inventory')),
+        FilledButton.tonal(onPressed: null, child: Text('Add to wishlist')),
+        FilledButton.tonal(onPressed: null, child: Text('Compare prices')),
+      ],
+    );
+  }
+}
+
 class _GlanceLine extends StatelessWidget {
   const _GlanceLine({required this.label, required this.value});
 
@@ -365,12 +385,17 @@ class _GlanceLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: theme.textTheme.labelSmall),
-          Text(value, style: theme.textTheme.bodyMedium),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyLarge,
+          ),
         ],
       ),
     );

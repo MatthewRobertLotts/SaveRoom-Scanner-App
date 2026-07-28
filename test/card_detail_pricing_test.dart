@@ -61,6 +61,9 @@ void main() {
       await goToCardDetail(tester, cardIndex: 0);
       expect(find.text('Card detail'), findsOneWidget);
       expect(find.text('Charizard ex'), findsWidgets);
+      expect(find.text('Add to inventory'), findsOneWidget);
+      expect(find.text('Add to wishlist'), findsOneWidget);
+      expect(find.text('Compare prices'), findsOneWidget);
     });
 
     testWidgets('Miraidon ex detail', (tester) async {
