@@ -191,8 +191,10 @@ class CardDetailScreen extends StatelessWidget {
     final evidence = asMap(pricing['evidence_summary']);
     final pp = asMap(pricing['primary_price']);
     final fp = asMap(pricing['fallback_price']);
+    final hasPrimaryPrice = _hasAmount(pp);
+    final hasFallbackPrice = _hasAmount(fp);
     final rows = <Widget>[];
-    if (pp.isNotEmpty) {
+    if (hasPrimaryPrice) {
       rows.add(
         _PriceRow(
           label: 'Market price',
@@ -200,7 +202,7 @@ class CardDetailScreen extends StatelessWidget {
           icon: Icons.trending_up_outlined,
         ),
       );
-    } else if (fp.isNotEmpty) {
+    } else if (hasFallbackPrice) {
       rows.add(
         _PriceRow(
           label: 'Estimated price',
@@ -209,7 +211,13 @@ class CardDetailScreen extends StatelessWidget {
         ),
       );
     }
-    final source = _pricingSource(pricing, evidence, pp.isNotEmpty ? pp : fp);
+    final source = _pricingSource(
+      pricing,
+      evidence,
+      hasPrimaryPrice
+          ? pp
+          : (hasFallbackPrice ? fp : const <String, dynamic>{}),
+    );
     final hasEvidence =
         _hasPositiveCount(evidence['total_evidence']) ||
         _hasPositiveCount(evidence['uk_evidence']);
@@ -230,7 +238,8 @@ class CardDetailScreen extends StatelessWidget {
           InfoTile(label: 'Source', value: source, icon: Icons.source_outlined),
       ]);
     }
-    if (providers.isNotEmpty) {
+    if (providers.isNotEmpty &&
+        (hasPrimaryPrice || hasFallbackPrice || hasEvidence)) {
       rows.add(
         InfoTile(
           label: 'Data sources',
@@ -241,7 +250,8 @@ class CardDetailScreen extends StatelessWidget {
         ),
       );
     }
-    if (rows.isEmpty || (!hasEvidence && pp.isEmpty && fp.isEmpty)) {
+    if (rows.isEmpty ||
+        (!hasEvidence && !hasPrimaryPrice && !hasFallbackPrice)) {
       rows.clear();
       rows.add(
         const Text('No pricing or evidence is available for this card yet.'),
@@ -265,6 +275,13 @@ class CardDetailScreen extends StatelessWidget {
 
   static bool _hasPositiveCount(Object? value) {
     final n = num.tryParse(value?.toString() ?? '');
+    return n != null && n > 0;
+  }
+
+  static bool _hasAmount(Map<String, dynamic> price) {
+    final amount = price['amount'];
+    if (amount is num) return amount > 0;
+    final n = num.tryParse(amount?.toString() ?? '');
     return n != null && n > 0;
   }
 

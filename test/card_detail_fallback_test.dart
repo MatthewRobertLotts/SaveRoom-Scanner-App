@@ -135,6 +135,10 @@ void main() {
           'set': <String, dynamic>{'name': 'Sandstorm'},
           'images': <String, dynamic>{},
           'pricing': <String, dynamic>{
+            'fallback_price': <String, dynamic>{
+              'amount': null,
+              'source': 'rapidapi_ebay_average_selling_price',
+            },
             'evidence_summary': <String, dynamic>{
               'total_evidence': 0,
               'uk_evidence': 0,
@@ -158,6 +162,10 @@ void main() {
     );
     expect(find.text('Source'), findsNothing);
     expect(find.text('Data sources'), findsNothing);
+    expect(find.text('Total'), findsNothing);
+    expect(find.text('None'), findsNothing);
+    expect(find.text('UK evidence'), findsNothing);
+    expect(find.text('None yet'), findsNothing);
   });
 
   testWidgets('detail API failure with fallback renders fallback card detail', (

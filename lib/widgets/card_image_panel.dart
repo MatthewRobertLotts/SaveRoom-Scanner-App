@@ -149,52 +149,59 @@ class _CardImagePanelState extends State<CardImagePanel> {
         height: widget.imageHeight,
         child: AspectRatio(
           aspectRatio: 63 / 88,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-              border: Border.all(color: colorScheme.outlineVariant),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(17),
-              child: hasImage
-                  ? !_attemptStarted
-                        ? _placeholderContent(
-                            theme,
-                            colorScheme,
-                            'Loading image',
-                            loading: true,
-                          )
-                        : Image.network(
-                            candidates[_imageIndex],
-                            key: ValueKey(candidates[_imageIndex]),
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, _, _) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                _advanceCandidate();
-                              });
-                              return _placeholderContent(
-                                theme,
-                                colorScheme,
-                                'Loading image',
-                                loading: true,
-                              );
-                            },
-                            loadingBuilder: (_, child, progress) {
-                              if (progress == null) {
-                                _candidateTimer?.cancel();
-                                return child;
-                              }
-                              return _placeholderContent(
-                                theme,
-                                colorScheme,
-                                'Loading image',
-                                loading: true,
-                              );
-                            },
-                          )
-                  : _placeholderContent(theme, colorScheme, 'Image pending'),
-            ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: hasImage
+                ? !_attemptStarted
+                      ? _placeholderContent(
+                          theme,
+                          colorScheme,
+                          'Loading image',
+                          loading: true,
+                        )
+                      : Image.network(
+                          candidates[_imageIndex],
+                          key: ValueKey(candidates[_imageIndex]),
+                          // ponytail: real cards are portrait; fill the portrait slot, no extra work area.
+                          fit: BoxFit.fill,
+                          errorBuilder: (_, _, _) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _advanceCandidate();
+                            });
+                            return _placeholderContent(
+                              theme,
+                              colorScheme,
+                              'Loading image',
+                              loading: true,
+                            );
+                          },
+                          loadingBuilder: (_, child, progress) {
+                            if (progress == null) {
+                              _candidateTimer?.cancel();
+                              return child;
+                            }
+                            return _placeholderContent(
+                              theme,
+                              colorScheme,
+                              'Loading image',
+                              loading: true,
+                            );
+                          },
+                        )
+                : DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.4,
+                      ),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: _placeholderContent(
+                      theme,
+                      colorScheme,
+                      'Image pending',
+                    ),
+                  ),
           ),
         ),
       ),
