@@ -176,39 +176,48 @@ class CardDetailScreen extends StatelessWidget {
     final displayRarity = rarity == '—'
         ? (AppConfig.fixtureMode ? 'Unknown / fixture pending' : 'Unknown')
         : rarity;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 168,
-          child: CardImagePanel.fromData(
-            data,
-            imageHeight: 235,
-            showTitle: false,
-            showMetadata: false,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // ponytail: one proportion bump; responsive later if tablets matter.
+        final imageHeight = constraints.maxWidth >= 360 ? 300.0 : 270.0;
+        final imageWidth = imageHeight * 5 / 7;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: imageWidth,
+              child: CardImagePanel.fromData(
+                data,
+                imageHeight: imageHeight,
+                showTitle: false,
+                showMetadata: false,
               ),
-              const SizedBox(height: 12),
-              _GlanceLine(label: 'Set', value: setName),
-              _GlanceLine(label: 'No.', value: number),
-              _GlanceLine(label: 'Lang', value: language),
-              _GlanceLine(label: 'Rarity', value: displayRarity),
-              _GlanceLine(label: 'Price', value: _priceGlance(pricing)),
-            ],
-          ),
-        ),
-      ],
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _GlanceLine(label: 'Set', value: setName),
+                  _GlanceLine(label: 'No.', value: number),
+                  _GlanceLine(label: 'Lang', value: language),
+                  _GlanceLine(label: 'Rarity', value: displayRarity),
+                  _GlanceLine(label: 'Price', value: _priceGlance(pricing)),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
