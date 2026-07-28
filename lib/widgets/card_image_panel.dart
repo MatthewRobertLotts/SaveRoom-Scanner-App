@@ -59,7 +59,7 @@ class CardImagePanel extends StatefulWidget {
       setText: joinPresent([
         textAt(set, 'name'),
         textAt(set, 'set_code'),
-        textAt(card, 'collector_number'),
+        textAt(card, 'collector_number', textAt(card, 'number')),
       ]),
       languageCode: _nullableText(card, 'language_code'),
       rarity: _nullableText(card, 'rarity'),

@@ -116,8 +116,8 @@ class CardDetailScreen extends StatelessWidget {
 
     final set = asMap(data['set']);
     final name = textAt(card, 'name', 'Unknown card');
-    final setName = textAt(set, 'name');
-    final number = textAt(card, 'collector_number');
+    final setName = textAt(set, 'name', textAt(set, 'localized_name'));
+    final number = textAt(card, 'collector_number', textAt(card, 'number'));
     final language = _humanLanguage(textAt(card, 'language_code'));
     final rarity = textAt(card, 'rarity');
 
@@ -224,7 +224,7 @@ class CardDetailScreen extends StatelessWidget {
         ),
         InfoTile(
           label: 'Source',
-          value: _humanSource(textAt(evidence, 'source')),
+          value: _pricingSource(pricing, evidence, pp.isNotEmpty ? pp : fp),
           icon: Icons.source_outlined,
         ),
       ]);
@@ -259,6 +259,24 @@ class CardDetailScreen extends StatelessWidget {
     if (text == '—') return 'No evidence available yet';
     if (text == '0') return zeroText;
     return '$text market observations';
+  }
+
+  static String _pricingSource(
+    Map<String, dynamic> pricing,
+    Map<String, dynamic> evidence,
+    Map<String, dynamic> price,
+  ) {
+    final breakdown = asList(pricing['source_breakdown']);
+    final firstBreakdown = breakdown.isNotEmpty
+        ? asMap(breakdown.first)
+        : const <String, dynamic>{};
+    return _humanSource(
+      textAt(
+        evidence,
+        'source',
+        textAt(price, 'source', textAt(firstBreakdown, 'source')),
+      ),
+    );
   }
 }
 
@@ -307,6 +325,14 @@ class _PriceRow extends StatelessWidget {
     final amount = price['amount'];
     final currency = textAt(price, 'currency', 'GBP');
     final source = _humanSource(textAt(price, 'source'));
+    if (amount == null) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(icon ?? Icons.attach_money_outlined),
+        title: Text(label, style: Theme.of(context).textTheme.labelLarge),
+        subtitle: Text(source == '—' ? 'Price evidence available' : source),
+      );
+    }
     final formattedAmount = amount is num
         ? '${currency == 'GBP' ? '£' : ''}${amount.toStringAsFixed(2)} $currency'
         : '$amount $currency';

@@ -71,6 +71,51 @@ void main() {
     expect(find.text('Card detail unavailable'), findsNothing);
   });
 
+  testWidgets('live v12 detail shape renders number and pricing source', (
+    tester,
+  ) async {
+    final client = _FakeDetailClient(
+      (_) async => <String, dynamic>{
+        'data': <String, dynamic>{
+          'card': <String, dynamic>{
+            'card_key': 'en:sv03-223',
+            'name': 'Charizard ex',
+            'language_code': 'en',
+            'number': '223',
+          },
+          'set': <String, dynamic>{'name': 'Obsidian Flames'},
+          'images': <String, dynamic>{},
+          'pricing': <String, dynamic>{
+            'primary_price': null,
+            'fallback_price': <String, dynamic>{
+              'amount': 87.9,
+              'currency': 'GBP',
+              'source': 'rapidapi_ebay_average_selling_price',
+            },
+            'source_breakdown': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'source': 'rapidapi_ebay_average_selling_price',
+              },
+            ],
+            'evidence_summary': <String, dynamic>{
+              'total_evidence': 58,
+              'uk_evidence': 0,
+            },
+          },
+          'provider_status': <String, dynamic>{},
+        },
+      },
+    );
+
+    await tester.pumpWidget(_screen(client: client, args: 'en:sv03-223'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('223'), findsOneWidget);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -800));
+    await tester.pumpAndSettle();
+    expect(find.text('RapidAPI eBay average selling price'), findsWidgets);
+  });
+
   testWidgets('detail API failure with fallback renders fallback card detail', (
     tester,
   ) async {
