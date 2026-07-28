@@ -148,7 +148,8 @@ class _CardImagePanelState extends State<CardImagePanel> {
       child: SizedBox(
         height: widget.imageHeight,
         child: AspectRatio(
-          aspectRatio: 63 / 88,
+          // ponytail: standard Pokémon cards are 2.5" x 3.5" (5:7); scale evenly.
+          aspectRatio: 5 / 7,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: hasImage
@@ -162,8 +163,7 @@ class _CardImagePanelState extends State<CardImagePanel> {
                       : Image.network(
                           candidates[_imageIndex],
                           key: ValueKey(candidates[_imageIndex]),
-                          // ponytail: real cards are portrait; fill the portrait slot, no extra work area.
-                          fit: BoxFit.fill,
+                          fit: BoxFit.contain,
                           errorBuilder: (_, _, _) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               _advanceCandidate();
@@ -207,60 +207,63 @@ class _CardImagePanelState extends State<CardImagePanel> {
       ),
     );
 
+    final children = [
+      imagePlaceholder,
+      const SizedBox(height: 12),
+      if (widget.setText != null &&
+          widget.setText!.isNotEmpty &&
+          widget.setText != '—')
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            children: [
+              Icon(
+                Icons.style_outlined,
+                size: 16,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text(widget.setText!, style: theme.textTheme.bodyMedium),
+            ],
+          ),
+        ),
+      if (widget.languageCode != null && widget.languageCode != '—')
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            children: [
+              Icon(
+                Icons.language_outlined,
+                size: 16,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text(widget.languageCode!, style: theme.textTheme.bodySmall),
+            ],
+          ),
+        ),
+      if (widget.rarity != null && widget.rarity != '—')
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            children: [
+              Icon(
+                Icons.star_outline,
+                size: 16,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text(widget.rarity!, style: theme.textTheme.bodySmall),
+            ],
+          ),
+        ),
+    ];
+
+    if (!widget.showTitle) return Column(children: children);
     return SectionCard(
-      title: widget.showTitle ? widget.cardName : '',
-      icon: widget.showTitle ? Icons.auto_awesome_outlined : null,
-      children: [
-        imagePlaceholder,
-        const SizedBox(height: 12),
-        if (widget.setText != null &&
-            widget.setText!.isNotEmpty &&
-            widget.setText != '—')
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.style_outlined,
-                  size: 16,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 6),
-                Text(widget.setText!, style: theme.textTheme.bodyMedium),
-              ],
-            ),
-          ),
-        if (widget.languageCode != null && widget.languageCode != '—')
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.language_outlined,
-                  size: 16,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 6),
-                Text(widget.languageCode!, style: theme.textTheme.bodySmall),
-              ],
-            ),
-          ),
-        if (widget.rarity != null && widget.rarity != '—')
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.star_outline,
-                  size: 16,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 6),
-                Text(widget.rarity!, style: theme.textTheme.bodySmall),
-              ],
-            ),
-          ),
-      ],
+      title: widget.cardName,
+      icon: Icons.auto_awesome_outlined,
+      children: children,
     );
   }
 
