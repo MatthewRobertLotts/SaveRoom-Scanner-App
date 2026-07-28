@@ -224,6 +224,11 @@ class SearchQuality {
   static String _normalizeForPrefix(String value) =>
       value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
 
+  static bool shouldSearch(String query) {
+    final q = query.trim();
+    return q.length >= 3 || RegExp(r'\d').hasMatch(q);
+  }
+
   static bool isUsefulPrefixMatch(String query, String name) {
     final q = _normalizeForPrefix(query);
     final n = _normalizeForPrefix(name);
@@ -243,7 +248,9 @@ class SearchQuality {
   static bool isUsefulResult(SearchResult r, String q) =>
       isUsefulPrefixMatch(q, r.name) ||
       isUsefulPrefixMatch(q, r.rawItem['name_english']?.toString() ?? '') ||
-      isUsefulPrefixMatch(q, r.cardKey);
+      isUsefulPrefixMatch(q, r.cardKey) ||
+      isUsefulPrefixMatch(q, r.collectorNumber ?? '') ||
+      isUsefulPrefixMatch(q, r.displayText);
 
   static bool isStrongNameMatch(SearchResult r, String q) =>
       isUsefulResult(r, q);
@@ -258,6 +265,7 @@ class SearchQuality {
     final query = _normalizeForPrefix(q);
     final name = _normalizeForPrefix(r.name);
     final key = r.cardKey.toLowerCase();
+    final number = _normalizeForPrefix(r.collectorNumber ?? '');
     final sourceScore = switch (r.source) {
       'primary' => 80,
       'autocomplete' => 60,
@@ -267,6 +275,8 @@ class SearchQuality {
     return (name == query ? 1000 : 0) +
         (name.startsWith(query) ? 700 : 0) +
         (name.contains(query) ? 400 : 0) +
+        (number == query ? 650 : 0) +
+        (number.startsWith(query) ? 450 : 0) +
         (key.contains(query) ? 200 : 0) +
         (r.language == 'en' ? 100 : -50) +
         sourceScore;
@@ -606,7 +616,9 @@ class SaveRoomApiClient {
               Fixtures.byKey(key)['data'] as Map<String, dynamic>? ?? const {},
             );
             return result.name.toLowerCase().contains(q) ||
-                result.cardKey.toLowerCase().contains(q);
+                result.cardKey.toLowerCase().contains(q) ||
+                (result.collectorNumber ?? '').toLowerCase().contains(q) ||
+                result.displayText.toLowerCase().contains(q);
           })
           .map(
             (key) => SearchResult.fromFixtureData(
@@ -617,7 +629,7 @@ class SaveRoomApiClient {
     }
 
     final trimmed = query.trim();
-    if (trimmed.length < 3) return const [];
+    if (!SearchQuality.shouldSearch(trimmed)) return const [];
 
     final stopwatch = Stopwatch()..start();
     final q = trimmed.toLowerCase();

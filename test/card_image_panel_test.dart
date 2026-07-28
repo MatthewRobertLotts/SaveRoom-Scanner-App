@@ -42,6 +42,7 @@ void main() {
 
       expect(find.text('Pikachu'), findsWidgets);
       expect(find.text('Image pending'), findsOneWidget);
+      expect(find.byType(AspectRatio), findsOneWidget);
     });
 
     testWidgets('shows set text when available', (tester) async {

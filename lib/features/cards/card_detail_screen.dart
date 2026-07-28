@@ -209,7 +209,11 @@ class CardDetailScreen extends StatelessWidget {
         ),
       );
     }
-    if (evidence.isNotEmpty) {
+    final source = _pricingSource(pricing, evidence, pp.isNotEmpty ? pp : fp);
+    final hasEvidence =
+        _hasPositiveCount(evidence['total_evidence']) ||
+        _hasPositiveCount(evidence['uk_evidence']);
+    if (evidence.isNotEmpty && hasEvidence) {
       rows.addAll([
         Text('Evidence', style: Theme.of(context).textTheme.titleSmall),
         InfoTile(
@@ -222,11 +226,8 @@ class CardDetailScreen extends StatelessWidget {
           value: _evidenceCount(evidence['uk_evidence'], zeroText: 'None yet'),
           icon: Icons.language_outlined,
         ),
-        InfoTile(
-          label: 'Source',
-          value: _pricingSource(pricing, evidence, pp.isNotEmpty ? pp : fp),
-          icon: Icons.source_outlined,
-        ),
+        if (source != '—')
+          InfoTile(label: 'Source', value: source, icon: Icons.source_outlined),
       ]);
     }
     if (providers.isNotEmpty) {
@@ -240,7 +241,8 @@ class CardDetailScreen extends StatelessWidget {
         ),
       );
     }
-    if (rows.isEmpty) {
+    if (rows.isEmpty || (!hasEvidence && pp.isEmpty && fp.isEmpty)) {
+      rows.clear();
       rows.add(
         const Text('No pricing or evidence is available for this card yet.'),
       );
@@ -259,6 +261,11 @@ class CardDetailScreen extends StatelessWidget {
     if (text == '—') return 'No evidence available yet';
     if (text == '0') return zeroText;
     return '$text market observations';
+  }
+
+  static bool _hasPositiveCount(Object? value) {
+    final n = num.tryParse(value?.toString() ?? '');
+    return n != null && n > 0;
   }
 
   static String _pricingSource(

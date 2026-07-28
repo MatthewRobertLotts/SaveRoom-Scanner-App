@@ -280,6 +280,21 @@ void main() {
       expect(SearchQuality.isUsefulPrefixMatch('vilep', 'Weedle'), false);
       expect(SearchQuality.isUsefulPrefixMatch('zzzzzzzz', 'Pikachu'), false);
     });
+
+    test('numeric card searches are allowed and match collector numbers', () {
+      expect(SearchQuality.shouldSearch('72'), true);
+      final ranked = SearchQuality.rankAndFilterNoise([
+        const SearchResult(
+          cardKey: 'en:ex2-72',
+          name: 'Pikachu',
+          setText: 'Sandstorm / ex2 / 72',
+          language: 'en',
+          collectorNumber: '72',
+          source: 'primary',
+        ),
+      ], '72');
+      expect(ranked.single.cardKey, 'en:ex2-72');
+    });
   });
 
   group('CardImageResolver', () {

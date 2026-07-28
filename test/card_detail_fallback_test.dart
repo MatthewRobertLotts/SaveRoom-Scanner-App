@@ -66,6 +66,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
     expect(find.text('Full Detail Name'), findsWidgets);
     expect(find.text('Fallback Name'), findsNothing);
     expect(find.text('Card detail unavailable'), findsNothing);
@@ -110,10 +112,52 @@ void main() {
     await tester.pumpWidget(_screen(client: client, args: 'en:sv03-223'));
     await tester.pumpAndSettle();
 
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
     expect(find.text('223'), findsOneWidget);
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -800));
     await tester.pumpAndSettle();
     expect(find.text('RapidAPI eBay average selling price'), findsWidgets);
+  });
+
+  testWidgets('empty evidence summary renders one friendly fallback', (
+    tester,
+  ) async {
+    final client = _FakeDetailClient(
+      (_) async => <String, dynamic>{
+        'data': <String, dynamic>{
+          'card': <String, dynamic>{
+            'card_key': 'en:ex2-72',
+            'name': 'Pikachu',
+            'language_code': 'en',
+            'collector_number': '72',
+          },
+          'set': <String, dynamic>{'name': 'Sandstorm'},
+          'images': <String, dynamic>{},
+          'pricing': <String, dynamic>{
+            'evidence_summary': <String, dynamic>{
+              'total_evidence': 0,
+              'uk_evidence': 0,
+            },
+          },
+          'provider_status': <String, dynamic>{
+            'uk_ebay_sold': <String, dynamic>{},
+          },
+        },
+      },
+    );
+
+    await tester.pumpWidget(_screen(client: client, args: 'en:ex2-72'));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -900));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('No pricing or evidence is available for this card yet.'),
+      findsOneWidget,
+    );
+    expect(find.text('Source'), findsNothing);
+    expect(find.text('Data sources'), findsNothing);
   });
 
   testWidgets('detail API failure with fallback renders fallback card detail', (

@@ -63,11 +63,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   void _onSearchChanged(String query) {
     _debounce?.cancel();
-    if (_liveMode && query.length >= 3) {
+    final trimmed = query.trim();
+    if (_liveMode && SearchQuality.shouldSearch(trimmed)) {
       final id = ++_reqId;
       _debounce = Timer(
         const Duration(milliseconds: 240),
-        () => _doSearch(query, id),
+        () => _doSearch(trimmed, id),
       );
     } else {
       ++_reqId;
@@ -265,7 +266,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
       final card = Fixtures.byKey(key)['data']?['card'];
       final name = (card?['name'] ?? '').toString().toLowerCase();
       final code = (card?['card_key'] ?? '').toString().toLowerCase();
-      return name.contains(q) || code.contains(q);
+      final number = (card?['collector_number'] ?? card?['number'] ?? '')
+          .toString()
+          .toLowerCase();
+      return name.contains(q) || code.contains(q) || number.contains(q);
     }).toList();
   }
 

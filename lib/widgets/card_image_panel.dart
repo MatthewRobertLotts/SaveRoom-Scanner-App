@@ -144,53 +144,59 @@ class _CardImagePanelState extends State<CardImagePanel> {
     final colorScheme = theme.colorScheme;
     final candidates = _candidates;
     final hasImage = _imageIndex < candidates.length;
-    final imagePlaceholder = Container(
-      height: widget.imageHeight,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(17),
-        child: hasImage
-            ? !_attemptStarted
-                  ? _placeholderContent(
-                      theme,
-                      colorScheme,
-                      'Loading image',
-                      loading: true,
-                    )
-                  : Image.network(
-                      candidates[_imageIndex],
-                      key: ValueKey(candidates[_imageIndex]),
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _advanceCandidate();
-                        });
-                        return _placeholderContent(
-                          theme,
-                          colorScheme,
-                          'Loading image',
-                          loading: true,
-                        );
-                      },
-                      loadingBuilder: (_, child, progress) {
-                        if (progress == null) {
-                          _candidateTimer?.cancel();
-                          return child;
-                        }
-                        return _placeholderContent(
-                          theme,
-                          colorScheme,
-                          'Loading image',
-                          loading: true,
-                        );
-                      },
-                    )
-            : _placeholderContent(theme, colorScheme, 'Image pending'),
+    final imagePlaceholder = Center(
+      child: SizedBox(
+        height: widget.imageHeight,
+        child: AspectRatio(
+          aspectRatio: 63 / 88,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+              border: Border.all(color: colorScheme.outlineVariant),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(17),
+              child: hasImage
+                  ? !_attemptStarted
+                        ? _placeholderContent(
+                            theme,
+                            colorScheme,
+                            'Loading image',
+                            loading: true,
+                          )
+                        : Image.network(
+                            candidates[_imageIndex],
+                            key: ValueKey(candidates[_imageIndex]),
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                _advanceCandidate();
+                              });
+                              return _placeholderContent(
+                                theme,
+                                colorScheme,
+                                'Loading image',
+                                loading: true,
+                              );
+                            },
+                            loadingBuilder: (_, child, progress) {
+                              if (progress == null) {
+                                _candidateTimer?.cancel();
+                                return child;
+                              }
+                              return _placeholderContent(
+                                theme,
+                                colorScheme,
+                                'Loading image',
+                                loading: true,
+                              );
+                            },
+                          )
+                  : _placeholderContent(theme, colorScheme, 'Image pending'),
+            ),
+          ),
+        ),
       ),
     );
 
