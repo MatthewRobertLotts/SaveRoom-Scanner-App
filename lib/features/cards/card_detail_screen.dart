@@ -144,13 +144,12 @@ class CardDetailScreen extends StatelessWidget {
         isFallbackPreview: isFallbackPreview,
       ),
       const SizedBox(height: 12),
-      const _HeroActions(),
-      const SizedBox(height: 12),
       SectionCard(
         title: 'Pricing / evidence',
         icon: Icons.query_stats_outlined,
         children: _pricingRows(context, pricing, providers),
       ),
+      const _HeroActions(),
       if (isFallbackPreview)
         const SectionCard(
           title: 'Detail status',
@@ -180,45 +179,50 @@ class CardDetailScreen extends StatelessWidget {
         : rarity;
     return LayoutBuilder(
       builder: (context, constraints) {
-        // ponytail: one proportion bump; responsive later if tablets matter.
-        final imageHeight = constraints.maxWidth >= 360 ? 320.0 : 290.0;
+        // ponytail: hero owns half the screen; keep a sliver for side facts.
+        final heroHeight = MediaQuery.sizeOf(context).height * 0.5;
+        final maxImageHeight = (constraints.maxWidth - 106) * 7 / 5;
+        final imageHeight = heroHeight.clamp(300.0, maxImageHeight);
         final imageWidth = imageHeight * 5 / 7;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: imageWidth,
-              child: CardImagePanel.fromData(
-                data,
-                imageHeight: imageHeight,
-                showTitle: false,
-                showMetadata: false,
+        return SizedBox(
+          height: heroHeight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: imageWidth,
+                child: CardImagePanel.fromData(
+                  data,
+                  imageHeight: imageHeight,
+                  showTitle: false,
+                  showMetadata: false,
+                ),
               ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  _GlanceLine(label: 'Set', value: setName),
-                  _GlanceLine(label: 'No.', value: number),
-                  _GlanceLine(label: 'Lang', value: language),
-                  _GlanceLine(label: 'Rarity', value: displayRarity),
-                  _GlanceLine(label: 'Price', value: _priceGlance(pricing)),
-                ],
+                    _GlanceLine(label: 'Set', value: setName),
+                    _GlanceLine(label: 'No.', value: number),
+                    _GlanceLine(label: 'Lang', value: language),
+                    _GlanceLine(label: 'Rarity', value: displayRarity),
+                    _GlanceLine(label: 'Price', value: _priceGlance(pricing)),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

@@ -61,6 +61,12 @@ void main() {
       await goToCardDetail(tester, cardIndex: 0);
       expect(find.text('Card detail'), findsOneWidget);
       expect(find.text('Charizard ex'), findsWidgets);
+      await tester.scrollUntilVisible(
+        find.text('Add to inventory'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Add to inventory'), findsOneWidget);
       expect(find.text('Add to wishlist'), findsOneWidget);
       expect(find.text('Compare prices'), findsOneWidget);
