@@ -132,38 +132,18 @@ class CardDetailScreen extends StatelessWidget {
           ),
         ),
       const SizedBox(height: 12),
-      CardImagePanel.fromData(
-        data,
-        imageHeight: 320,
-        showTitle: isFallbackPreview,
+      _summaryRow(
+        context,
+        data: data,
+        name: name,
+        setName: setName,
+        number: number,
+        language: language,
+        rarity: rarity,
+        pricing: pricing,
+        isFallbackPreview: isFallbackPreview,
       ),
-      const SizedBox(height: 8),
-      SectionCard(
-        title: name,
-        icon: Icons.style_outlined,
-        children: [
-          InfoTile(
-            label: 'Set',
-            value: setName,
-            icon: Icons.inventory_2_outlined,
-          ),
-          InfoTile(label: 'Number', value: number, icon: Icons.tag_outlined),
-          InfoTile(
-            label: 'Language',
-            value: language,
-            icon: Icons.language_outlined,
-          ),
-          InfoTile(
-            label: 'Rarity',
-            value: rarity == '—'
-                ? (AppConfig.fixtureMode
-                      ? 'Unknown / fixture pending'
-                      : 'Unknown')
-                : rarity,
-            icon: Icons.star_outline,
-          ),
-        ],
-      ),
+      const SizedBox(height: 12),
       SectionCard(
         title: 'Pricing / evidence',
         icon: Icons.query_stats_outlined,
@@ -180,6 +160,56 @@ class CardDetailScreen extends StatelessWidget {
           ],
         ),
     ];
+  }
+
+  Widget _summaryRow(
+    BuildContext context, {
+    required Map<String, dynamic> data,
+    required String name,
+    required String setName,
+    required String number,
+    required String language,
+    required String rarity,
+    required Map<String, dynamic> pricing,
+    required bool isFallbackPreview,
+  }) {
+    final displayRarity = rarity == '—'
+        ? (AppConfig.fixtureMode ? 'Unknown / fixture pending' : 'Unknown')
+        : rarity;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 168,
+          child: CardImagePanel.fromData(
+            data,
+            imageHeight: 235,
+            showTitle: false,
+            showMetadata: false,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              _GlanceLine(label: 'Set', value: setName),
+              _GlanceLine(label: 'No.', value: number),
+              _GlanceLine(label: 'Lang', value: language),
+              _GlanceLine(label: 'Rarity', value: displayRarity),
+              _GlanceLine(label: 'Price', value: _priceGlance(pricing)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   // ponytail: one readable summary beats backend primary/fallback/debug sections.
@@ -299,6 +329,40 @@ class CardDetailScreen extends StatelessWidget {
         evidence,
         'source',
         textAt(price, 'source', textAt(firstBreakdown, 'source')),
+      ),
+    );
+  }
+
+  static String _priceGlance(Map<String, dynamic> pricing) {
+    final pp = asMap(pricing['primary_price']);
+    final fp = asMap(pricing['fallback_price']);
+    final price = _hasAmount(pp) ? pp : (_hasAmount(fp) ? fp : null);
+    if (price == null) return 'No pricing yet';
+    final amount = price['amount'];
+    final currency = textAt(price, 'currency', 'GBP');
+    return amount is num
+        ? '${currency == 'GBP' ? '£' : ''}${amount.toStringAsFixed(2)}'
+        : amount.toString();
+  }
+}
+
+class _GlanceLine extends StatelessWidget {
+  const _GlanceLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: theme.textTheme.labelSmall),
+          Text(value, style: theme.textTheme.bodyMedium),
+        ],
       ),
     );
   }

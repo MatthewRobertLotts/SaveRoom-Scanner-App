@@ -19,6 +19,7 @@ class CardImagePanel extends StatefulWidget {
     this.imageUrls = const [],
     this.hasLocalImage = false,
     this.showTitle = true,
+    this.showMetadata = true,
     this.imageHeight = 200,
   });
 
@@ -30,6 +31,7 @@ class CardImagePanel extends StatefulWidget {
   final List<String> imageUrls;
   final bool hasLocalImage;
   final bool showTitle;
+  final bool showMetadata;
   final double imageHeight;
 
   /// Construct from a raw fixture/API data map (the `data` field from
@@ -38,6 +40,7 @@ class CardImagePanel extends StatefulWidget {
     Map<String, dynamic> data, {
     double imageHeight = 200,
     bool showTitle = true,
+    bool showMetadata = true,
   }) {
     final card = asMap(data['card']);
     final set = asMap(data['set']);
@@ -68,6 +71,7 @@ class CardImagePanel extends StatefulWidget {
       hasLocalImage: images['has_local_image'] == true,
       imageHeight: imageHeight,
       showTitle: showTitle,
+      showMetadata: showMetadata,
     );
   }
 
@@ -209,8 +213,9 @@ class _CardImagePanelState extends State<CardImagePanel> {
 
     final children = [
       imagePlaceholder,
-      const SizedBox(height: 12),
-      if (widget.setText != null &&
+      if (widget.showMetadata) const SizedBox(height: 12),
+      if (widget.showMetadata &&
+          widget.setText != null &&
           widget.setText!.isNotEmpty &&
           widget.setText != '—')
         Padding(
@@ -227,7 +232,9 @@ class _CardImagePanelState extends State<CardImagePanel> {
             ],
           ),
         ),
-      if (widget.languageCode != null && widget.languageCode != '—')
+      if (widget.showMetadata &&
+          widget.languageCode != null &&
+          widget.languageCode != '—')
         Padding(
           padding: const EdgeInsets.only(bottom: 4),
           child: Row(
@@ -242,7 +249,7 @@ class _CardImagePanelState extends State<CardImagePanel> {
             ],
           ),
         ),
-      if (widget.rarity != null && widget.rarity != '—')
+      if (widget.showMetadata && widget.rarity != null && widget.rarity != '—')
         Padding(
           padding: const EdgeInsets.only(bottom: 4),
           child: Row(

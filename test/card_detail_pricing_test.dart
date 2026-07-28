@@ -29,12 +29,12 @@ void main() {
 
       // Fallback price should show formatted amount (Charizard = 87.90)
       await tester.scrollUntilVisible(
-        find.textContaining('£87.90'),
+        find.textContaining('£87.90').last,
         200,
         scrollable: find.byType(Scrollable).last,
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('£87.90'), findsOneWidget);
+      expect(find.textContaining('£87.90'), findsWidgets);
 
       // No raw map strings in pricing section
       expect(find.textContaining('{amount'), findsNothing);
