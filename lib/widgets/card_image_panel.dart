@@ -20,7 +20,6 @@ class CardImagePanel extends StatefulWidget {
     this.hasLocalImage = false,
     this.showTitle = true,
     this.showMetadata = true,
-    this.fillFrame = false,
     this.imageHeight = 200,
   });
 
@@ -33,7 +32,6 @@ class CardImagePanel extends StatefulWidget {
   final bool hasLocalImage;
   final bool showTitle;
   final bool showMetadata;
-  final bool fillFrame;
   final double imageHeight;
 
   /// Construct from a raw fixture/API data map (the `data` field from
@@ -43,7 +41,6 @@ class CardImagePanel extends StatefulWidget {
     double imageHeight = 200,
     bool showTitle = true,
     bool showMetadata = true,
-    bool fillFrame = false,
   }) {
     final card = asMap(data['card']);
     final set = asMap(data['set']);
@@ -75,7 +72,6 @@ class CardImagePanel extends StatefulWidget {
       imageHeight: imageHeight,
       showTitle: showTitle,
       showMetadata: showMetadata,
-      fillFrame: fillFrame,
     );
   }
 
@@ -152,66 +148,68 @@ class _CardImagePanelState extends State<CardImagePanel> {
     final colorScheme = theme.colorScheme;
     final candidates = _candidates;
     final hasImage = _imageIndex < candidates.length;
-    final imageContent = ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: hasImage
-          ? !_attemptStarted
-                ? _placeholderContent(
-                    theme,
-                    colorScheme,
-                    'Loading image',
-                    loading: true,
-                  )
-                : Image.network(
-                    candidates[_imageIndex],
-                    key: ValueKey(candidates[_imageIndex]),
-                    fit: widget.fillFrame ? BoxFit.fill : BoxFit.contain,
-                    errorBuilder: (_, _, _) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        _advanceCandidate();
-                      });
-                      return _placeholderContent(
-                        theme,
-                        colorScheme,
-                        'Loading image',
-                        loading: true,
-                      );
-                    },
-                    loadingBuilder: (_, child, progress) {
-                      if (progress == null) {
-                        _candidateTimer?.cancel();
-                        return child;
-                      }
-                      return _placeholderContent(
-                        theme,
-                        colorScheme,
-                        'Loading image',
-                        loading: true,
-                      );
-                    },
-                  )
-          : DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.4,
-                ),
-                border: Border.all(color: colorScheme.outlineVariant),
-              ),
-              child: _placeholderContent(theme, colorScheme, 'Image pending'),
-            ),
+    final imagePlaceholder = Center(
+      child: SizedBox(
+        height: widget.imageHeight,
+        child: AspectRatio(
+          // ponytail: standard Pokémon cards are 2.5" x 3.5" (5:7); scale evenly.
+          aspectRatio: 5 / 7,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: hasImage
+                ? !_attemptStarted
+                      ? _placeholderContent(
+                          theme,
+                          colorScheme,
+                          'Loading image',
+                          loading: true,
+                        )
+                      : Image.network(
+                          candidates[_imageIndex],
+                          key: ValueKey(candidates[_imageIndex]),
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _advanceCandidate();
+                            });
+                            return _placeholderContent(
+                              theme,
+                              colorScheme,
+                              'Loading image',
+                              loading: true,
+                            );
+                          },
+                          loadingBuilder: (_, child, progress) {
+                            if (progress == null) {
+                              _candidateTimer?.cancel();
+                              return child;
+                            }
+                            return _placeholderContent(
+                              theme,
+                              colorScheme,
+                              'Loading image',
+                              loading: true,
+                            );
+                          },
+                        )
+                : DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.4,
+                      ),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: _placeholderContent(
+                      theme,
+                      colorScheme,
+                      'Image pending',
+                    ),
+                  ),
+          ),
+        ),
+      ),
     );
-    final imageFrame = SizedBox(
-      height: widget.imageHeight,
-      child: widget.fillFrame
-          ? imageContent
-          : AspectRatio(
-              // ponytail: standard Pokémon cards are 2.5" x 3.5" (5:7); scale evenly.
-              aspectRatio: 5 / 7,
-              child: imageContent,
-            ),
-    );
-    final imagePlaceholder = Center(child: imageFrame);
 
     final children = [
       imagePlaceholder,

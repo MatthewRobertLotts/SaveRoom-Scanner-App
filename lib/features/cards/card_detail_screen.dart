@@ -179,9 +179,11 @@ class CardDetailScreen extends StatelessWidget {
         : rarity;
     return LayoutBuilder(
       builder: (context, constraints) {
-        // ponytail: user wants fit over strict proportions here.
+        // ponytail: hero owns half the screen; let the card take the marked gap.
         final heroHeight = MediaQuery.sizeOf(context).height * 0.5;
-        final imageWidth = constraints.maxWidth >= 360 ? 178.0 : 160.0;
+        final maxImageHeight = (constraints.maxWidth - 78) * 7 / 5;
+        final imageHeight = heroHeight.clamp(300.0, maxImageHeight);
+        final imageWidth = imageHeight * 5 / 7;
         return SizedBox(
           height: heroHeight,
           child: Row(
@@ -191,10 +193,9 @@ class CardDetailScreen extends StatelessWidget {
                 width: imageWidth,
                 child: CardImagePanel.fromData(
                   data,
-                  imageHeight: heroHeight,
+                  imageHeight: imageHeight,
                   showTitle: false,
                   showMetadata: false,
-                  fillFrame: true,
                 ),
               ),
               const SizedBox(width: 14),
