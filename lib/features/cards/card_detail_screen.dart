@@ -144,6 +144,17 @@ class CardDetailScreen extends StatelessWidget {
         isFallbackPreview: isFallbackPreview,
       ),
       const SizedBox(height: 12),
+      _variantSelector(language),
+      const SizedBox(height: 12),
+      _bentoGrid(
+        context,
+        setName,
+        number,
+        language,
+        _displayRarity(rarity),
+        pricing,
+      ),
+      const SizedBox(height: 12),
       SectionCard(
         title: 'Pricing / evidence',
         icon: Icons.query_stats_outlined,
@@ -174,57 +185,93 @@ class CardDetailScreen extends StatelessWidget {
     required Map<String, dynamic> pricing,
     required bool isFallbackPreview,
   }) {
-    final displayRarity = rarity == '—'
-        ? (AppConfig.fixtureMode ? 'Unknown / fixture pending' : 'Unknown')
-        : rarity;
     return LayoutBuilder(
       builder: (context, constraints) {
-        // ponytail: hero owns half the screen; let the card take the marked gap.
-        final heroHeight = MediaQuery.sizeOf(context).height * 0.5;
-        final maxImageHeight = (constraints.maxWidth - 78) * 7 / 5;
-        final imageHeight = heroHeight.clamp(300.0, maxImageHeight);
+        // ponytail: Variant Explorer top, Bento facts below. No squeezed side rail.
+        final heroHeight = MediaQuery.sizeOf(context).height * 0.42;
+        final imageHeight = (heroHeight - 70).clamp(180.0, 330.0);
         final imageWidth = imageHeight * 5 / 7;
         return SizedBox(
           height: heroHeight,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
             children: [
-              SizedBox(
-                width: imageWidth,
-                child: CardImagePanel.fromData(
-                  data,
-                  imageHeight: imageHeight,
-                  showTitle: false,
-                  showMetadata: false,
-                ),
-              ),
-              const SizedBox(width: 14),
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
+                    const Expanded(child: _PrintPreview(label: 'Prev')),
+                    SizedBox(
+                      width: imageWidth,
+                      child: CardImagePanel.fromData(
+                        data,
+                        imageHeight: imageHeight,
+                        showTitle: false,
+                        showMetadata: false,
                       ),
                     ),
-                    _GlanceLine(label: 'Set', value: setName),
-                    _GlanceLine(label: 'No.', value: number),
-                    _GlanceLine(label: 'Lang', value: language),
-                    _GlanceLine(label: 'Rarity', value: displayRarity),
-                    _GlanceLine(label: 'Price', value: _priceGlance(pricing)),
+                    const Expanded(child: _PrintPreview(label: 'Next')),
                   ],
                 ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              Text(
+                'Selected printing',
+                style: Theme.of(context).textTheme.labelSmall,
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  static String _displayRarity(String rarity) => rarity == '—'
+      ? (AppConfig.fixtureMode ? 'Unknown / fixture pending' : 'Unknown')
+      : rarity;
+
+  Widget _variantSelector(String language) {
+    return Row(
+      children: [
+        Expanded(child: _SelectorChip(label: language, selected: true)),
+        const SizedBox(width: 8),
+        const Expanded(child: _SelectorChip(label: 'Alt language')),
+        const SizedBox(width: 8),
+        const Expanded(child: _SelectorChip(label: 'Reverse')),
+      ],
+    );
+  }
+
+  Widget _bentoGrid(
+    BuildContext context,
+    String setName,
+    String number,
+    String language,
+    String rarity,
+    Map<String, dynamic> pricing,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _BentoTile(
+            title: 'Identity',
+            lines: [setName, number, language],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _BentoTile(
+            title: 'Market',
+            lines: [_priceGlance(pricing), rarity],
+          ),
+        ),
+      ],
     );
   }
 
@@ -379,27 +426,89 @@ class _HeroActions extends StatelessWidget {
   }
 }
 
-class _GlanceLine extends StatelessWidget {
-  const _GlanceLine({required this.label, required this.value});
+class _PrintPreview extends StatelessWidget {
+  const _PrintPreview({required this.label});
 
   final String label;
-  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 90,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.32),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      alignment: Alignment.center,
+      child: Text(label, style: Theme.of(context).textTheme.labelSmall),
+    );
+  }
+}
+
+class _SelectorChip extends StatelessWidget {
+  const _SelectorChip({required this.label, this.selected = false});
+
+  final String label;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: selected
+            ? colorScheme.primaryContainer.withValues(alpha: 0.38)
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        border: Border.all(
+          color: selected ? colorScheme.primary : colorScheme.outlineVariant,
+        ),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class _BentoTile extends StatelessWidget {
+  const _BentoTile({required this.title, required this.lines});
+
+  final String title;
+  final List<String> lines;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+    final colorScheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.38),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: theme.textTheme.labelSmall),
-          Text(
-            value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyLarge,
-          ),
+          Text(title, style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          for (final line in lines)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                line,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
         ],
       ),
     );
