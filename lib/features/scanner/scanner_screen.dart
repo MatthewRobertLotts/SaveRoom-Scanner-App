@@ -359,6 +359,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                         as Map<String, dynamic>? ??
                     const {},
               ),
+              detailArguments: filteredKeys[i],
             ),
           ),
       ],
@@ -393,53 +394,69 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
   }
 
-  Widget _buildSearchResultTile(ThemeData theme, SearchResult r) {
+  Widget _buildSearchResultTile(
+    ThemeData theme,
+    SearchResult r, {
+    Object? detailArguments,
+  }) {
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 10,
-        ),
-        leading: CardThumbnail(
-          imageUrls: r.imageUrlCandidates,
-          cardName: r.name,
-        ),
-        title: Text(
-          r.name,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          _resultSubtitle(r),
-          style: theme.textTheme.bodySmall,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (r.rarity != null && r.rarity != '—') ...[
-              StatusPill(r.rarity!, dense: true),
-              const SizedBox(width: 8),
-            ],
-            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-          ],
-        ),
+      margin: const EdgeInsets.only(bottom: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
         onTap: () {
           RecentlyViewed.add(r);
           Navigator.pushNamed(
             context,
             AppRoutes.cardDetail,
-            arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
+            arguments:
+                detailArguments ??
+                CardDetailArgs(cardKey: r.cardKey, fallback: r),
           );
         },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CardThumbnail(
+                imageUrls: r.imageUrlCandidates,
+                cardName: r.name,
+                width: 84,
+                height: 118,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _resultSubtitle(r),
+                      style: theme.textTheme.bodySmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 14),
+                    if (r.rarity != null && r.rarity != '—')
+                      StatusPill(r.rarity!, dense: true),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }
