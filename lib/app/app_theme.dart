@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 ThemeData buildAppTheme() {
-  // Apple-like dark theme: near-black background, clean blue accents
-  const seed = Color(0xFF007AFF); // iOS system blue
-  const bg = Color(0xFF0A0A0A); // near-black for premium feel
-  const surface = Color(0xFF121212); // slightly lighter for cards
-  const surfaceVariant = Color(0xFF1E1E1E); // list items
+  const seed = Color(0xFF0A84FF);
+  const bg = Color(0xFF07090D);
+  const surface = Color(0xFF11151B);
+  const surfaceVariant = Color(0xFF171C24);
+  const outline = Color(0xFF2A3340);
 
   return ThemeData(
     colorScheme:
@@ -15,7 +15,8 @@ ThemeData buildAppTheme() {
         ).copyWith(
           surface: surface,
           surfaceContainerHighest: surfaceVariant,
-          primary: const Color(0xFF007AFF), // iOS blue
+          outline: outline,
+          primary: seed,
           onPrimary: Colors.white,
         ),
     scaffoldBackgroundColor: bg,
@@ -34,7 +35,10 @@ ThemeData buildAppTheme() {
       color: surface,
       elevation: 0,
       margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: outline),
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(

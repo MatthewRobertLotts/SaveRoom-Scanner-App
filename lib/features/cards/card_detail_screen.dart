@@ -42,6 +42,7 @@ class CardDetailScreen extends StatelessWidget {
           if (fallback != null && fallback.hasFallbackDetail) {
             return SaveRoomShell(
               title: 'Card detail',
+              bottomBar: const _CollectorActionBar(),
               children: _content(
                 context,
                 fallback.toFallbackDetailResponse(),
@@ -59,6 +60,7 @@ class CardDetailScreen extends StatelessWidget {
         }
         return SaveRoomShell(
           title: 'Card detail',
+          bottomBar: const _CollectorActionBar(),
           children: _content(context, snapshot.data!),
         );
       },
@@ -132,7 +134,9 @@ class CardDetailScreen extends StatelessWidget {
           ),
         ),
       const SizedBox(height: 12),
-      _summaryRow(
+      _IdentityHeader(name: name, setName: setName, number: number),
+      const SizedBox(height: 16),
+      _collectorProHeader(
         context,
         data: data,
         name: name,
@@ -144,7 +148,9 @@ class CardDetailScreen extends StatelessWidget {
         isFallbackPreview: isFallbackPreview,
       ),
       const SizedBox(height: 12),
-      _bentoGrid(),
+      const _DetailTabs(),
+      const SizedBox(height: 12),
+      _collectorInformation(card, name, setName, number, language, rarity),
       const SizedBox(height: 12),
       SectionCard(
         title: 'Pricing / evidence',
@@ -164,7 +170,7 @@ class CardDetailScreen extends StatelessWidget {
     ];
   }
 
-  Widget _summaryRow(
+  Widget _collectorProHeader(
     BuildContext context, {
     required Map<String, dynamic> data,
     required String name,
@@ -177,57 +183,62 @@ class CardDetailScreen extends StatelessWidget {
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // ponytail: vanilla Bento; image is one tile, facts are adjacent tiles.
-        final heroHeight = (MediaQuery.sizeOf(context).height * 0.48).clamp(
-          330.0,
-          390.0,
-        );
-        final imageHeight = (heroHeight - 10).clamp(300.0, 360.0);
+        // ponytail: Collector Pro only above 600dp; standard phones get a safe split.
+        final wide = constraints.maxWidth >= 360;
+        final heroHeight = wide ? 280.0 : 420.0;
+        final imageHeight = wide ? 260.0 : 320.0;
         final imageWidth = imageHeight * 5 / 7;
         return SizedBox(
           height: heroHeight,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: imageWidth,
-                child: CardImagePanel.fromData(
-                  data,
-                  imageHeight: imageHeight,
-                  showTitle: false,
-                  showMetadata: false,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: wide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: _BentoTile(
-                        title: 'Identity',
-                        lines: [setName, number, language],
+                    SizedBox(
+                      width: imageWidth,
+                      child: CardImagePanel.fromData(
+                        data,
+                        imageHeight: imageHeight,
+                        showTitle: false,
+                        showMetadata: false,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: _BentoTile(
-                        title: 'Market',
-                        lines: [_priceGlance(pricing), _displayRarity(rarity)],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: _MarketDecisionCard(pricing: pricing),
+                          ),
+                          const SizedBox(height: 10),
+                          Expanded(
+                            child: _CardFactsCard(
+                              rarity: _displayRarity(rarity),
+                              language: language,
+                              finish: _finish(rarity),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
+                )
+              : Column(
+                  children: [
+                    SizedBox(
+                      width: imageWidth,
+                      child: CardImagePanel.fromData(
+                        data,
+                        imageHeight: imageHeight,
+                        showTitle: false,
+                        showMetadata: false,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(child: _MarketDecisionCard(pricing: pricing)),
+                  ],
                 ),
-              ),
-            ],
-          ),
         );
       },
     );
@@ -237,23 +248,23 @@ class CardDetailScreen extends StatelessWidget {
       ? (AppConfig.fixtureMode ? 'Unknown / fixture pending' : 'Unknown')
       : rarity;
 
-  Widget _bentoGrid() {
-    return const Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _collectorInformation(
+    Map<String, dynamic> card,
+    String name,
+    String setName,
+    String number,
+    String language,
+    String rarity,
+  ) {
+    return SectionCard(
+      title: 'Collector information',
       children: [
-        Expanded(
-          child: _BentoTile(
-            title: 'Collection',
-            lines: ['Not owned', 'Inventory coming later'],
-          ),
-        ),
-        SizedBox(width: 10),
-        Expanded(
-          child: _BentoTile(
-            title: 'Quick actions',
-            lines: ['Add to inventory', 'Add to wishlist', 'Compare prices'],
-          ),
-        ),
+        _FactRow(label: 'Name', value: name),
+        _FactRow(label: 'Card key', value: textAt(card, 'card_key')),
+        _FactRow(label: 'Set', value: setName),
+        _FactRow(label: 'Number', value: number),
+        _FactRow(label: 'Language', value: language),
+        _FactRow(label: 'Rarity', value: _displayRarity(rarity)),
       ],
     );
   }
@@ -390,41 +401,307 @@ class CardDetailScreen extends StatelessWidget {
         ? '${currency == 'GBP' ? '£' : ''}${amount.toStringAsFixed(2)}'
         : amount.toString();
   }
+
+  static String _finish(String rarity) => rarity.toLowerCase().contains('holo')
+      ? 'Holofoil'
+      : (rarity == '—' ? 'Unknown' : 'Standard');
 }
 
-class _BentoTile extends StatelessWidget {
-  const _BentoTile({required this.title, required this.lines});
-
-  final String title;
-  final List<String> lines;
+class _DetailTabs extends StatelessWidget {
+  const _DetailTabs();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(14),
+      height: 48,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.38),
+        color: colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Row(
+        children: [
+          _TabLabel('Overview', selected: true),
+          _TabLabel('Evidence'),
+          _TabLabel('History'),
+        ],
+      ),
+    );
+  }
+}
+
+class _IdentityHeader extends StatelessWidget {
+  const _IdentityHeader({
+    required this.name,
+    required this.setName,
+    required this.number,
+  });
+
+  final String name;
+  final String setName;
+  final String number;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          name,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                setName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            if (number != '—') ...[
+              const SizedBox(width: 8),
+              Text(number, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _TabLabel extends StatelessWidget {
+  const _TabLabel(this.text, {this.selected = false});
+
+  final String text;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            text,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: selected ? Colors.white : Colors.white60,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: 54,
+            height: 3,
+            decoration: BoxDecoration(
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketDecisionCard extends StatelessWidget {
+  const _MarketDecisionCard({required this.pricing});
+
+  final Map<String, dynamic> pricing;
+
+  @override
+  Widget build(BuildContext context) {
+    final price = CardDetailScreen._priceGlance(pricing);
+    final hasPrice = price != 'No pricing yet';
+    return _MiniPanel(
+      title: 'Market price',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            hasPrice ? price : '—',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            hasPrice ? 'Verified market signal' : '0 verified observations',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CardFactsCard extends StatelessWidget {
+  const _CardFactsCard({
+    required this.rarity,
+    required this.language,
+    required this.finish,
+  });
+
+  final String rarity;
+  final String language;
+  final String finish;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MiniPanel(
+      title: 'Card facts',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CompactFact(label: 'Rarity', value: rarity),
+          _CompactFact(label: 'Language', value: language),
+          const _CompactFact(label: 'Owned', value: 'No'),
+          _CompactFact(label: 'Finish', value: finish),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniPanel extends StatelessWidget {
+  const _MiniPanel({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        border: Border.all(color: colors.outline),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          for (final line in lines)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                line,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall,
-              ),
+          Text(
+            title.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Colors.white70,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.7,
             ),
+          ),
+          const SizedBox(height: 6),
+          Expanded(child: child),
         ],
       ),
+    );
+  }
+}
+
+class _CompactFact extends StatelessWidget {
+  const _CompactFact({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 1),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.labelSmall),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FactRow extends StatelessWidget {
+  const _FactRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CollectorActionBar extends StatelessWidget {
+  const _CollectorActionBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Expanded(
+          child: FilledButton(onPressed: null, child: Text('Add to inventory')),
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: FilledButton.tonal(
+            onPressed: null,
+            child: Text('Add to wishlist'),
+          ),
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: FilledButton.tonal(
+            onPressed: null,
+            child: Text('Compare prices'),
+          ),
+        ),
+      ],
     );
   }
 }
