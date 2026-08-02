@@ -1,4 +1,6 @@
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class CardThumbnail extends StatefulWidget {
   const CardThumbnail({
@@ -54,16 +56,21 @@ class _CardThumbnailState extends State<CardThumbnail> {
   }
 
   Widget _imageContent(BuildContext context, String url) {
-    return Image.network(
+    return ExtendedImage.network(
       url,
       key: ValueKey(url),
+      semanticLabel: widget.cardName == null
+          ? 'Trading card thumbnail'
+          : '${widget.cardName} card thumbnail',
       fit: BoxFit.contain,
-      errorBuilder: (_, _, _) {
-        _scheduleAdvance(url);
-        return _placeholder(context);
-      },
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
+      cache: true,
+      retries: 1,
+      timeLimit: const Duration(seconds: 4),
+      loadStateChanged: (state) {
+        if (state.extendedImageLoadState == LoadState.completed) return null;
+        if (state.extendedImageLoadState == LoadState.failed) {
+          _scheduleAdvance(url);
+        }
         return _placeholder(context);
       },
     );
@@ -95,7 +102,7 @@ class _CardThumbnailState extends State<CardThumbnail> {
       ),
       child: Center(
         child: Icon(
-          Icons.style_outlined,
+          LucideIcons.image,
           size: 22,
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
         ),

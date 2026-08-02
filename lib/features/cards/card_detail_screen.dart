@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../config/app_config.dart';
 import '../../services/fixture_loader.dart';
 import '../../services/saveroom_api_client.dart';
 import '../../widgets/card_image_panel.dart';
 import '../../widgets/fixture_badge.dart';
+import '../../widgets/glass_panel.dart';
 import '../../widgets/info_tile.dart';
 import '../../widgets/section_card.dart';
 import '../../widgets/saveroom_shell.dart';
@@ -53,10 +56,7 @@ class CardDetailScreen extends StatelessWidget {
           return _unavailable(context, cardKey);
         }
         if (!snapshot.hasData) {
-          return const SaveRoomShell(
-            title: 'Card detail',
-            children: [LinearProgressIndicator()],
-          );
+          return const _DetailLoading();
         }
         return SaveRoomShell(
           title: 'Card detail',
@@ -75,7 +75,7 @@ class CardDetailScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              const Icon(Icons.error_outline, size: 48),
+              const Icon(LucideIcons.circleAlert, size: 48),
               const SizedBox(height: 12),
               Text(
                 'Card detail unavailable',
@@ -129,7 +129,7 @@ class CardDetailScreen extends StatelessWidget {
         const Padding(
           padding: EdgeInsets.only(bottom: 8),
           child: Chip(
-            avatar: Icon(Icons.info_outline, size: 18),
+            avatar: Icon(LucideIcons.info, size: 18),
             label: Text('Preview from search result'),
           ),
         ),
@@ -147,20 +147,22 @@ class CardDetailScreen extends StatelessWidget {
         pricing: pricing,
         isFallbackPreview: isFallbackPreview,
       ),
-      const SizedBox(height: 12),
-      const _DetailTabs(),
+      if (MediaQuery.textScalerOf(context).scale(16) <= 24) ...[
+        const SizedBox(height: 12),
+        const _DetailTabs(),
+      ],
       const SizedBox(height: 12),
       _collectorInformation(card, name, setName, number, language, rarity),
       const SizedBox(height: 12),
       SectionCard(
         title: 'Pricing / evidence',
-        icon: Icons.query_stats_outlined,
+        icon: LucideIcons.chartNoAxesCombined,
         children: _pricingRows(context, pricing, providers),
       ),
       if (isFallbackPreview)
         const SectionCard(
           title: 'Detail status',
-          icon: Icons.info_outline,
+          icon: LucideIcons.info,
           children: [
             Text(
               'Full card detail is temporarily unavailable. Showing the tapped search result instead.',
@@ -183,10 +185,11 @@ class CardDetailScreen extends StatelessWidget {
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // ponytail: Collector Pro only above 600dp; standard phones get a safe split.
-        final wide = constraints.maxWidth >= 360;
-        final heroHeight = wide ? 280.0 : 420.0;
-        final imageHeight = wide ? 260.0 : 320.0;
+        // ponytail: preserve the approved split, stack when text scaling needs room.
+        final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
+        final wide = constraints.maxWidth >= 360 && !largeText;
+        final heroHeight = wide ? 280.0 : (largeText ? 540.0 : 420.0);
+        final imageHeight = wide ? 260.0 : (largeText ? 280.0 : 320.0);
         final imageWidth = imageHeight * 5 / 7;
         return SizedBox(
           height: heroHeight,
@@ -286,7 +289,7 @@ class CardDetailScreen extends StatelessWidget {
         _PriceRow(
           label: 'Market price',
           price: pp,
-          icon: Icons.trending_up_outlined,
+          icon: LucideIcons.trendingUp,
         ),
       );
     } else if (hasFallbackPrice) {
@@ -294,7 +297,7 @@ class CardDetailScreen extends StatelessWidget {
         _PriceRow(
           label: 'Estimated price',
           price: fp,
-          icon: Icons.trending_up_outlined,
+          icon: LucideIcons.trendingUp,
         ),
       );
     }
@@ -314,15 +317,15 @@ class CardDetailScreen extends StatelessWidget {
         InfoTile(
           label: 'Total',
           value: _evidenceCount(evidence['total_evidence']),
-          icon: Icons.fact_check_outlined,
+          icon: LucideIcons.fileCheck,
         ),
         InfoTile(
           label: 'UK evidence',
           value: _evidenceCount(evidence['uk_evidence'], zeroText: 'None yet'),
-          icon: Icons.language_outlined,
+          icon: LucideIcons.globe,
         ),
         if (source != '—')
-          InfoTile(label: 'Source', value: source, icon: Icons.source_outlined),
+          InfoTile(label: 'Source', value: source, icon: LucideIcons.database),
       ]);
     }
     if (providers.isNotEmpty &&
@@ -333,7 +336,7 @@ class CardDetailScreen extends StatelessWidget {
           value: providers.keys
               .map((s) => _humanSource(s.toString()))
               .join(', '),
-          icon: Icons.verified_outlined,
+          icon: LucideIcons.badgeCheck,
         ),
       );
     }
@@ -407,24 +410,94 @@ class CardDetailScreen extends StatelessWidget {
       : (rarity == '—' ? 'Unknown' : 'Standard');
 }
 
+class _DetailLoading extends StatelessWidget {
+  const _DetailLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return SaveRoomShell(
+      title: 'Card detail',
+      children: [
+        Skeletonizer(
+          effect: const ShimmerEffect(
+            baseColor: Color(0xFF2A2A2D),
+            highlightColor: Color(0xFF4A3428),
+            duration: Duration(milliseconds: 1250),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Loading collector card title',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: GlassPanel(
+                      padding: EdgeInsets.zero,
+                      child: AspectRatio(
+                        aspectRatio: 5 / 7,
+                        child: ColoredBox(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      children: [
+                        GlassPanel(
+                          child: SizedBox(
+                            height: 92,
+                            child: Text('Market price loading'),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        GlassPanel(
+                          child: SizedBox(
+                            height: 92,
+                            child: Text('Card facts loading'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const GlassPanel(
+                child: SizedBox(
+                  height: 132,
+                  child: Text('Collector information loading'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _DetailTabs extends StatelessWidget {
   const _DetailTabs();
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Row(
-        children: [
-          _TabLabel('Overview', selected: true),
-          _TabLabel('Evidence'),
-          _TabLabel('History'),
-        ],
+    return const GlassPanel(
+      radius: 16,
+      padding: EdgeInsets.zero,
+      child: SizedBox(
+        height: 48,
+        child: Row(
+          children: [
+            _TabLabel('Overview', selected: true),
+            _TabLabel('Evidence'),
+            _TabLabel('History'),
+          ],
+        ),
       ),
     );
   }
@@ -521,13 +594,16 @@ class _MarketDecisionCard extends StatelessWidget {
     final hasPrice = price != 'No pricing yet';
     return _MiniPanel(
       title: 'Market price',
+      accent: hasPrice,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             hasPrice ? price : '—',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: hasPrice ? Theme.of(context).colorScheme.primary : null,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -571,21 +647,22 @@ class _CardFactsCard extends StatelessWidget {
 }
 
 class _MiniPanel extends StatelessWidget {
-  const _MiniPanel({required this.title, required this.child});
+  const _MiniPanel({
+    required this.title,
+    required this.child,
+    this.accent = false,
+  });
 
   final String title;
   final Widget child;
+  final bool accent;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest,
-        border: Border.all(color: colors.outline),
-        borderRadius: BorderRadius.circular(16),
-      ),
+      radius: 16,
+      accent: accent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

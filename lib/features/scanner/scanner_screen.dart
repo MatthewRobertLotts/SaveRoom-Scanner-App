@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../config/app_config.dart';
 import '../../app/app_routes.dart';
@@ -8,6 +9,7 @@ import '../../services/fixtures.dart';
 import '../../services/saveroom_api_client.dart';
 import '../../services/recent_cards.dart';
 import '../../widgets/card_thumbnail.dart';
+import '../../widgets/glass_panel.dart';
 import '../../widgets/saveroom_shell.dart';
 import '../../widgets/status_pill.dart';
 
@@ -127,7 +129,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             hintText: liveMode
                 ? 'Search by name, set, number, or card key'
                 : 'Search cards\u2026',
-            prefixIcon: const Icon(Icons.search),
+            prefixIcon: const Icon(LucideIcons.search),
             suffixIcon: _loading
                 ? const Padding(
                     padding: EdgeInsets.all(14),
@@ -156,7 +158,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.error_outline,
+                    LucideIcons.circleAlert,
                     size: 16,
                     color: theme.colorScheme.error,
                   ),
@@ -232,32 +234,32 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Container(
-          height: 470,
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest,
-            border: Border.all(color: colors.outline),
-            borderRadius: BorderRadius.circular(22),
-          ),
+        GlassPanel(
+          strong: true,
+          accent: true,
+          radius: 22,
+          padding: EdgeInsets.zero,
           child: Stack(
             children: [
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _ScannerFramePainter(colors.primary),
+              SizedBox(
+                height: 470,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _ScannerFramePainter(colors.primary),
+                      ),
+                    ),
+                    const Center(child: _ScannerCardPlaceholder()),
+                  ],
                 ),
               ),
-              const Center(child: _ScannerCardPlaceholder()),
             ],
           ),
         ),
         const SizedBox(height: 14),
-        Container(
-          width: double.infinity,
+        GlassPanel(
           padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -272,7 +274,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               Text(
                 'Good  •  Hold steady',
                 style: theme.textTheme.titleSmall?.copyWith(
-                  color: const Color(0xFF58E69B),
+                  color: colors.primary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -399,66 +401,65 @@ class _ScannerScreenState extends State<ScannerScreen> {
     SearchResult r, {
     Object? detailArguments,
   }) {
-    return Card(
-      elevation: 0,
+    final tile = GlassPanel(
       margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () {
-          RecentlyViewed.add(r);
-          Navigator.pushNamed(
-            context,
-            AppRoutes.cardDetail,
-            arguments:
-                detailArguments ??
-                CardDetailArgs(cardKey: r.cardKey, fallback: r),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CardThumbnail(
-                imageUrls: r.imageUrlCandidates,
-                cardName: r.name,
-                width: 84,
-                height: 118,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      r.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _resultSubtitle(r),
-                      style: theme.textTheme.bodySmall,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 14),
-                    if (r.rarity != null && r.rarity != '—')
-                      StatusPill(r.rarity!, dense: true),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-            ],
+      radius: 18,
+      onTap: () {
+        RecentlyViewed.add(r);
+        Navigator.pushNamed(
+          context,
+          AppRoutes.cardDetail,
+          arguments:
+              detailArguments ??
+              CardDetailArgs(cardKey: r.cardKey, fallback: r),
+        );
+      },
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CardThumbnail(
+            imageUrls: r.imageUrlCandidates,
+            cardName: r.name,
+            width: 84,
+            height: 118,
           ),
-        ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  r.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _resultSubtitle(r),
+                  style: theme.textTheme.bodySmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 14),
+                if (r.rarity != null && r.rarity != '—')
+                  StatusPill(r.rarity!, dense: true),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(
+            LucideIcons.chevronRight,
+            color: theme.colorScheme.primary,
+            size: 20,
+          ),
+        ],
       ),
     );
+    return tile;
   }
 
   String _resultSubtitle(SearchResult r) {
@@ -478,7 +479,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       child: Column(
         children: [
           Icon(
-            Icons.search_off_outlined,
+            LucideIcons.searchX,
             size: 48,
             color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),

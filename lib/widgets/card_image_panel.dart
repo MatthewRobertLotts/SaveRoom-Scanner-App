@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../services/fixture_loader.dart';
 import '../services/saveroom_api_client.dart';
@@ -164,32 +166,48 @@ class _CardImagePanelState extends State<CardImagePanel> {
                           'Loading image',
                           loading: true,
                         )
-                      : Image.network(
+                      : ExtendedImage.network(
                           candidates[_imageIndex],
                           key: ValueKey(candidates[_imageIndex]),
+                          semanticLabel: '${widget.cardName} card image',
                           fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              _advanceCandidate();
-                            });
-                            return _placeholderContent(
-                              theme,
-                              colorScheme,
-                              'Loading image',
-                              loading: true,
-                            );
-                          },
-                          loadingBuilder: (_, child, progress) {
-                            if (progress == null) {
-                              _candidateTimer?.cancel();
-                              return child;
+                          cache: true,
+                          retries: 1,
+                          timeLimit: const Duration(seconds: 4),
+                          loadStateChanged: (state) {
+                            switch (state.extendedImageLoadState) {
+                              case LoadState.completed:
+                                _candidateTimer?.cancel();
+                                return Semantics(
+                                  button: true,
+                                  label: 'Open ${widget.cardName} image viewer',
+                                  child: GestureDetector(
+                                    onTap: () => _openImageViewer(
+                                      candidates[_imageIndex],
+                                    ),
+                                    child: state.completedWidget,
+                                  ),
+                                );
+                              case LoadState.failed:
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  _advanceCandidate();
+                                });
+                                return _placeholderContent(
+                                  theme,
+                                  colorScheme,
+                                  'Loading image',
+                                  loading: true,
+                                );
+                              case LoadState.loading:
+                                return _placeholderContent(
+                                  theme,
+                                  colorScheme,
+                                  'Loading image',
+                                  loading: true,
+                                );
                             }
-                            return _placeholderContent(
-                              theme,
-                              colorScheme,
-                              'Loading image',
-                              loading: true,
-                            );
                           },
                         )
                 : DecoratedBox(
@@ -223,7 +241,7 @@ class _CardImagePanelState extends State<CardImagePanel> {
           child: Row(
             children: [
               Icon(
-                Icons.style_outlined,
+                LucideIcons.layers,
                 size: 16,
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -240,7 +258,7 @@ class _CardImagePanelState extends State<CardImagePanel> {
           child: Row(
             children: [
               Icon(
-                Icons.language_outlined,
+                LucideIcons.globe,
                 size: 16,
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -255,7 +273,7 @@ class _CardImagePanelState extends State<CardImagePanel> {
           child: Row(
             children: [
               Icon(
-                Icons.star_outline,
+                LucideIcons.star,
                 size: 16,
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -269,7 +287,7 @@ class _CardImagePanelState extends State<CardImagePanel> {
     if (!widget.showTitle) return Column(children: children);
     return SectionCard(
       title: widget.cardName,
-      icon: Icons.auto_awesome_outlined,
+      icon: LucideIcons.sparkles,
       children: children,
     );
   }
@@ -303,7 +321,7 @@ class _CardImagePanelState extends State<CardImagePanel> {
             )
           else
             Icon(
-              Icons.image_outlined,
+              LucideIcons.image,
               size: 52,
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
@@ -315,6 +333,50 @@ class _CardImagePanelState extends State<CardImagePanel> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _openImageViewer(String url) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Semantics(
+                image: true,
+                label: '${widget.cardName} card image, zoomable',
+                child: ExtendedImage.network(
+                  url,
+                  fit: BoxFit.contain,
+                  cache: true,
+                  mode: ExtendedImageMode.gesture,
+                  initGestureConfigHandler: (_) => GestureConfig(
+                    inPageView: false,
+                    initialScale: 1,
+                    maxScale: 4,
+                    animationMaxScale: 4.5,
+                    initialAlignment: InitialAlignment.center,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: SafeArea(
+                child: IconButton.filledTonal(
+                  tooltip: 'Close image viewer',
+                  onPressed: () => Navigator.pop(dialogContext),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

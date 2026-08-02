@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../config/app_config.dart';
 import '../../services/fixture_loader.dart';
@@ -45,7 +46,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         SectionCard(
           title: 'App mode',
-          icon: Icons.tune_outlined,
+          icon: LucideIcons.slidersHorizontal,
           children: [
             InfoTile(label: 'App version', value: AppConfig.appVersion),
             InfoTile(label: 'API baseline', value: AppConfig.apiBaseline),
@@ -65,7 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         SectionCard(
           title: 'Health check',
-          icon: Icons.favorite_outlined,
+          icon: LucideIcons.heartPulse,
           children: [
             Text(
               AppConfig.fixtureMode
@@ -81,7 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.refresh),
+                  : const Icon(LucideIcons.refreshCw),
               label: const Text('Check API health'),
             ),
             if (_healthResult.isNotEmpty) ...[
@@ -90,8 +91,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Icon(
                     _healthResult == 'OK'
-                        ? Icons.check_circle
-                        : Icons.warning_amber,
+                        ? LucideIcons.circleCheck
+                        : LucideIcons.triangleAlert,
                     size: 18,
                     color: _healthResult == 'OK' ? Colors.green : Colors.orange,
                   ),
@@ -110,7 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.info_outline, size: 16),
+                  const Icon(LucideIcons.info, size: 16),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -126,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         SectionCard(
           title: 'Future backend milestones',
-          icon: Icons.route_outlined,
+          icon: LucideIcons.route,
           children: [
             InfoTile(label: 'Auth', value: 'planned v12.3'),
             InfoTile(label: 'Collection backend', value: 'planned v12.4'),
@@ -135,7 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         SectionCard(
           title: 'Storage note',
-          icon: Icons.storage_outlined,
+          icon: LucideIcons.hardDrive,
           children: [
             Text(
               'App repo, Flutter SDK, package cache and Gradle cache are kept '

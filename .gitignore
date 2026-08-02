@@ -35,3 +35,6 @@ key.properties
 **/key.properties
 *.apk
 *.aab
+
+# Hermes agent working dir (attachments, venvs)
+.hermes/

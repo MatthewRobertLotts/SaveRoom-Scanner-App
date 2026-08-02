@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../app/app_routes.dart';
+import '../../config/app_config.dart';
+import '../../services/fixtures.dart';
 import '../../services/recent_cards.dart';
 import '../../services/saveroom_api_client.dart';
-import '../../services/fixtures.dart';
 import '../../widgets/card_thumbnail.dart';
-import '../../config/app_config.dart';
-import '../../app/app_routes.dart';
-import '../../widgets/status_pill.dart';
+import '../../widgets/glass_panel.dart';
 import '../../widgets/saveroom_shell.dart';
+import '../../widgets/status_pill.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.forceFixtureMode});
@@ -22,72 +24,110 @@ class HomeScreen extends StatelessWidget {
       title: 'SaveRoom',
       bottomBar: const _HomeBottomNav(),
       children: [
-        _DashboardHero(fixtureMode: fixtureMode),
+        _entrance(context, _DashboardHero(fixtureMode: fixtureMode)),
         const SizedBox(height: 14),
-        const Row(
-          children: [
-            Expanded(
-              child: _MetricTile(
-                icon: Icons.style_outlined,
-                title: 'Collection',
-                value: '0',
+        _entrance(
+          context,
+          const Row(
+            children: [
+              Expanded(
+                child: _MetricTile(
+                  icon: LucideIcons.layers,
+                  title: 'Collection',
+                  value: '0',
+                ),
               ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: _MetricTile(
-                icon: Icons.favorite_border,
-                title: 'Wishlist',
-                value: '0',
+              SizedBox(width: 10),
+              Expanded(
+                child: _MetricTile(
+                  icon: LucideIcons.heart,
+                  title: 'Wishlist',
+                  value: '0',
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          delay: const Duration(milliseconds: 60),
         ),
         const SizedBox(height: 16),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1.04,
-          children: [
-            _DashboardActionTile(
-              label: 'SCAN A CARD',
-              title: 'Camera scanner',
-              icon: Icons.document_scanner_outlined,
-              accent: colors.primary,
-              onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
-            ),
-            _DashboardActionTile(
-              label: 'SEARCH',
-              title: 'Search cards',
-              icon: Icons.search,
-              accent: const Color(0xFF58E69B),
-              onTap: () => Navigator.pushNamed(context, AppRoutes.search),
-            ),
-            const _DashboardActionTile(
-              label: 'COLLECTION',
-              title: 'Browse cards',
-              icon: Icons.inventory_2_outlined,
-              accent: Color(0xFFA78BFA),
-            ),
-            const _DashboardActionTile(
-              label: 'WISHLIST',
-              title: 'Saved targets',
-              icon: Icons.bookmark_border,
-              accent: Color(0xFFFFB020),
-            ),
-          ],
+        _entrance(
+          context,
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 1.04,
+            children: [
+              _DashboardActionTile(
+                label: 'SCAN A CARD',
+                title: 'Camera scanner',
+                icon: LucideIcons.scanLine,
+                accent: colors.primary,
+                onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
+              ),
+              _DashboardActionTile(
+                label: 'SEARCH',
+                title: 'Search cards',
+                icon: LucideIcons.search,
+                accent: const Color(0xFFFF9A57),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.search),
+              ),
+              const _DashboardActionTile(
+                label: 'COLLECTION',
+                title: 'Browse cards',
+                icon: LucideIcons.library,
+                accent: Color(0xFFC7C7CC),
+              ),
+              const _DashboardActionTile(
+                label: 'WISHLIST',
+                title: 'Saved targets',
+                icon: LucideIcons.bookmark,
+                accent: Color(0xFFFFB269),
+              ),
+            ],
+          ),
+          delay: const Duration(milliseconds: 120),
         ),
         const SizedBox(height: 24),
         ValueListenableBuilder<List<SearchResult>>(
           valueListenable: RecentlyViewed.instance,
-          builder: (context, recent, _) => _RecentlyViewedRail(recent: recent),
+          builder: (context, recent, _) => _entrance(
+            context,
+            _RecentlyViewedRail(recent: recent),
+            delay: const Duration(milliseconds: 180),
+          ),
         ),
       ],
     );
   }
+}
+
+Widget _entrance(
+  BuildContext context,
+  Widget child, {
+  Duration delay = Duration.zero,
+}) {
+  if (MediaQuery.disableAnimationsOf(context)) return child;
+  final total = Duration(milliseconds: 260 + delay.inMilliseconds);
+  final wait = delay.inMilliseconds / total.inMilliseconds;
+  return TweenAnimationBuilder<double>(
+    tween: Tween(begin: 0, end: 1),
+    duration: total,
+    curve: Curves.easeOut,
+    builder: (context, value, animatedChild) {
+      final progress = ((value - wait) / (1 - wait)).clamp(0.0, 1.0);
+      return Opacity(
+        opacity: progress,
+        child: Transform.translate(
+          offset: Offset(0, 8 * (1 - progress)),
+          child: animatedChild,
+        ),
+      );
+    },
+    child: child,
+  );
 }
 
 class _DashboardHero extends StatelessWidget {
@@ -98,40 +138,45 @@ class _DashboardHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
+    return GlassPanel(
+      accent: true,
+      strong: true,
+      radius: 24,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colors.primary.withValues(alpha: 0.22),
-            colors.surfaceContainerHighest,
-          ],
-        ),
-        border: Border.all(color: colors.outline.withValues(alpha: 0.45)),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          StatusPill(
-            fixtureMode ? 'Fixture mode' : 'Live API ready',
-            icon: fixtureMode
-                ? Icons.developer_mode
-                : Icons.check_circle_outline,
-            dense: true,
+          Positioned(
+            right: -18,
+            top: -28,
+            child: Icon(
+              LucideIcons.sparkles,
+              size: 118,
+              color: colors.primary.withValues(alpha: 0.055),
+            ),
           ),
-          const SizedBox(height: 22),
-          Text(
-            'Your collector dashboard',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Scan, search and review Pokémon cards without the clutter.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StatusPill(
+                fixtureMode ? 'Fixture mode' : 'Live API ready',
+                icon: fixtureMode
+                    ? LucideIcons.database
+                    : LucideIcons.circleCheck,
+                dense: true,
+              ),
+              const SizedBox(height: 22),
+              Text(
+                'Your collector dashboard',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Scan, search and review Pokémon cards without the clutter.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -156,48 +201,46 @@ class _DashboardActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Card(
-      elevation: 0,
-      color: colors.surfaceContainerHighest.withValues(alpha: 0.72),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+    final enabled = onTap != null;
+    return Opacity(
+      opacity: enabled ? 1 : 0.62,
+      child: GlassPanel(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(icon, color: accent),
+        accent: enabled,
+        radius: 20,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: accent.withValues(alpha: 0.24)),
               ),
-              const Spacer(),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.7,
-                ),
+              child: Icon(icon, color: accent),
+            ),
+            const Spacer(),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: accent,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.7,
               ),
-              const SizedBox(height: 5),
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
+          ],
         ),
       ),
     );
@@ -218,30 +261,27 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: colors.primary),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.labelSmall),
-                  Text(
-                    value,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
+    return GlassPanel(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: colors.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.labelSmall),
+                Text(
+                  value,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -282,10 +322,10 @@ class _RecentlyViewedRail extends StatelessWidget {
         Row(
           children: cards
               .map(
-                (r) => Expanded(
+                (result) => Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: _RecentMiniCard(result: r),
+                    child: _RecentMiniCard(result: result),
                   ),
                 ),
               )
@@ -303,34 +343,31 @@ class _RecentMiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: CardThumbnail(
-                imageUrls: result.imageUrlCandidates,
-                cardName: result.name,
-              ),
+    return GlassPanel(
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: CardThumbnail(
+              imageUrls: result.imageUrlCandidates,
+              cardName: result.name,
             ),
-            const SizedBox(height: 8),
-            Text(
-              result.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            Text(
-              result.displayText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            result.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          Text(
+            result.displayText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }
@@ -341,36 +378,29 @@ class _HomeBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
+    return NavigationBar(
+      backgroundColor: Colors.transparent,
       elevation: 0,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _NavLabel('Home', selected: true),
-            _NavLabel('Search'),
-            _NavLabel('Scan'),
-            _NavLabel('Collection'),
-          ],
+      selectedIndex: 0,
+      height: 64,
+      onDestinationSelected: (index) {
+        final route = switch (index) {
+          1 => AppRoutes.search,
+          2 => AppRoutes.scanner,
+          3 => AppRoutes.settings,
+          _ => null,
+        };
+        if (route != null) Navigator.pushNamed(context, route);
+      },
+      destinations: const [
+        NavigationDestination(icon: Icon(LucideIcons.home), label: 'Home'),
+        NavigationDestination(icon: Icon(LucideIcons.search), label: 'Search'),
+        NavigationDestination(icon: Icon(LucideIcons.scanLine), label: 'Scan'),
+        NavigationDestination(
+          icon: Icon(LucideIcons.settings),
+          label: 'Settings',
         ),
-      ),
+      ],
     );
   }
-}
-
-class _NavLabel extends StatelessWidget {
-  const _NavLabel(this.text, {this.selected = false});
-
-  final String text;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-      color: selected ? Theme.of(context).colorScheme.primary : null,
-      fontWeight: FontWeight.w800,
-    ),
-  );
 }

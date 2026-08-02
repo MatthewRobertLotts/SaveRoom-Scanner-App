@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/testing.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:saveroom_scanner_app/features/scanner/scanner_screen.dart';
 import 'package:saveroom_scanner_app/services/saveroom_api_client.dart';
 import 'package:saveroom_scanner_app/widgets/card_thumbnail.dart';
@@ -180,7 +182,7 @@ void main() {
       // No setState during build error should occur
       expect(tester.takeException(), isNull);
       // Should show placeholder icon instead of error text
-      expect(find.byIcon(Icons.style_outlined), findsWidgets);
+      expect(find.byIcon(LucideIcons.image), findsWidgets);
     },
   );
 
@@ -206,7 +208,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(tester.takeException(), isNull);
-    expect(find.byIcon(Icons.style_outlined), findsWidgets);
+    expect(find.byIcon(LucideIcons.image), findsWidgets);
     expect(find.textContaining('setState'), findsNothing);
     expect(find.textContaining('markNeedsBuild'), findsNothing);
   });
@@ -223,6 +225,9 @@ void main() {
       ),
     );
 
-    expect(tester.widget<Image>(find.byType(Image)).fit, BoxFit.contain);
+    expect(
+      tester.widget<ExtendedImage>(find.byType(ExtendedImage)).fit,
+      BoxFit.contain,
+    );
   });
 }
