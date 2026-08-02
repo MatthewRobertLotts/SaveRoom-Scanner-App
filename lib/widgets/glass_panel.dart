@@ -1,9 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
 
+// ponytail: flat solid card with border — no blur, no glow, no gradients.
 class GlassPanel extends StatelessWidget {
   const GlassPanel({
     super.key,
@@ -34,33 +33,21 @@ class GlassPanel extends StatelessWidget {
 
     final panel = ClipRRect(
       borderRadius: borderRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: strong ? tokens.glassStrong : tokens.glassFill,
-            borderRadius: borderRadius,
-            border: Border.all(color: borderColor),
-            boxShadow: accent
-                ? [
-                    BoxShadow(
-                      color: tokens.orangeGlow,
-                      blurRadius: 24,
-                      spreadRadius: -10,
-                    ),
-                  ]
-                : const [],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: onTap == null
-                ? Padding(padding: padding, child: child)
-                : InkWell(
-                    onTap: onTap,
-                    borderRadius: borderRadius,
-                    child: Padding(padding: padding, child: child),
-                  ),
-          ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: strong ? tokens.glassStrong : tokens.glassFill,
+          borderRadius: borderRadius,
+          border: Border.all(color: borderColor),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: onTap == null
+              ? Padding(padding: padding, child: child)
+              : InkWell(
+                  onTap: onTap,
+                  borderRadius: borderRadius,
+                  child: Padding(padding: padding, child: child),
+                ),
         ),
       ),
     );

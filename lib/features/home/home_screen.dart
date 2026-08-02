@@ -251,19 +251,19 @@ class _DashboardActionTile extends StatelessWidget {
         onTap: onTap,
         accent: enabled,
         radius: 20,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: accent.withValues(alpha: 0.24)),
               ),
-              child: Icon(icon, color: accent),
+              child: Center(child: Icon(icon, size: 24, color: accent)),
             ),
             const Spacer(),
             Text(
@@ -274,7 +274,7 @@ class _DashboardActionTile extends StatelessWidget {
                 letterSpacing: 0.7,
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             Text(
               title,
               maxLines: 1,
