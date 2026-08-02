@@ -5,13 +5,11 @@ import 'package:saveroom_scanner_app/app/app.dart';
 void main() {
   testWidgets('scanner screen shows fixture card picker', (tester) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
-    await tester.tap(find.text('Search cards'));
+    await tester.tap(find.text('Search by name, set, number or key'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Fixture mode — camera/OCR not enabled yet'),
-      findsOneWidget,
-    );
+    expect(find.text('Search cards'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
     expect(find.text('Charizard ex'), findsOneWidget);
     expect(find.text('Miraidon ex'), findsOneWidget);
     expect(find.text('Iono'), findsOneWidget);
@@ -19,7 +17,7 @@ void main() {
 
   testWidgets('scanner search filters card list', (tester) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
-    await tester.tap(find.text('Search cards'));
+    await tester.tap(find.text('Search by name, set, number or key'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'char');
@@ -33,7 +31,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
-    await tester.tap(find.text('Camera scanner'));
+    await tester.tap(find.text('SCAN A CARD'));
     await tester.pumpAndSettle();
 
     expect(find.text('Scan card'), findsOneWidget);
@@ -44,11 +42,10 @@ void main() {
 
   testWidgets('tapping fixture card navigates to card detail', (tester) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
-    await tester.tap(find.text('Search cards'));
+    await tester.tap(find.text('Search by name, set, number or key'));
     await tester.pumpAndSettle();
 
-    // Tap the first list tile (Charizard ex)
-    await tester.tap(find.byType(ListTile).first);
+    await tester.tap(find.text('Charizard ex').first);
     await tester.pumpAndSettle();
 
     // Should be on card detail page now

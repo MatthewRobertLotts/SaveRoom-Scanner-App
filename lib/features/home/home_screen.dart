@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../services/recent_cards.dart';
 import '../../services/saveroom_api_client.dart';
+import '../../services/fixtures.dart';
 import '../../widgets/card_thumbnail.dart';
 import '../../config/app_config.dart';
 import '../../app/app_routes.dart';
-import '../../widgets/primary_action_card.dart';
-import '../../widgets/section_card.dart';
 import '../../widgets/status_pill.dart';
 import '../../widgets/saveroom_shell.dart';
 
@@ -20,20 +19,16 @@ class HomeScreen extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final fixtureMode = forceFixtureMode ?? AppConfig.fixtureMode;
     return SaveRoomShell(
-      title: 'SaveRoom Scanner',
+      title: 'SaveRoom',
+      bottomBar: const _HomeBottomNav(),
       children: [
         Text(
-          'SaveRoom Scanner',
-          style: Theme.of(context).textTheme.headlineLarge,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Search and identify Pokémon cards',
+          'Honest collecting. Clear card data.',
           style: Theme.of(
             context,
-          ).textTheme.titleMedium?.copyWith(color: colors.onSurfaceVariant),
+          ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -48,116 +43,274 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        PrimaryActionCard(
-          title: 'Search cards',
-          subtitle: 'Find cards by name, set, or partial name',
-          icon: Icons.search,
-          onTap: () => Navigator.pushNamed(context, AppRoutes.search),
-        ),
-        const SizedBox(height: 8),
-        PrimaryActionCard(
-          title: 'Camera scanner',
-          subtitle: 'Coming soon',
-          icon: Icons.document_scanner_outlined,
+        _ScanHeroCard(
           onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 14),
+        _SearchLaunchCard(
+          onTap: () => Navigator.pushNamed(context, AppRoutes.search),
+        ),
+        const SizedBox(height: 28),
         ValueListenableBuilder<List<SearchResult>>(
           valueListenable: RecentlyViewed.instance,
-          builder: (context, recent, _) => SectionCard(
-            title: 'Recently viewed',
-            icon: Icons.history,
-            dense: true,
-            children: [
-              if (recent.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    'Cards you open will appear here',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                )
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: recent.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (context, i) {
-                    final r = recent[i];
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      leading: CardThumbnail(
-                        imageUrls: r.imageUrlCandidates,
-                        cardName: r.name,
-                      ),
-                      title: Text(
-                        r.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        r.displayText,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: const Icon(Icons.chevron_right, size: 20),
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        AppRoutes.cardDetail,
-                        arguments: CardDetailArgs(
-                          cardKey: r.cardKey,
-                          fallback: r,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-            ],
-          ),
+          builder: (context, recent, _) => _RecentlyViewedRail(recent: recent),
         ),
-        const SizedBox(height: 24),
-        // Dev/testing actions in fixture mode only
-        if (fixtureMode) ...[
-          const SectionCard(
-            title: 'Testing',
-            icon: Icons.developer_mode,
-            dense: true,
-            children: [
-              _SmallAction(
-                'View Mock Card',
-                Icons.style_outlined,
-                AppRoutes.cardDetail,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-        ],
-        const _SmallAction('Settings', Icons.tune_outlined, AppRoutes.settings),
+        const SizedBox(height: 26),
+        const Text('Your space', style: TextStyle(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 10),
+        const Row(
+          children: [
+            Expanded(
+              child: _SpaceTile(title: 'COLLECTION', value: '0 cards'),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: _SpaceTile(title: 'WISHLIST', value: '0 cards'),
+            ),
+          ],
+        ),
       ],
     );
   }
 }
 
-class _SmallAction extends StatelessWidget {
-  const _SmallAction(this.title, this.icon, this.route);
-  final String title;
-  final IconData icon;
-  final String route;
+class _ScanHeroCard extends StatelessWidget {
+  const _ScanHeroCard({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Card(
-    elevation: 0,
-    child: ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => Navigator.pushNamed(context, route),
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: colors.primary.withValues(alpha: 0.16),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: colors.primary.withValues(alpha: 0.55)),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SCAN A CARD',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFF5AC8FF),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Text(
+                      'Identify in seconds',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Camera recognition with review before save',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(Icons.bolt, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchLaunchCard extends StatelessWidget {
+  const _SearchLaunchCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      child: ListTile(
+        leading: const Icon(Icons.search, size: 18),
+        title: const Text('Search cards'),
+        subtitle: const Text('Search by name, set, number or key'),
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    );
+  }
+}
+
+class _RecentlyViewedRail extends StatelessWidget {
+  const _RecentlyViewedRail({required this.recent});
+
+  final List<SearchResult> recent;
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = recent.isEmpty
+        ? Fixtures.cardKeys
+              .take(3)
+              .map(
+                (key) => SearchResult.fromFixtureData(
+                  Fixtures.byKey(key)['data'] as Map<String, dynamic>? ??
+                      const {},
+                ),
+              )
+        : recent.take(3);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Recently viewed',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        if (recent.isEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Cards you open will appear here',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+        const SizedBox(height: 10),
+        Row(
+          children: cards
+              .map(
+                (r) => Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _RecentMiniCard(result: r),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentMiniCard extends StatelessWidget {
+  const _RecentMiniCard({required this.result});
+
+  final SearchResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: CardThumbnail(
+                imageUrls: result.imageUrlCandidates,
+                cardName: result.name,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              result.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            Text(
+              result.displayText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SpaceTile extends StatelessWidget {
+  const _SpaceTile({required this.title, required this.value});
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.labelSmall),
+            const SizedBox(height: 28),
+            Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeBottomNav extends StatelessWidget {
+  const _HomeBottomNav();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      elevation: 0,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _NavLabel('Home', selected: true),
+            _NavLabel('Search'),
+            _NavLabel('Scan'),
+            _NavLabel('Collection'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavLabel extends StatelessWidget {
+  const _NavLabel(this.text, {this.selected = false});
+
+  final String text;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+      color: selected ? Theme.of(context).colorScheme.primary : null,
+      fontWeight: FontWeight.w800,
     ),
   );
 }

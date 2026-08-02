@@ -119,17 +119,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (widget.showScannerLanding) return _scannerLanding(theme);
 
     return SaveRoomShell(
-      title: liveMode ? 'Search live API cards' : 'Choose a fixture card',
+      title: 'Search cards',
       children: [
-        Text(
-          liveMode
-              ? 'Live API mode — search the Zima API'
-              : 'Fixture mode — camera/OCR not enabled yet',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 12),
         TextField(
           controller: _textController,
           decoration: InputDecoration(
@@ -155,7 +146,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
           onChanged: liveMode ? _onSearchChanged : _onFixtureQueryChanged,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
+        _filterChips(),
+        const SizedBox(height: 18),
         if (liveMode) ...[
           if (_error != null)
             Padding(
@@ -207,9 +200,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
               'No cards found',
               'Try a different name or card key',
             )
-          else if (_results.isNotEmpty)
-            _searchResultsList(theme)
-          else if (_error == null)
+          else if (_results.isNotEmpty) ...[
+            Text(
+              '${_results.length} results',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            _searchResultsList(theme),
+          ] else if (_error == null)
             _emptyState(
               theme,
               'Keep typing',
@@ -317,6 +315,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
   }
 
+  Widget _filterChips() {
+    return const Wrap(
+      spacing: 8,
+      children: [
+        StatusPill('English', dense: true),
+        StatusPill('All sets', dense: true),
+        StatusPill('Any rarity', dense: true),
+      ],
+    );
+  }
+
   void _onFixtureQueryChanged(String value) => setState(() => _results = []);
 
   Widget _fixtureModeContent(ThemeData theme) {
@@ -328,7 +337,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${filteredKeys.length} of ${5} cards',
+          '${filteredKeys.length} results',
           style: theme.textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
@@ -339,19 +348,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
             'Try another name or card key',
           )
         else
-          ListView.separated(
+          ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: filteredKeys.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (context, i) => _buildResultTile(
+            itemBuilder: (context, i) => _buildSearchResultTile(
               theme,
               SearchResult.fromFixtureData(
                 _fixtureData(filteredKeys[i])['data']
                         as Map<String, dynamic>? ??
                     const {},
               ),
-              filteredKeys[i],
             ),
           ),
       ],
@@ -389,8 +396,42 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Widget _buildSearchResultTile(ThemeData theme, SearchResult r) {
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 0),
-      child: InkWell(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ),
+        leading: CardThumbnail(
+          imageUrls: r.imageUrlCandidates,
+          cardName: r.name,
+        ),
+        title: Text(
+          r.name,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          _resultSubtitle(r),
+          style: theme.textTheme.bodySmall,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (r.rarity != null && r.rarity != '—') ...[
+              StatusPill(r.rarity!, dense: true),
+              const SizedBox(width: 8),
+            ],
+            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+          ],
+        ),
         onTap: () {
           RecentlyViewed.add(r);
           Navigator.pushNamed(
@@ -399,41 +440,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
             arguments: CardDetailArgs(cardKey: r.cardKey, fallback: r),
           );
         },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              CardThumbnail(imageUrls: r.imageUrlCandidates, cardName: r.name),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      r.name,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _resultSubtitle(r),
-                      style: theme.textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              if (r.rarity != null && r.rarity != '—')
-                StatusPill(r.rarity!, dense: true),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -447,35 +453,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
       parts.add(r.language!);
     }
     return parts.isEmpty ? '' : parts.join(' · ');
-  }
-
-  Widget _buildResultTile(
-    ThemeData theme,
-    SearchResult result,
-    String cardKey,
-  ) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.primaryContainer,
-        child: Icon(Icons.style, color: theme.colorScheme.onPrimaryContainer),
-      ),
-      title: Text(
-        result.name,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(result.displayText, style: theme.textTheme.bodySmall),
-      trailing: result.rarity != null
-          ? Chip(
-              label: Text(result.rarity!, style: const TextStyle(fontSize: 10)),
-              visualDensity: VisualDensity.compact,
-            )
-          : null,
-      onTap: () => Navigator.pushNamed(
-        context,
-        AppRoutes.cardDetail,
-        arguments: cardKey,
-      ),
-    );
   }
 
   Widget _emptyState(ThemeData theme, String title, String subtitle) {

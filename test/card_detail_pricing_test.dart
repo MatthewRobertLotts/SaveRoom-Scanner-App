@@ -8,9 +8,22 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Search cards'));
     await tester.pumpAndSettle();
-    final tiles = find.byType(ListTile);
-    expect(tiles, findsWidgets);
-    await tester.tap(tiles.at(cardIndex));
+    final names = [
+      'Charizard ex',
+      'Miraidon ex',
+      'Iono',
+      'Greninja ex',
+      'Giratina V',
+    ];
+    final target = find.text(names[cardIndex]);
+    await tester.scrollUntilVisible(
+      target,
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.drag(find.byType(Scrollable).last, const Offset(0, -160));
+    await tester.pumpAndSettle();
+    await tester.tap(target);
     await tester.pumpAndSettle();
   }
 

@@ -6,9 +6,9 @@ void main() {
   testWidgets('home screen shows visual shell basics', (tester) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
 
-    expect(find.text('SaveRoom Scanner'), findsWidgets);
+    expect(find.text('SaveRoom'), findsWidgets);
     expect(find.text('Fixture mode'), findsOneWidget);
-    expect(find.text('Search cards'), findsOneWidget);
+    expect(find.text('SCAN A CARD'), findsOneWidget);
   });
 
   group('AppConfig defaults', () {
