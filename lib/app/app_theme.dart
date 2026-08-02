@@ -1,7 +1,7 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 
-const saveRoomOrange = Color(0xFFFFA62E);
+const saveRoomOrange = Color(0xFFB23A);
 const saveRoomBackground = Color(0xFF09090A);
 const saveRoomSurface = Color(0xFF171719);
 const saveRoomRaisedSurface = Color(0xFF222225);
@@ -28,7 +28,7 @@ class SaveRoomTokens extends ThemeExtension<SaveRoomTokens> {
     glassFill: Color(0xA61A1A1D),
     glassStrong: Color(0xD9212124),
     glassBorder: Color(0x4DFFFFFF),
-    orangeGlow: Color(0x66FFA62E),
+    orangeGlow: Color(0x66FFB23A),
     positive: Color(0xFF56D68B),
     warning: Color(0xFFFFB34D),
   );

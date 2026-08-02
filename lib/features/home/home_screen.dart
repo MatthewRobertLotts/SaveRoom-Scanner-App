@@ -143,40 +143,25 @@ class _DashboardHero extends StatelessWidget {
       strong: true,
       radius: 24,
       padding: const EdgeInsets.all(20),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned(
-            right: -18,
-            top: -28,
-            child: Icon(
-              LucideIcons.sparkles,
-              size: 118,
-              color: colors.primary.withValues(alpha: 0.055),
-            ),
+          StatusPill(
+            fixtureMode ? 'Fixture mode' : 'Live API ready',
+            icon: fixtureMode ? LucideIcons.database : LucideIcons.circleCheck,
+            dense: true,
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              StatusPill(
-                fixtureMode ? 'Fixture mode' : 'Live API ready',
-                icon: fixtureMode
-                    ? LucideIcons.database
-                    : LucideIcons.circleCheck,
-                dense: true,
-              ),
-              const SizedBox(height: 22),
-              Text(
-                'Your collector dashboard',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Scan, search and review Pokémon cards without the clutter.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-            ],
+          const SizedBox(height: 22),
+          Text(
+            'Your collector dashboard',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Scan, search and review Pokémon cards without the clutter.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
           ),
         ],
       ),
