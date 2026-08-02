@@ -36,16 +36,10 @@ void main() {
     await tester.tap(find.text('Camera scanner'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scan a card'), findsWidgets);
-    expect(find.text('Scanner coming soon'), findsOneWidget);
-
-    await tester.tap(find.text('Open card search'));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text('Fixture mode — camera/OCR not enabled yet'),
-      findsOneWidget,
-    );
+    expect(find.text('Scan card'), findsOneWidget);
+    expect(find.text('Keep the full card inside the frame'), findsOneWidget);
+    expect(find.text('LIGHTING'), findsOneWidget);
+    expect(find.text('Good  •  Hold steady'), findsOneWidget);
   });
 
   testWidgets('tapping fixture card navigates to card detail', (tester) async {

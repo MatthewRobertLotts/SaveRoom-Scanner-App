@@ -225,23 +225,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Widget _scannerLanding(ThemeData theme) {
     final colors = theme.colorScheme;
     return SaveRoomShell(
-      title: 'Scan a card',
+      title: 'Scan card',
       children: [
-        Text('Scan a card', style: theme.textTheme.headlineLarge),
-        const SizedBox(height: 6),
         Text(
-          'Camera recognition with review before save.',
-          style: theme.textTheme.bodyMedium?.copyWith(
+          'Keep the full card inside the frame',
+          style: theme.textTheme.bodySmall?.copyWith(
             color: colors.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 16),
         Container(
-          height: 320,
+          height: 470,
           decoration: BoxDecoration(
             color: colors.surfaceContainerHighest,
-            border: Border.all(color: colors.primary.withValues(alpha: 0.55)),
-            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: colors.outline),
+            borderRadius: BorderRadius.circular(22),
           ),
           child: Stack(
             children: [
@@ -250,36 +248,70 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   painter: _ScannerFramePainter(colors.primary),
                 ),
               ),
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.document_scanner_outlined,
-                      color: colors.primary,
-                      size: 54,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Scanner coming soon',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Line up a card inside the frame.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
+              const Center(child: _ScannerCardPlaceholder()),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'LIGHTING',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.7,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Good  •  Hold steady',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: const Color(0xFF58E69B),
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        FilledButton.icon(
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
-          icon: const Icon(Icons.search),
-          label: const Text('Open card search'),
+        const SizedBox(height: 26),
+        Center(
+          child: InkWell(
+            key: const Key('scanner-capture-placeholder'),
+            borderRadius: BorderRadius.circular(44),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.search),
+            child: Container(
+              width: 86,
+              height: 86,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 6),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white70,
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(width: 20, height: 20),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -480,10 +512,10 @@ class _ScannerFramePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     final rect = Rect.fromCenter(
       center: size.center(Offset.zero),
-      width: size.width * 0.62,
-      height: size.height * 0.72,
+      width: size.width * 0.84,
+      height: size.height * 0.80,
     );
-    final corner = rect.width * 0.18;
+    final corner = rect.width * 0.16;
     for (final p in [
       (rect.topLeft, Offset(corner, 0), Offset(0, corner)),
       (rect.topRight, Offset(-corner, 0), Offset(0, corner)),
@@ -498,4 +530,67 @@ class _ScannerFramePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ScannerFramePainter oldDelegate) =>
       oldDelegate.color != color;
+}
+
+class _ScannerCardPlaceholder extends StatelessWidget {
+  const _ScannerCardPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return FractionallySizedBox(
+      widthFactor: 0.50,
+      child: AspectRatio(
+        aspectRatio: 5 / 7,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            border: Border.all(color: colors.outline, width: 3),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black54,
+                blurRadius: 18,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(width: 86, height: 10, color: colors.outline),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  height: 6,
+                  color: colors.outline,
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  width: double.infinity,
+                  height: 6,
+                  color: colors.outline,
+                ),
+                const Spacer(),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(width: 44, height: 8, color: colors.outline),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
