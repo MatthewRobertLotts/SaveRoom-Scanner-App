@@ -29,6 +29,25 @@ void main() {
     expect(find.text('Miraidon ex'), findsNothing);
   });
 
+  testWidgets('camera scanner opens scanner landing before search', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const SaveRoomScannerApp());
+    await tester.tap(find.text('Camera scanner'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Scan a card'), findsWidgets);
+    expect(find.text('Scanner coming soon'), findsOneWidget);
+
+    await tester.tap(find.text('Open card search'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Fixture mode — camera/OCR not enabled yet'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('tapping fixture card navigates to card detail', (tester) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
     await tester.tap(find.text('Search cards'));

@@ -10,6 +10,7 @@ import '../features/settings/settings_screen.dart';
 class AppRoutes {
   static const home = '/';
   static const scanner = '/scanner';
+  static const search = '/search';
   static const mockScanResult = '/scanner/mock-result';
   static const cardDetail = '/cards/detail';
   static const collection = '/collection';
@@ -17,7 +18,11 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> routes({bool? forceFixtureMode}) => {
     home: (_) => HomeScreen(forceFixtureMode: forceFixtureMode),
-    scanner: (_) => ScannerScreen(forceFixtureMode: forceFixtureMode),
+    scanner: (_) => ScannerScreen(
+      forceFixtureMode: forceFixtureMode,
+      showScannerLanding: true,
+    ),
+    search: (_) => ScannerScreen(forceFixtureMode: forceFixtureMode),
     mockScanResult: (_) => const MockScanResultScreen(),
     cardDetail: (_) => CardDetailScreen(forceFixtureMode: forceFixtureMode),
     collection: (_) => const CollectionScreen(),

@@ -19,6 +19,7 @@ class ScannerScreen extends StatefulWidget {
     SaveRoomApiClient? client,
     bool? forceLiveMode,
     bool? forceFixtureMode,
+    this.showScannerLanding = false,
   }) : _client = client,
        _forceLiveMode = forceLiveMode,
        _forceFixtureMode = forceFixtureMode;
@@ -26,6 +27,7 @@ class ScannerScreen extends StatefulWidget {
   final SaveRoomApiClient? _client;
   final bool? _forceLiveMode;
   final bool? _forceFixtureMode;
+  final bool showScannerLanding;
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
@@ -113,6 +115,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final liveMode = _liveMode;
+
+    if (widget.showScannerLanding) return _scannerLanding(theme);
 
     return SaveRoomShell(
       title: liveMode ? 'Search live API cards' : 'Choose a fixture card',
@@ -214,6 +218,69 @@ class _ScannerScreenState extends State<ScannerScreen> {
         ] else ...[
           _fixtureModeContent(theme),
         ],
+      ],
+    );
+  }
+
+  Widget _scannerLanding(ThemeData theme) {
+    final colors = theme.colorScheme;
+    return SaveRoomShell(
+      title: 'Scan a card',
+      children: [
+        Text('Scan a card', style: theme.textTheme.headlineLarge),
+        const SizedBox(height: 6),
+        Text(
+          'Camera recognition with review before save.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colors.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          height: 320,
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest,
+            border: Border.all(color: colors.primary.withValues(alpha: 0.55)),
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _ScannerFramePainter(colors.primary),
+                ),
+              ),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.document_scanner_outlined,
+                      color: colors.primary,
+                      size: 54,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Scanner coming soon',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Line up a card inside the frame.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton.icon(
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+          icon: const Icon(Icons.search),
+          label: const Text('Open card search'),
+        ),
       ],
     );
   }
@@ -397,4 +464,38 @@ class _ScannerScreenState extends State<ScannerScreen> {
       ),
     );
   }
+}
+
+class _ScannerFramePainter extends CustomPainter {
+  const _ScannerFramePainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final rect = Rect.fromCenter(
+      center: size.center(Offset.zero),
+      width: size.width * 0.62,
+      height: size.height * 0.72,
+    );
+    final corner = rect.width * 0.18;
+    for (final p in [
+      (rect.topLeft, Offset(corner, 0), Offset(0, corner)),
+      (rect.topRight, Offset(-corner, 0), Offset(0, corner)),
+      (rect.bottomLeft, Offset(corner, 0), Offset(0, -corner)),
+      (rect.bottomRight, Offset(-corner, 0), Offset(0, -corner)),
+    ]) {
+      canvas.drawLine(p.$1, p.$1 + p.$2, paint);
+      canvas.drawLine(p.$1, p.$1 + p.$3, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScannerFramePainter oldDelegate) =>
+      oldDelegate.color != color;
 }

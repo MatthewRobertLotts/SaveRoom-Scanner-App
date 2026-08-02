@@ -52,7 +52,7 @@ class HomeScreen extends StatelessWidget {
           title: 'Search cards',
           subtitle: 'Find cards by name, set, or partial name',
           icon: Icons.search,
-          onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
+          onTap: () => Navigator.pushNamed(context, AppRoutes.search),
         ),
         const SizedBox(height: 8),
         PrimaryActionCard(
