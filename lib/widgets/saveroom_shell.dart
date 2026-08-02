@@ -65,22 +65,12 @@ class SaveRoomShell extends StatelessWidget {
   }
 }
 
-// ponytail: smooth vertical graphite gradient only, no shapes or grid.
+// ponytail: solid graphite — no gradient, no shapes.
 class _GraphiteBackdrop extends StatelessWidget {
   const _GraphiteBackdrop();
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [const Color(0xFF16171B), saveRoomBackground],
-          ),
-        ),
-      ),
-    );
+    return IgnorePointer(child: ColoredBox(color: saveRoomBackground));
   }
 }
