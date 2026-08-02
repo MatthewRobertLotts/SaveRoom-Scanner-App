@@ -18,35 +18,16 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final fixtureMode = forceFixtureMode ?? AppConfig.fixtureMode;
     return SaveRoomShell(
       title: 'SaveRoom',
       bottomBar: const _HomeBottomNav(),
       children: [
-        _entrance(context, _DashboardHero(fixtureMode: fixtureMode)),
-        const SizedBox(height: 14),
+        _entrance(context, _OverviewCard(fixtureMode: fixtureMode)),
+        const SizedBox(height: 12),
         _entrance(
           context,
-          const Row(
-            children: [
-              Expanded(
-                child: _MetricTile(
-                  icon: LucideIcons.layers,
-                  title: 'Collection',
-                  value: '0',
-                ),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: _MetricTile(
-                  icon: LucideIcons.heart,
-                  title: 'Wishlist',
-                  value: '0',
-                ),
-              ),
-            ],
-          ),
+          const _HomeSearchBar(),
           delay: const Duration(milliseconds: 60),
         ),
         const SizedBox(height: 16),
@@ -64,7 +45,7 @@ class HomeScreen extends StatelessWidget {
                 label: 'SCAN A CARD',
                 title: 'Camera scanner',
                 icon: LucideIcons.scanLine,
-                accent: colors.primary,
+                accent: Theme.of(context).colorScheme.primary,
                 onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
               ),
               _DashboardActionTile(
@@ -104,6 +85,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+// ponytail: no delay param on first child — first section appears immediately.
 Widget _entrance(
   BuildContext context,
   Widget child, {
@@ -130,14 +112,15 @@ Widget _entrance(
   );
 }
 
-class _DashboardHero extends StatelessWidget {
-  const _DashboardHero({required this.fixtureMode});
+/// Compact collection overview — status + two metrics side by side.
+/// Combines the old hero banner + separate metric tiles into one card.
+class _OverviewCard extends StatelessWidget {
+  const _OverviewCard({required this.fixtureMode});
 
   final bool fixtureMode;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return GlassPanel(
       accent: true,
       strong: true,
@@ -151,19 +134,94 @@ class _DashboardHero extends StatelessWidget {
             icon: fixtureMode ? LucideIcons.database : LucideIcons.circleCheck,
             dense: true,
           ),
-          const SizedBox(height: 22),
-          Text(
-            'Your collector dashboard',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Scan, search and review Pokémon cards without the clutter.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              _metric(context, LucideIcons.layers, 'Collection', '0'),
+              const SizedBox(width: 24),
+              _metric(context, LucideIcons.heart, 'Wishlist', '0'),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _metric(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
+    return Expanded(
+      child: Row(
+        children: [
+          Icon(icon, size: 22, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: Theme.of(context).textTheme.labelSmall),
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Primary search entry — navigates to full search on submit.
+class _HomeSearchBar extends StatefulWidget {
+  const _HomeSearchBar();
+
+  @override
+  State<_HomeSearchBar> createState() => _HomeSearchBarState();
+}
+
+class _HomeSearchBarState extends State<_HomeSearchBar> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassPanel(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      radius: 16,
+      child: TextField(
+        controller: _controller,
+        decoration: InputDecoration(
+          hintText: 'Search cards by name, set, or number…',
+          prefixIcon: const Icon(LucideIcons.search, size: 20),
+          suffixIcon: _controller.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(LucideIcons.x, size: 18),
+                  onPressed: () {
+                    _controller.clear();
+                    setState(() {});
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          filled: false,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+        textInputAction: TextInputAction.search,
+        onChanged: (_) => setState(() {}),
+        onSubmitted: (query) {
+          _controller.clear();
+          Navigator.pushNamed(context, AppRoutes.search);
+        },
       ),
     );
   }
@@ -227,46 +285,6 @@ class _DashboardActionTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.icon,
-    required this.title,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return GlassPanel(
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: colors.primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.labelSmall),
-                Text(
-                  value,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
