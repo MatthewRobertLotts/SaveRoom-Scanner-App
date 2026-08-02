@@ -210,4 +210,19 @@ void main() {
     expect(find.textContaining('setState'), findsNothing);
     expect(find.textContaining('markNeedsBuild'), findsNothing);
   });
+
+  testWidgets('CardThumbnail contains whole card image', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: CardThumbnail(
+            imageUrls: ['https://example.com/card.png'],
+            cardName: 'Whole Card Test',
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.widget<Image>(find.byType(Image)).fit, BoxFit.contain);
+  });
 }

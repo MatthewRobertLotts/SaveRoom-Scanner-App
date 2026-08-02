@@ -57,7 +57,7 @@ class _CardThumbnailState extends State<CardThumbnail> {
     return Image.network(
       url,
       key: ValueKey(url),
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
       errorBuilder: (_, _, _) {
         _scheduleAdvance(url);
         return _placeholder(context);
