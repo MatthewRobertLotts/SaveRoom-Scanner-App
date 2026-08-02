@@ -65,6 +65,7 @@ class SaveRoomShell extends StatelessWidget {
   }
 }
 
+// ponytail: solid graphite base with a single soft top glow; no grid/line blobs.
 class _GraphiteBackdrop extends StatelessWidget {
   const _GraphiteBackdrop();
 
@@ -72,80 +73,16 @@ class _GraphiteBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: saveRoomBackground,
           gradient: RadialGradient(
-            center: Alignment(-0.9, -0.72),
+            center: const Alignment(-0.9, -0.72),
             radius: 1.35,
-            colors: [Color(0xFF302017), saveRoomBackground],
-            stops: [0, 0.72],
+            colors: [const Color(0xFF3A2A14), saveRoomBackground],
+            stops: const [0, 0.72],
           ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: -120,
-              right: -110,
-              child: Container(
-                width: 330,
-                height: 330,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      saveRoomOrange.withValues(alpha: 0.22),
-                      saveRoomOrange.withValues(alpha: 0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: -150,
-              bottom: 30,
-              child: Transform.rotate(
-                angle: -0.32,
-                child: Container(
-                  width: 430,
-                  height: 82,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(50),
-                    gradient: LinearGradient(
-                      colors: [
-                        saveRoomOrange.withValues(alpha: 0),
-                        saveRoomOrange.withValues(alpha: 0.08),
-                        saveRoomOrange.withValues(alpha: 0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const Positioned.fill(child: CustomPaint(painter: _GridPainter())),
-          ],
         ),
       ),
     );
   }
-}
-
-class _GridPainter extends CustomPainter {
-  const _GridPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.022)
-      ..strokeWidth = 1;
-    const spacing = 46.0;
-    for (double x = 0; x < size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
