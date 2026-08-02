@@ -17,6 +17,15 @@ This roadmap keeps the app small until the API has the next backend foundations.
 - `paid beta`: after v12.5 billing/entitlement enforcement.
 
 
+
+### v0.7.25 Collector Pro UI wrap-up — completed
+
+- Card detail, scanner landing, search results, and home dashboard now follow the current design-system direction closely enough for UAT.
+- Search result rows are larger and show whole-card thumbnails instead of cropped art.
+- Fixture result/detail fallback banners were removed from normal fixture-row navigation.
+- Home page is no longer a vertical list-first layout: it uses a scan hero, clear scan/search icon buttons, compact status cards, and recent cards.
+- Validation: `flutter analyze --no-fatal-infos` and `flutter test` passed (`87/87`).
+
 ### v0.7.4 thumbnail image parity fix — completed
 
 - v0.7.3 restored partial search and removed thumbnail framework error text, but list/recent thumbnails still showed placeholders.

@@ -72,11 +72,22 @@ Android SDK is installed on the secondary drive at `/media/matt/Storage/DevTools
 |-----------|--------|
 | `dart format lib test` | ✅ |
 | `flutter pub get` | ✅ |
-| `flutter analyze --no-fatal-infos` | ✅ (10 info-only suggestions) |
-| `flutter test` | ✅ 80/80 |
+| `flutter analyze --no-fatal-infos` | ✅ (2 existing info-only print warnings in `tools/smoke/live_search_smoke.dart`) |
+| `flutter test` | ✅ 87/87 |
 | `flutter build web --debug` | ✅ |
 | `flutter build apk --debug` | ✅ debug APK |
 
+
+
+### v0.7.25 Collector Pro UI wrap-up
+
+- Current app commit: `9f805bd` (`v0.7.25: simplify home dashboard`).
+- Card detail uses the PDF Collector Pro direction: identity header, card image plus market/card facts, segmented Overview/Evidence/History bar, collector information, pricing/evidence, and bottom actions.
+- Scanner flow is split: **SCAN A CARD** opens the scanner landing/capture placeholder; **Search cards** opens manual search.
+- Search results use larger report-style rows with whole-card thumbnails (`BoxFit.contain`) and fixture rows open full fixture detail instead of fallback-preview banners.
+- Home is now a simple dashboard: large scan hero, clear scan/search icon buttons, compact stats, and recent-card rail.
+- Validation: `dart format lib test`, `flutter analyze --no-fatal-infos`, and `flutter test` passed on 2026-08-02 (`87/87`).
+- Still out of scope: real camera/OCR, auth, billing, inventory writes, app-store publishing, and live collection metrics.
 
 ### v0.7.4 thumbnail image parity fix
 
