@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveroom_scanner_app/app/app.dart';
+import 'package:saveroom_scanner_app/app/app_routes.dart';
 
 void main() {
   Future<void> goToCardDetail(WidgetTester tester, {int cardIndex = 0}) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Search cards'));
+    final keys = [
+      'en:sv03-223',
+      'en:sv04-234',
+      'en:sv05-191',
+      'en:sv07-201',
+      'en:sv02-200',
+    ];
+    Navigator.of(
+      tester.element(find.byType(Navigator)),
+    ).pushNamed(AppRoutes.cardDetail, arguments: keys[cardIndex]);
     await tester.pumpAndSettle();
     final names = [
       'Charizard ex',
@@ -15,16 +25,7 @@ void main() {
       'Greninja ex',
       'Giratina V',
     ];
-    final target = find.text(names[cardIndex]);
-    await tester.scrollUntilVisible(
-      target,
-      120,
-      scrollable: find.byType(Scrollable).last,
-    );
-    await tester.drag(find.byType(Scrollable).last, const Offset(0, -160));
-    await tester.pumpAndSettle();
-    await tester.tap(target);
-    await tester.pumpAndSettle();
+    expect(find.text(names[cardIndex]), findsWidgets);
   }
 
   group('Card detail pricing formatting', () {
@@ -122,8 +123,9 @@ void main() {
 
   group('Scanner picker', () {
     testWidgets('shows all 5 cards', (tester) async {
-      await tester.pumpWidget(const SaveRoomScannerApp());
-      await tester.tap(find.text('Search cards'));
+      await tester.pumpWidget(
+        const SaveRoomScannerApp(initialRoute: AppRoutes.search),
+      );
       await tester.pumpAndSettle();
 
       for (final name in [
@@ -138,8 +140,9 @@ void main() {
     });
 
     testWidgets('search filters by card key', (tester) async {
-      await tester.pumpWidget(const SaveRoomScannerApp());
-      await tester.tap(find.text('Search cards'));
+      await tester.pumpWidget(
+        const SaveRoomScannerApp(initialRoute: AppRoutes.search),
+      );
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField), 'sv04');
@@ -150,8 +153,9 @@ void main() {
     });
 
     testWidgets('empty search state', (tester) async {
-      await tester.pumpWidget(const SaveRoomScannerApp());
-      await tester.tap(find.text('Search cards'));
+      await tester.pumpWidget(
+        const SaveRoomScannerApp(initialRoute: AppRoutes.search),
+      );
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField), 'zzznotexist');

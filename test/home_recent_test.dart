@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:saveroom_scanner_app/app/app.dart';
 
 void main() {
@@ -8,6 +9,11 @@ void main() {
     await tester.pumpWidget(const SaveRoomScannerApp());
 
     // Recently viewed section should always show empty state
+    await tester.scrollUntilVisible(
+      find.text('Recently viewed'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Recently viewed'), findsOneWidget);
     expect(find.text('Cards you open will appear here'), findsOneWidget);
   });
