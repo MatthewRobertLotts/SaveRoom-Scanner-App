@@ -3,14 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:saveroom_scanner_app/features/cards/card_detail_screen.dart';
 import 'package:saveroom_scanner_app/services/fixture_loader.dart';
 import 'package:saveroom_scanner_app/services/saveroom_api_client.dart';
+import 'package:saveroom_scanner_app/widgets/card_image_panel.dart';
 
 class _FakeDetailClient extends SaveRoomApiClient {
-  _FakeDetailClient(this.loader) : super(fixtureLoader: const FixtureLoader());
+  _FakeDetailClient(this.loader, {this.searcher})
+    : super(fixtureLoader: const FixtureLoader());
 
   final Future<Map<String, dynamic>> Function(String cardKey) loader;
+  final Future<List<SearchResult>> Function(String query)? searcher;
 
   @override
   Future<Map<String, dynamic>> getCardDetail(String cardKey) => loader(cardKey);
+
+  @override
+  Future<List<SearchResult>> searchCards(String query) async =>
+      searcher == null ? super.searchCards(query) : searcher!(query);
 }
 
 Map<String, dynamic> _detail(String name, String key) => <String, dynamic>{
@@ -19,7 +26,7 @@ Map<String, dynamic> _detail(String name, String key) => <String, dynamic>{
       'card_key': key,
       'name': name,
       'language_code': 'en',
-      'collector_number': '25',
+      'collector_number': key.split('-').last,
     },
     'set': <String, dynamic>{'name': 'Vivid Voltage', 'set_code': 'swsh4'},
     'images': <String, dynamic>{},
@@ -71,6 +78,32 @@ void main() {
     expect(find.text('Full Detail Name'), findsWidgets);
     expect(find.text('Fallback Name'), findsNothing);
     expect(find.text('Card detail unavailable'), findsNothing);
+  });
+
+  testWidgets('swiping card image opens same-name variant detail', (
+    tester,
+  ) async {
+    final client = _FakeDetailClient(
+      (key) async => key == 'en:swsh4-26'
+          ? _detail('Pikachu', 'en:swsh4-26')
+          : _detail('Pikachu', 'en:swsh4-25'),
+      searcher: (_) async => const [
+        SearchResult(cardKey: 'en:swsh4-25', name: 'Pikachu', setText: '25'),
+        SearchResult(cardKey: 'en:swsh4-26', name: 'Pikachu', setText: '26'),
+      ],
+    );
+
+    await tester.pumpWidget(_screen(client: client, args: 'en:swsh4-25'));
+    await tester.pumpAndSettle();
+
+    await tester.fling(
+      find.byType(CardImagePanel).first,
+      const Offset(-320, 0),
+      900,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('26'), findsWidgets);
   });
 
   testWidgets('live v12 detail shape renders number and pricing source', (

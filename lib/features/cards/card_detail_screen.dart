@@ -10,7 +10,7 @@ import '../../widgets/section_card.dart';
 import '../../widgets/saveroom_shell.dart';
 
 /// ponytail: cardKey passed via route args.
-class CardDetailScreen extends StatelessWidget {
+class CardDetailScreen extends StatefulWidget {
   const CardDetailScreen({
     super.key,
     SaveRoomApiClient? client,
@@ -21,35 +21,62 @@ class CardDetailScreen extends StatelessWidget {
   final bool? forceFixtureMode;
 
   @override
-  Widget build(BuildContext context) {
+  State<CardDetailScreen> createState() => _CardDetailScreenState();
+}
+
+class _CardDetailScreenState extends State<CardDetailScreen> {
+  String? _cardKey;
+  SearchResult? _fallback;
+  SaveRoomApiClient? _client;
+  Future<Map<String, dynamic>>? _detailFuture;
+
+  SaveRoomApiClient get _apiClient => _client ??=
+      widget._client ??
+      SaveRoomApiClient(
+        fixtureLoader: const FixtureLoader(),
+        forceFixtureMode: widget.forceFixtureMode,
+      );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_detailFuture != null) return;
     final args = ModalRoute.of(context)?.settings.arguments;
-    final cardKey = switch (args) {
+    _fallback = args is CardDetailArgs ? args.fallback : null;
+    _cardKey = switch (args) {
       CardDetailArgs(:final cardKey) => cardKey,
       String value => value,
       _ => 'en:sv03-223',
     };
-    final fallback = args is CardDetailArgs ? args.fallback : null;
-    final client =
-        _client ??
-        SaveRoomApiClient(
-          fixtureLoader: const FixtureLoader(),
-          forceFixtureMode: forceFixtureMode,
-        );
+    _detailFuture = _apiClient.getCardDetail(_cardKey!);
+  }
+
+  void _selectVariant(SearchResult result) {
+    if (result.cardKey.isEmpty || result.cardKey == _cardKey) return;
+    setState(() {
+      _cardKey = result.cardKey;
+      _fallback = result;
+      _detailFuture = _apiClient.getCardDetail(result.cardKey);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
-      future: client.getCardDetail(cardKey),
+      future: _detailFuture,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          if (fallback != null && fallback.hasFallbackDetail) {
+          if (_fallback != null && _fallback!.hasFallbackDetail) {
             return SaveRoomShell(
               title: 'Card detail',
               children: _content(
                 context,
-                fallback.toFallbackDetailResponse(),
+                _fallback!.toFallbackDetailResponse(),
                 isFallbackPreview: true,
               ),
             );
           }
-          return _unavailable(context, cardKey);
+          return _unavailable(context, _cardKey ?? '—');
         }
         if (!snapshot.hasData) {
           return const SaveRoomShell(
@@ -134,6 +161,8 @@ class CardDetailScreen extends StatelessWidget {
       const SizedBox(height: 12),
       _summaryRow(
         context,
+        client: _apiClient,
+        selectedCardKey: _cardKey ?? textAt(card, 'card_key'),
         data: data,
         name: name,
         setName: setName,
@@ -142,6 +171,7 @@ class CardDetailScreen extends StatelessWidget {
         rarity: rarity,
         pricing: pricing,
         isFallbackPreview: isFallbackPreview,
+        onVariantSelected: _selectVariant,
       ),
       const SizedBox(height: 12),
       _variantSelector(language),
@@ -151,6 +181,7 @@ class CardDetailScreen extends StatelessWidget {
         setName,
         number,
         language,
+        name,
         _displayRarity(rarity),
         pricing,
       ),
@@ -176,6 +207,8 @@ class CardDetailScreen extends StatelessWidget {
 
   Widget _summaryRow(
     BuildContext context, {
+    required SaveRoomApiClient client,
+    required String selectedCardKey,
     required Map<String, dynamic> data,
     required String name,
     required String setName,
@@ -184,6 +217,7 @@ class CardDetailScreen extends StatelessWidget {
     required String rarity,
     required Map<String, dynamic> pricing,
     required bool isFallbackPreview,
+    required ValueChanged<SearchResult> onVariantSelected,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -196,21 +230,14 @@ class CardDetailScreen extends StatelessWidget {
           child: Column(
             children: [
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Expanded(child: _PrintPreview(label: 'Prev')),
-                    SizedBox(
-                      width: imageWidth,
-                      child: CardImagePanel.fromData(
-                        data,
-                        imageHeight: imageHeight,
-                        showTitle: false,
-                        showMetadata: false,
-                      ),
-                    ),
-                    const Expanded(child: _PrintPreview(label: 'Next')),
-                  ],
+                child: _VariantImagePager(
+                  client: client,
+                  selectedCardKey: selectedCardKey,
+                  name: name,
+                  data: data,
+                  imageWidth: imageWidth,
+                  imageHeight: imageHeight,
+                  onVariantSelected: onVariantSelected,
                 ),
               ),
               const SizedBox(height: 6),
@@ -252,24 +279,48 @@ class CardDetailScreen extends StatelessWidget {
     String setName,
     String number,
     String language,
+    String name,
     String rarity,
     Map<String, dynamic> pricing,
   ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-        Expanded(
-          child: _BentoTile(
-            title: 'Identity',
-            lines: [setName, number, language],
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _BentoTile(
+                title: 'Identity',
+                lines: [name, setName, number, language],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _BentoTile(
+                title: 'Market',
+                lines: [_priceGlance(pricing), rarity],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _BentoTile(
-            title: 'Market',
-            lines: [_priceGlance(pricing), rarity],
-          ),
+        const SizedBox(height: 10),
+        const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _BentoTile(
+                title: 'Collection',
+                lines: ['Not owned', 'Inventory coming later'],
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: _BentoTile(
+                title: 'Printings',
+                lines: ['Swipe card image', 'Same-name variants'],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -426,26 +477,135 @@ class _HeroActions extends StatelessWidget {
   }
 }
 
-class _PrintPreview extends StatelessWidget {
-  const _PrintPreview({required this.label});
+class _VariantImagePager extends StatefulWidget {
+  const _VariantImagePager({
+    required this.client,
+    required this.selectedCardKey,
+    required this.name,
+    required this.data,
+    required this.imageWidth,
+    required this.imageHeight,
+    required this.onVariantSelected,
+  });
 
-  final String label;
+  final SaveRoomApiClient client;
+  final String selectedCardKey;
+  final String name;
+  final Map<String, dynamic> data;
+  final double imageWidth;
+  final double imageHeight;
+  final ValueChanged<SearchResult> onVariantSelected;
+
+  @override
+  State<_VariantImagePager> createState() => _VariantImagePagerState();
+}
+
+class _VariantImagePagerState extends State<_VariantImagePager> {
+  late Future<List<SearchResult>> _future;
+  int _index = 0;
+  double _dragDx = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = widget.client.searchCards(widget.name);
+  }
+
+  @override
+  void didUpdateWidget(covariant _VariantImagePager oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.name != widget.name || oldWidget.client != widget.client) {
+      _index = 0;
+      _future = widget.client.searchCards(widget.name);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      height: 90,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.32),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      alignment: Alignment.center,
-      child: Text(label, style: Theme.of(context).textTheme.labelSmall),
+    return FutureBuilder<List<SearchResult>>(
+      future: _future,
+      builder: (context, snapshot) {
+        final variants = _variants(snapshot.data ?? const []);
+        final currentIndex = variants.indexWhere(
+          (r) => r.cardKey == widget.selectedCardKey,
+        );
+        _index = _index.clamp(0, variants.length - 1);
+        final shownIndex = currentIndex < 0 ? _index : currentIndex;
+        final variant = variants[shownIndex];
+        final pageData = variant.cardKey == widget.selectedCardKey
+            ? widget.data
+            : asMap(variant.toFallbackDetailResponse()['data']);
+        return Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            GestureDetector(
+              onHorizontalDragStart: (_) => _dragDx = 0,
+              onHorizontalDragUpdate: (details) => _dragDx += details.delta.dx,
+              onHorizontalDragEnd: (details) {
+                if (variants.length < 2) return;
+                if (_dragDx.abs() < 60) return;
+                final next = _dragDx < 0
+                    ? (shownIndex + 1).clamp(0, variants.length - 1)
+                    : (shownIndex - 1).clamp(0, variants.length - 1);
+                if (next == shownIndex) return;
+                setState(() => _index = next);
+                widget.onVariantSelected(variants[next]);
+              },
+              child: Center(
+                child: SizedBox(
+                  width: widget.imageWidth,
+                  child: CardImagePanel.fromData(
+                    pageData,
+                    imageHeight: widget.imageHeight,
+                    showTitle: false,
+                    showMetadata: false,
+                  ),
+                ),
+              ),
+            ),
+            if (variants.length > 1)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  child: Text(
+                    '${shownIndex + 1} of ${variants.length} printings · swipe',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
+
+  List<SearchResult> _variants(List<SearchResult> results) {
+    final current = SearchResult(
+      cardKey: widget.selectedCardKey,
+      name: widget.name,
+      setText: 'Selected printing',
+      rawItem: widget.data,
+    );
+    final exact = results.where((r) => _sameName(r.name, widget.name)).toList();
+    final byKey = <String, SearchResult>{widget.selectedCardKey: current};
+    for (final r in exact) {
+      if (r.cardKey.isNotEmpty) byKey[r.cardKey] = r;
+    }
+    return byKey.values.toList();
+  }
+
+  static bool _sameName(String a, String b) => _norm(a) == _norm(b);
+  static String _norm(String v) =>
+      v.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
 }
 
 class _SelectorChip extends StatelessWidget {

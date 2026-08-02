@@ -40,7 +40,6 @@ void main() {
 
     // Should be on card detail page now
     expect(find.text('Card detail'), findsOneWidget);
-    // CardImagePanel shows the card name
-    expect(find.text('Charizard ex'), findsOneWidget);
+    expect(find.text('Charizard ex'), findsWidgets);
   });
 }

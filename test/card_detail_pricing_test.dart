@@ -151,7 +151,7 @@ void main() {
     testWidgets('tapping Miraidon navigates to detail', (tester) async {
       await goToCardDetail(tester, cardIndex: 1);
       expect(find.text('Card detail'), findsOneWidget);
-      expect(find.text('Miraidon ex'), findsOneWidget);
+      expect(find.text('Miraidon ex'), findsWidgets);
     });
   });
 }
