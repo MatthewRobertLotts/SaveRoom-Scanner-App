@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/app_routes.dart';
+import '../../app/app_theme.dart';
 import '../../config/app_config.dart';
 import '../../services/fixtures.dart';
 import '../../services/recent_cards.dart';
@@ -10,7 +11,6 @@ import '../../widgets/card_thumbnail.dart';
 import '../../widgets/glass_panel.dart';
 import '../../widgets/saveroom_shell.dart';
 import '../../widgets/status_pill.dart';
-import '../../app/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.forceFixtureMode});
@@ -24,99 +24,44 @@ class HomeScreen extends StatelessWidget {
       title: 'SaveRoom',
       bottomBar: const _HomeBottomNav(),
       children: [
-        _entrance(context, _OverviewCard(fixtureMode: fixtureMode)),
-        const SizedBox(height: 12),
-        _entrance(
-          context,
-          const _HomeSearchBar(),
-          delay: const Duration(milliseconds: 60),
+        _HeroDashboard(fixtureMode: fixtureMode),
+        const SizedBox(height: 18),
+        const _HomeSearchBar(),
+        const SizedBox(height: 18),
+        _ActionStrip(
+          actions: [
+            _HomeAction(
+              'SCAN A CARD',
+              'Camera frame',
+              LucideIcons.scanLine,
+              () => Navigator.pushNamed(context, AppRoutes.scanner),
+            ),
+            _HomeAction(
+              'Search',
+              'Find cards',
+              LucideIcons.search,
+              () => Navigator.pushNamed(context, AppRoutes.search),
+            ),
+            _HomeAction(
+              'Collection',
+              'Your vault',
+              LucideIcons.library,
+              () => Navigator.pushNamed(context, AppRoutes.collection),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
-        _entrance(
-          context,
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1.04,
-            children: [
-              _DashboardActionTile(
-                label: 'SCAN A CARD',
-                title: 'Camera scanner',
-                icon: LucideIcons.scanLine,
-                accent: Theme.of(context).colorScheme.primary,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
-              ),
-              _DashboardActionTile(
-                label: 'SEARCH',
-                title: 'Search cards',
-                icon: LucideIcons.search,
-                accent: saveRoomGold,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.search),
-              ),
-              const _DashboardActionTile(
-                label: 'COLLECTION',
-                title: 'Browse cards',
-                icon: LucideIcons.library,
-                accent: Color(0xFFC7C7CC),
-              ),
-              const _DashboardActionTile(
-                label: 'WISHLIST',
-                title: 'Saved targets',
-                icon: LucideIcons.bookmark,
-                accent: saveRoomGold,
-              ),
-            ],
-          ),
-          delay: const Duration(milliseconds: 120),
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 26),
         ValueListenableBuilder<List<SearchResult>>(
           valueListenable: RecentlyViewed.instance,
-          builder: (context, recent, _) => _entrance(
-            context,
-            _RecentlyViewedRail(recent: recent),
-            delay: const Duration(milliseconds: 180),
-          ),
+          builder: (context, recent, _) => _RecentlyViewedRail(recent: recent),
         ),
       ],
     );
   }
 }
 
-// ponytail: no delay param on first child — first section appears immediately.
-Widget _entrance(
-  BuildContext context,
-  Widget child, {
-  Duration delay = Duration.zero,
-}) {
-  if (MediaQuery.disableAnimationsOf(context)) return child;
-  final total = Duration(milliseconds: 260 + delay.inMilliseconds);
-  final wait = delay.inMilliseconds / total.inMilliseconds;
-  return TweenAnimationBuilder<double>(
-    tween: Tween(begin: 0, end: 1),
-    duration: total,
-    curve: Curves.easeOut,
-    builder: (context, value, animatedChild) {
-      final progress = ((value - wait) / (1 - wait)).clamp(0.0, 1.0);
-      return Opacity(
-        opacity: progress,
-        child: Transform.translate(
-          offset: Offset(0, 8 * (1 - progress)),
-          child: animatedChild,
-        ),
-      );
-    },
-    child: child,
-  );
-}
-
-/// Compact collection overview — status + two metrics side by side.
-/// Combines the old hero banner + separate metric tiles into one card.
-class _OverviewCard extends StatelessWidget {
-  const _OverviewCard({required this.fixtureMode});
+class _HeroDashboard extends StatelessWidget {
+  const _HeroDashboard({required this.fixtureMode});
 
   final bool fixtureMode;
 
@@ -125,60 +70,39 @@ class _OverviewCard extends StatelessWidget {
     return GlassPanel(
       accent: true,
       strong: true,
-      radius: 24,
-      padding: const EdgeInsets.all(20),
+      radius: 34,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          StatusPill(
-            fixtureMode ? 'Fixture mode' : 'Live API ready',
-            icon: fixtureMode ? LucideIcons.database : LucideIcons.circleCheck,
-            dense: true,
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Scan, price, collect.',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Premium card lookup, market prices, and collection tools in one calm workflow.',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 20),
           Row(
             children: [
-              _metric(context, LucideIcons.layers, 'Collection', '0'),
-              const SizedBox(width: 16),
-              _metric(context, LucideIcons.heart, 'Wishlist', '0'),
+              StatusPill(
+                fixtureMode ? 'Fixture mode' : 'Live API',
+                icon: fixtureMode ? LucideIcons.database : LucideIcons.wifi,
+                dense: true,
+              ),
+              const Spacer(),
+              Icon(LucideIcons.sparkles, color: saveRoomGold),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _metric(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String value,
-  ) {
-    return Expanded(
-      child: Row(
-        children: [
-          Icon(icon, size: 22, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 22),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(label, style: Theme.of(context).textTheme.labelSmall),
-              Text(
-                value,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-              ),
+              const Expanded(child: _HeroCopy()),
+              const SizedBox(width: 12),
+              _CardStackPreview(),
+            ],
+          ),
+          const SizedBox(height: 18),
+          const Row(
+            children: [
+              _MetricPill('Cards', '0'),
+              SizedBox(width: 8),
+              _MetricPill('Value', '£0'),
+              SizedBox(width: 8),
+              _MetricPill('List', '0'),
             ],
           ),
         ],
@@ -187,7 +111,116 @@ class _OverviewCard extends StatelessWidget {
   }
 }
 
-/// Primary search entry — navigates to full search on submit.
+class _HeroCopy extends StatelessWidget {
+  const _HeroCopy();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Card scanner', style: Theme.of(context).textTheme.headlineLarge),
+        const SizedBox(height: 6),
+        Text(
+          'Look up cards, check market price, and build the collection flow without fake inventory.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+}
+
+class _CardStackPreview extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 92,
+      height: 128,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 16,
+            top: 8,
+            child: _MiniCard(color: colors.secondary.withValues(alpha: 0.42)),
+          ),
+          Positioned(
+            left: 4,
+            top: 0,
+            child: _MiniCard(color: colors.primary.withValues(alpha: 0.42)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniCard extends StatelessWidget {
+  const _MiniCard({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 64,
+      height: 96,
+      decoration: BoxDecoration(
+        color: saveRoomMutedSurface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color),
+      ),
+      padding: const EdgeInsets.all(6),
+      child: Column(
+        children: [
+          Expanded(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(7),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(height: 5, width: 42, color: Colors.white24),
+          const SizedBox(height: 4),
+          Container(height: 4, width: 30, color: Colors.white12),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricPill extends StatelessWidget {
+  const _MetricPill(this.label, this.value);
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: saveRoomBackground.withValues(alpha: 0.52),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value, style: Theme.of(context).textTheme.titleLarge),
+              Text(label, style: Theme.of(context).textTheme.labelSmall),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _HomeSearchBar extends StatefulWidget {
   const _HomeSearchBar();
 
@@ -206,93 +239,64 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return GlassPanel(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      radius: 16,
-      child: TextField(
-        controller: _controller,
-        decoration: InputDecoration(
-          hintText: 'Search cards by name, set, or number…',
-          prefixIcon: const Icon(LucideIcons.search, size: 20),
-          suffixIcon: _controller.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(LucideIcons.x, size: 18),
-                  onPressed: () {
-                    _controller.clear();
-                    setState(() {});
-                  },
-                )
-              : null,
-          border: InputBorder.none,
-          filled: false,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-        ),
-        textInputAction: TextInputAction.search,
-        onChanged: (_) => setState(() {}),
-        onSubmitted: (query) {
-          _controller.clear();
-          Navigator.pushNamed(context, AppRoutes.search);
-        },
+    return TextField(
+      controller: _controller,
+      decoration: const InputDecoration(
+        hintText: 'Search cards by name, set, or number…',
+        prefixIcon: Icon(LucideIcons.search, size: 20),
+      ),
+      textInputAction: TextInputAction.search,
+      onSubmitted: (_) => Navigator.pushNamed(context, AppRoutes.search),
+    );
+  }
+}
+
+class _HomeAction {
+  const _HomeAction(this.title, this.subtitle, this.icon, this.onTap);
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+}
+
+class _ActionStrip extends StatelessWidget {
+  const _ActionStrip({required this.actions});
+  final List<_HomeAction> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 132,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemBuilder: (context, i) => _ActionCard(action: actions[i]),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemCount: actions.length,
       ),
     );
   }
 }
 
-class _DashboardActionTile extends StatelessWidget {
-  const _DashboardActionTile({
-    required this.label,
-    required this.title,
-    required this.icon,
-    required this.accent,
-    this.onTap,
-  });
-
-  final String label;
-  final String title;
-  final IconData icon;
-  final Color accent;
-  final VoidCallback? onTap;
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({required this.action});
+  final _HomeAction action;
 
   @override
   Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    return Opacity(
-      opacity: enabled ? 1 : 0.62,
+    return SizedBox(
+      width: 136,
       child: GlassPanel(
-        onTap: onTap,
-        accent: enabled,
-        radius: 24,
+        onTap: action.onTap,
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: accent.withValues(alpha: 0.24)),
-              ),
-              child: Center(child: Icon(icon, size: 24, color: accent)),
-            ),
+            Icon(action.icon, color: Theme.of(context).colorScheme.primary),
             const Spacer(),
+            Text(action.title, style: Theme.of(context).textTheme.titleMedium),
             Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.7,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              action.subtitle,
+              style: Theme.of(context).textTheme.labelSmall,
             ),
           ],
         ),
@@ -321,10 +325,7 @@ class _RecentlyViewedRail extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Recently viewed',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
+        Text('Recently viewed', style: Theme.of(context).textTheme.titleLarge),
         if (recent.isEmpty) ...[
           const SizedBox(height: 4),
           Text(
@@ -332,18 +333,16 @@ class _RecentlyViewedRail extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
-        const SizedBox(height: 10),
-        Row(
-          children: cards
-              .map(
-                (result) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _RecentMiniCard(result: result),
-                  ),
-                ),
-              )
-              .toList(),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 172,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (context, i) =>
+                _RecentMiniCard(result: cards.elementAt(i)),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemCount: cards.length,
+          ),
         ),
       ],
     );
@@ -352,36 +351,38 @@ class _RecentlyViewedRail extends StatelessWidget {
 
 class _RecentMiniCard extends StatelessWidget {
   const _RecentMiniCard({required this.result});
-
   final SearchResult result;
 
   @override
   Widget build(BuildContext context) {
-    return GlassPanel(
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: CardThumbnail(
-              imageUrls: result.imageUrlCandidates,
-              cardName: result.name,
+    return SizedBox(
+      width: 126,
+      child: GlassPanel(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: CardThumbnail(
+                imageUrls: result.imageUrlCandidates,
+                cardName: result.name,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            result.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
-          Text(
-            result.displayText,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+            const Spacer(),
+            Text(
+              result.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            Text(
+              result.displayText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
       ),
     );
   }

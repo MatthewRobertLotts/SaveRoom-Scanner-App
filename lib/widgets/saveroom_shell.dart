@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -12,7 +10,7 @@ class SaveRoomShell extends StatelessWidget {
     required this.children,
     this.bottomBar,
     this.actions,
-    this.contentPadding = const EdgeInsets.fromLTRB(16, 8, 16, 28),
+    this.contentPadding = const EdgeInsets.fromLTRB(18, 8, 18, 28),
   });
 
   final String title;
@@ -24,23 +22,12 @@ class SaveRoomShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: saveRoomBackground,
       extendBody: true,
-      appBar: AppBar(
-        title: Text(title),
-        actions: actions,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-            child: ColoredBox(
-              color: saveRoomBackground.withValues(alpha: 0.72),
-            ),
-          ),
-        ),
-      ),
+      appBar: AppBar(title: Text(title), actions: actions),
       body: Stack(
         children: [
-          const Positioned.fill(child: _GraphiteBackdrop()),
+          const Positioned.fill(child: _OpalBackdrop()),
           SafeArea(
             top: false,
             child: ListView(padding: contentPadding, children: children),
@@ -50,13 +37,13 @@ class SaveRoomShell extends StatelessWidget {
       bottomNavigationBar: bottomBar == null
           ? null
           : SafeArea(
-              minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+              minimum: const EdgeInsets.fromLTRB(18, 0, 18, 12),
               child: GlassPanel(
                 strong: true,
-                radius: 20,
+                radius: 28,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 9,
+                  horizontal: 10,
+                  vertical: 8,
                 ),
                 child: bottomBar!,
               ),
@@ -65,12 +52,24 @@ class SaveRoomShell extends StatelessWidget {
   }
 }
 
-// ponytail: solid graphite — no gradient, no shapes.
-class _GraphiteBackdrop extends StatelessWidget {
-  const _GraphiteBackdrop();
+class _OpalBackdrop extends StatelessWidget {
+  const _OpalBackdrop();
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(child: ColoredBox(color: saveRoomBackground));
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: const Alignment(0.7, -0.95),
+          radius: 1.15,
+          colors: [
+            saveRoomPrimary.withValues(alpha: 0.16),
+            saveRoomBackground,
+            saveRoomBackground,
+          ],
+          stops: const [0, 0.44, 1],
+        ),
+      ),
+    );
   }
 }

@@ -149,7 +149,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
           onChanged: liveMode ? _onSearchChanged : _onFixtureQueryChanged,
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
+        if (!_searched && _results.isEmpty) ...[
+          const _SearchStage(),
+          const SizedBox(height: 16),
+        ],
         _filterChips(),
         const SizedBox(height: 18),
         if (liveMode) ...[
@@ -245,7 +249,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         GlassPanel(
           strong: true,
           accent: true,
-          radius: 22,
+          radius: 34,
           padding: EdgeInsets.zero,
           child: Stack(
             children: [
@@ -266,28 +270,58 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
         ),
         const SizedBox(height: 14),
-        GlassPanel(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'LIGHTING',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.7,
+        Row(
+          children: [
+            Expanded(
+              child: GlassPanel(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'LIGHTING',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Good  •  Hold steady',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                'Good  •  Hold steady',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w800,
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: GlassPanel(
+                padding: EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'MODE',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Manual fallback',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         const SizedBox(height: 26),
         Center(
@@ -500,6 +534,52 @@ class _ScannerScreenState extends State<ScannerScreen> {
             subtitle,
             style: theme.textTheme.bodySmall,
             textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SearchStage extends StatelessWidget {
+  const _SearchStage();
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassPanel(
+      strong: true,
+      accent: true,
+      radius: 34,
+      padding: const EdgeInsets.all(22),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StatusPill(
+                  'Database lookup',
+                  dense: true,
+                  icon: LucideIcons.database,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Find the exact card',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Name, set code, collector number, or card key.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Icon(
+            LucideIcons.scanSearch,
+            size: 52,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ],
       ),

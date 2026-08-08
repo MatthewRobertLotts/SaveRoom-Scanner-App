@@ -183,67 +183,38 @@ class CardDetailScreen extends StatelessWidget {
     required Map<String, dynamic> pricing,
     required bool isFallbackPreview,
   }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // ponytail: preserve the approved split, stack when text scaling needs room.
-        final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
-        final wide = constraints.maxWidth >= 360 && !largeText;
-        final heroHeight = wide ? 280.0 : (largeText ? 540.0 : 420.0);
-        final imageHeight = wide ? 260.0 : (largeText ? 280.0 : 320.0);
-        final imageWidth = imageHeight * 5 / 7;
-        return SizedBox(
-          height: heroHeight,
-          child: wide
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: imageWidth,
-                      child: CardImagePanel.fromData(
-                        data,
-                        imageHeight: imageHeight,
-                        showTitle: false,
-                        showMetadata: false,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: _MarketDecisionCard(pricing: pricing),
-                          ),
-                          const SizedBox(height: 10),
-                          Expanded(
-                            child: _CardFactsCard(
-                              rarity: _displayRarity(rarity),
-                              language: language,
-                              finish: _finish(rarity),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                )
-              : Column(
-                  children: [
-                    SizedBox(
-                      width: imageWidth,
-                      child: CardImagePanel.fromData(
-                        data,
-                        imageHeight: imageHeight,
-                        showTitle: false,
-                        showMetadata: false,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(child: _MarketDecisionCard(pricing: pricing)),
-                  ],
-                ),
-        );
-      },
+    final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
+    final imageHeight = largeText ? 260.0 : 330.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlassPanel(
+          strong: true,
+          accent: true,
+          radius: 34,
+          padding: const EdgeInsets.all(18),
+          child: CardImagePanel.fromData(
+            data,
+            imageHeight: imageHeight,
+            showTitle: false,
+            showMetadata: false,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _MarketDecisionCard(pricing: pricing)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _CardFactsCard(
+                rarity: _displayRarity(rarity),
+                language: language,
+                finish: _finish(rarity),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -675,7 +646,7 @@ class _MiniPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Expanded(child: child),
+          child,
         ],
       ),
     );
