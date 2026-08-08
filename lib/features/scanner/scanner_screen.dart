@@ -12,6 +12,7 @@ import '../../widgets/card_thumbnail.dart';
 import '../../widgets/glass_panel.dart';
 import '../../widgets/saveroom_shell.dart';
 import '../../widgets/status_pill.dart';
+import '../../app/app_theme.dart';
 
 /// ponytail: one screen, two modes. Fixture = local picker. Live = API-backed
 /// search with request-ID guard against stale errors.
@@ -127,7 +128,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           controller: _textController,
           decoration: InputDecoration(
             hintText: liveMode
-                ? 'Search by name, set, number, or card key'
+                ? 'Search Charizard, SV03, 125…'
                 : 'Search cards\u2026',
             prefixIcon: const Icon(LucideIcons.search),
             suffixIcon: _loading
@@ -233,6 +234,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
             color: colors.onSurfaceVariant,
           ),
         ),
+        const SizedBox(height: 6),
+        Text(
+          'Manual search is ready while camera scanning is being finished.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colors.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 16),
         GlassPanel(
           strong: true,
@@ -242,7 +250,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           child: Stack(
             children: [
               SizedBox(
-                height: 470,
+                height: 430,
                 child: Stack(
                   children: [
                     Positioned.fill(
@@ -250,7 +258,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                         painter: _ScannerFramePainter(colors.primary),
                       ),
                     ),
-                    const Center(child: _ScannerCardPlaceholder()),
+                    Center(child: _ScannerCardPlaceholder()),
                   ],
                 ),
               ),
@@ -291,13 +299,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
               width: 86,
               height: 86,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: saveRoomPrimary,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 6),
+                border: Border.all(color: Colors.white, width: 5),
               ),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: colors.primary,
+                  color: saveRoomBackground,
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
@@ -474,19 +482,25 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   Widget _emptyState(ThemeData theme, String title, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 24),
+    return GlassPanel(
+      margin: const EdgeInsets.only(top: 12),
+      radius: 24,
+      padding: const EdgeInsets.all(22),
       child: Column(
         children: [
           Icon(
             LucideIcons.searchX,
-            size: 48,
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            size: 44,
+            color: theme.colorScheme.primary.withValues(alpha: 0.74),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(title, style: theme.textTheme.titleSmall),
           const SizedBox(height: 4),
-          Text(subtitle, style: theme.textTheme.bodySmall),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -528,7 +542,7 @@ class _ScannerFramePainter extends CustomPainter {
 }
 
 class _ScannerCardPlaceholder extends StatelessWidget {
-  const _ScannerCardPlaceholder();
+  _ScannerCardPlaceholder();
 
   @override
   Widget build(BuildContext context) {
@@ -539,8 +553,11 @@ class _ScannerCardPlaceholder extends StatelessWidget {
         aspectRatio: 5 / 7,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: colors.surface,
-            border: Border.all(color: colors.outline, width: 3),
+            color: saveRoomRaisedSurface,
+            border: Border.all(
+              color: colors.primary.withValues(alpha: 0.55),
+              width: 2,
+            ),
             borderRadius: BorderRadius.circular(8),
             boxShadow: const [
               BoxShadow(
@@ -558,7 +575,7 @@ class _ScannerCardPlaceholder extends StatelessWidget {
                 Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.16),
+                    color: colors.primary.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),

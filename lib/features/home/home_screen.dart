@@ -10,6 +10,7 @@ import '../../widgets/card_thumbnail.dart';
 import '../../widgets/glass_panel.dart';
 import '../../widgets/saveroom_shell.dart';
 import '../../widgets/status_pill.dart';
+import '../../app/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.forceFixtureMode});
@@ -52,7 +53,7 @@ class HomeScreen extends StatelessWidget {
                 label: 'SEARCH',
                 title: 'Search cards',
                 icon: LucideIcons.search,
-                accent: const Color(0xFFFF9A57),
+                accent: saveRoomGold,
                 onTap: () => Navigator.pushNamed(context, AppRoutes.search),
               ),
               const _DashboardActionTile(
@@ -65,7 +66,7 @@ class HomeScreen extends StatelessWidget {
                 label: 'WISHLIST',
                 title: 'Saved targets',
                 icon: LucideIcons.bookmark,
-                accent: Color(0xFFFFB269),
+                accent: saveRoomGold,
               ),
             ],
           ),
@@ -134,11 +135,21 @@ class _OverviewCard extends StatelessWidget {
             icon: fixtureMode ? LucideIcons.database : LucideIcons.circleCheck,
             dense: true,
           ),
+          const SizedBox(height: 18),
+          Text(
+            'Scan, price, collect.',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Premium card lookup, market prices, and collection tools in one calm workflow.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: 20),
           Row(
             children: [
               _metric(context, LucideIcons.layers, 'Collection', '0'),
-              const SizedBox(width: 24),
+              const SizedBox(width: 16),
               _metric(context, LucideIcons.heart, 'Wishlist', '0'),
             ],
           ),
@@ -250,14 +261,14 @@ class _DashboardActionTile extends StatelessWidget {
       child: GlassPanel(
         onTap: onTap,
         accent: enabled,
-        radius: 20,
+        radius: 24,
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 50,
-              height: 50,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(14),

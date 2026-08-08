@@ -9,7 +9,7 @@ class GlassPanel extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(16),
     this.margin = EdgeInsets.zero,
-    this.radius = 18,
+    this.radius = 24,
     this.strong = false,
     this.accent = false,
     this.onTap,

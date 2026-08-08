@@ -42,10 +42,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return SaveRoomShell(
-      title: 'API / Settings',
+      title: 'Settings',
       children: [
         SectionCard(
-          title: 'App mode',
+          title: 'Runtime mode',
           icon: LucideIcons.slidersHorizontal,
           children: [
             InfoTile(label: 'App version', value: AppConfig.appVersion),
@@ -61,7 +61,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : 'active (dev only)',
             ),
             InfoTile(label: 'Real API base URL', value: AppConfig.apiBaseUrl),
-            InfoTile(label: 'API key support', value: 'not implemented yet'),
+            InfoTile(label: 'API key support', value: 'server-side only later'),
           ],
         ),
         SectionCard(
@@ -126,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
         SectionCard(
-          title: 'Future backend milestones',
+          title: 'Roadmap',
           icon: LucideIcons.route,
           children: [
             InfoTile(label: 'Auth', value: 'planned v12.3'),
@@ -135,12 +135,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
         SectionCard(
-          title: 'Storage note',
+          title: 'Developer note',
           icon: LucideIcons.hardDrive,
           children: [
             Text(
-              'App repo, Flutter SDK, package cache and Gradle cache are kept '
-              'on /media/matt/Storage where controllable.',
+              'Fixture mode keeps the app demoable without private APIs. Live mode is for local UAT against the SaveRoom backend.',
             ),
           ],
         ),
