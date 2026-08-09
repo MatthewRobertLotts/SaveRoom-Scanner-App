@@ -5,6 +5,7 @@ import 'package:saveroom_scanner_app/config/app_config.dart';
 void main() {
   testWidgets('home screen shows visual shell basics', (tester) async {
     await tester.pumpWidget(const SaveRoomScannerApp());
+    await tester.pumpAndSettle();
 
     expect(find.text('SaveRoom'), findsWidgets);
     expect(find.text('Fixture mode'), findsOneWidget);

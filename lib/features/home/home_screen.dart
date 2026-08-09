@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/app_routes.dart';
@@ -32,9 +33,15 @@ class HomeScreen extends StatelessWidget {
               children: [
                 _TopBar(fixtureMode: fixtureMode),
                 const SizedBox(height: 18),
-                const _ObjectHero(),
+                const _ObjectHero()
+                    .animate()
+                    .fadeIn(duration: 360.ms)
+                    .slideY(begin: 0.04, end: 0),
                 const SizedBox(height: 18),
-                const _ActionDock(),
+                const _ActionDock()
+                    .animate()
+                    .fadeIn(delay: 120.ms, duration: 320.ms)
+                    .slideY(begin: 0.05, end: 0),
                 const SizedBox(height: 24),
                 ValueListenableBuilder<List<SearchResult>>(
                   valueListenable: RecentlyViewed.instance,

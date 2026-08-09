@@ -1,5 +1,6 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 const saveRoomPrimary = Color(0xFF8FFFE0);
 const saveRoomGold = Color(0xFFE8C36A);
@@ -103,6 +104,8 @@ ThemeData buildAppTheme() {
     ),
   );
 
+  final textTheme = GoogleFonts.interTightTextTheme(base.textTheme);
+
   return base.copyWith(
     scaffoldBackgroundColor: Colors.transparent,
     canvasColor: saveRoomBackground,
@@ -171,7 +174,7 @@ ThemeData buildAppTheme() {
         ),
       ),
     ),
-    textTheme: base.textTheme.copyWith(
+    textTheme: textTheme.copyWith(
       headlineLarge: const TextStyle(
         color: Color(0xFFF7FAF8),
         fontSize: 34,
