@@ -10,7 +10,7 @@ class GlassPanel extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(16),
     this.margin = EdgeInsets.zero,
-    this.radius = 28,
+    this.radius = 12,
     this.strong = false,
     this.accent = false,
     this.onTap,
@@ -32,7 +32,7 @@ class GlassPanel extends StatelessWidget {
     final tokens = context.saveRoomTokens;
     final borderRadius = BorderRadius.circular(radius);
     final top = strong ? saveRoomRaisedSurface : saveRoomSurface;
-    final bottom = strong ? const Color(0xFF071314) : const Color(0xFF090D10);
+    final bottom = strong ? saveRoomSurface : const Color(0xFF101010);
     final borderColor = accent
         ? colors.primary.withValues(alpha: 0.48)
         : tokens.glassBorder;
@@ -40,15 +40,15 @@ class GlassPanel extends StatelessWidget {
     Widget panel = ClipRRect(
       borderRadius: borderRadius,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
         child: DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                top.withValues(alpha: 0.92),
-                bottom.withValues(alpha: 0.92),
+                top.withValues(alpha: 0.98),
+                bottom.withValues(alpha: 0.98),
               ],
             ),
             borderRadius: borderRadius,
@@ -71,7 +71,7 @@ class GlassPanel extends StatelessWidget {
                             radius: 0.9,
                             colors: [
                               colors.primary.withValues(
-                                alpha: accent ? 0.18 : 0.06,
+                                alpha: accent ? 0.10 : 0.02,
                               ),
                               Colors.transparent,
                             ],
@@ -96,14 +96,14 @@ class GlassPanel extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.38),
-              blurRadius: 26,
-              offset: const Offset(0, 18),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
             ),
             if (accent)
               BoxShadow(
                 color: colors.primary.withValues(alpha: 0.14),
-                blurRadius: 34,
-                offset: const Offset(0, 10),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
           ],
         ),

@@ -66,8 +66,15 @@ class _TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text('SaveRoom', style: Theme.of(context).textTheme.headlineMedium),
-        const Spacer(),
+        Expanded(
+          child: Text(
+            'SaveRoom',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+        ),
+        const SizedBox(width: 12),
         StatusPill(
           fixtureMode ? 'Fixture mode' : 'Live API',
           icon: fixtureMode ? LucideIcons.database : LucideIcons.wifi,
@@ -99,13 +106,11 @@ class _ObjectHero extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFF122422).withValues(alpha: 0.78),
-                    const Color(0xFF070909).withValues(alpha: 0.94),
+                    const Color(0xFF1E1E1E).withValues(alpha: 0.96),
+                    const Color(0xFF0B0B0B).withValues(alpha: 0.98),
                   ],
                 ),
-                border: Border.all(
-                  color: colors.primary.withValues(alpha: 0.22),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.52),
@@ -129,13 +134,13 @@ class _ObjectHero extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  'Collector workspace',
+                  'Scan. Price. Vault.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineLarge?.copyWith(fontSize: 38),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Scan, price and organise cards without turning the app into a data dump.',
+                  'A premium utility for checking card value, evidence and collection state fast.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium,
                 ),
@@ -235,12 +240,10 @@ class _ScanButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 72,
+        height: 56,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          gradient: LinearGradient(
-            colors: [colors.primary, const Color(0xFF51D7B7)],
-          ),
+          borderRadius: BorderRadius.circular(8),
+          color: colors.primary,
           boxShadow: [
             BoxShadow(
               color: colors.primary.withValues(alpha: 0.30),
@@ -253,15 +256,15 @@ class _ScanButton extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.16),
-                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
                 LucideIcons.scanLine,
-                color: Colors.black,
+                color: Colors.white,
                 size: 27,
               ),
             ),
@@ -270,13 +273,13 @@ class _ScanButton extends StatelessWidget {
               child: Text(
                 'SCAN A CARD',
                 style: TextStyle(
-                  color: Colors.black,
+                  color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
               ),
             ),
-            const Icon(LucideIcons.arrowRight, color: Colors.black),
+            const Icon(LucideIcons.arrowRight, color: Colors.white),
           ],
         ),
       ),
@@ -333,7 +336,7 @@ class _DockButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassPanel(
       onTap: onTap,
-      radius: 28,
+      radius: 8,
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         children: [
@@ -398,7 +401,7 @@ class _RecentMiniCard extends StatelessWidget {
     return SizedBox(
       width: 142,
       child: GlassPanel(
-        radius: 30,
+        radius: 12,
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,7 +443,7 @@ class _HomeBottomNav extends StatelessWidget {
       minimum: const EdgeInsets.fromLTRB(20, 0, 20, 14),
       child: GlassPanel(
         strong: true,
-        radius: 34,
+        radius: 12,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
         child: NavigationBar(
           selectedIndex: 0,
@@ -488,7 +491,7 @@ class _HomeBackdrop extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF071213), Color(0xFF020303)],
+          colors: [Color(0xFF181818), Color(0xFF0B0B0B)],
         ),
       ),
       child: Stack(
@@ -501,7 +504,7 @@ class _HomeBackdrop extends StatelessWidget {
           const Positioned(
             bottom: 90,
             left: -120,
-            child: _Glow(size: 260, color: saveRoomGold),
+            child: _Glow(size: 260, color: saveRoomPrimary),
           ),
         ],
       ),

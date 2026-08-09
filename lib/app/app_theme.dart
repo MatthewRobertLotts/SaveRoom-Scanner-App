@@ -2,12 +2,12 @@ import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-const saveRoomPrimary = Color(0xFF8FFFE0);
-const saveRoomGold = Color(0xFFE8C36A);
-const saveRoomBackground = Color(0xFF050607);
-const saveRoomSurface = Color(0xFF111719);
-const saveRoomRaisedSurface = Color(0xFF182123);
-const saveRoomMutedSurface = Color(0xFF222B2E);
+const saveRoomPrimary = Color(0xFFFF6E01);
+const saveRoomGold = Color(0xFFFFB45C);
+const saveRoomBackground = Color(0xFF0B0B0B);
+const saveRoomSurface = Color(0xFF181818);
+const saveRoomRaisedSurface = Color(0xFF222222);
+const saveRoomMutedSurface = Color(0xFF303030);
 
 @immutable
 class SaveRoomTokens extends ThemeExtension<SaveRoomTokens> {
@@ -30,9 +30,9 @@ class SaveRoomTokens extends ThemeExtension<SaveRoomTokens> {
   static const dark = SaveRoomTokens(
     glassFill: saveRoomSurface,
     glassStrong: saveRoomRaisedSurface,
-    glassBorder: Color(0x334DF4CE),
-    orangeGlow: Color(0x008FFFE0),
-    positive: Color(0xFF62E6A8),
+    glassBorder: Color(0x29FFFFFF),
+    orangeGlow: Color(0x33FF6E01),
+    positive: Color(0xFF22C55E),
     warning: saveRoomGold,
   );
 
@@ -70,23 +70,23 @@ class SaveRoomTokens extends ThemeExtension<SaveRoomTokens> {
 ThemeData buildAppTheme() {
   const scheme = ColorScheme.dark(
     primary: saveRoomPrimary,
-    onPrimary: Color(0xFF001D16),
-    primaryContainer: Color(0xFF063C33),
-    onPrimaryContainer: Color(0xFFC7FFF3),
+    onPrimary: Colors.white,
+    primaryContainer: Color(0xFF4A2104),
+    onPrimaryContainer: Color(0xFFFFD5B0),
     secondary: saveRoomGold,
-    onSecondary: Color(0xFF241800),
-    secondaryContainer: Color(0xFF4A3610),
-    onSecondaryContainer: Color(0xFFFFE7AA),
-    tertiary: Color(0xFFC8B6FF),
-    onTertiary: Color(0xFF1E123C),
+    onSecondary: Color(0xFF181818),
+    secondaryContainer: Color(0xFF3A2612),
+    onSecondaryContainer: Color(0xFFFFE0B5),
+    tertiary: Color(0xFFFFFFFF),
+    onTertiary: Color(0xFF181818),
     error: Color(0xFFFF716C),
     onError: Color(0xFF2B0504),
     surface: saveRoomSurface,
     onSurface: Color(0xFFF7FAF8),
     surfaceContainerHighest: saveRoomMutedSurface,
-    onSurfaceVariant: Color(0xFFB7C6C2),
-    outline: Color(0xFF3D4A4D),
-    outlineVariant: Color(0xFF263134),
+    onSurfaceVariant: Color(0xFFB7B7B7),
+    outline: Color(0xFF3A3A3A),
+    outlineVariant: Color(0xFF2A2A2A),
   );
 
   final base = FlexThemeData.dark(
@@ -96,10 +96,10 @@ ThemeData buildAppTheme() {
     blendLevel: 0,
     subThemesData: const FlexSubThemesData(
       interactionEffects: true,
-      defaultRadius: 18,
-      cardRadius: 24,
-      filledButtonRadius: 18,
-      inputDecoratorRadius: 18,
+      defaultRadius: 8,
+      cardRadius: 12,
+      filledButtonRadius: 8,
+      inputDecoratorRadius: 8,
       chipRadius: 999,
     ),
   );
@@ -130,33 +130,33 @@ ThemeData buildAppTheme() {
       elevation: 0,
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: const BorderSide(color: Color(0x334DF4CE)),
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0x29FFFFFF)),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         minimumSize: const Size.fromHeight(54),
-        foregroundColor: const Color(0xFF001D16),
+        foregroundColor: Colors.white,
         backgroundColor: saveRoomPrimary,
         textStyle: const TextStyle(fontWeight: FontWeight.w900),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: SaveRoomTokens.dark.glassStrong,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      fillColor: saveRoomBackground,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: Color(0xFF263134)),
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Colors.white),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: Color(0xFF263134)),
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Colors.white),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: saveRoomPrimary, width: 1.4),
       ),
     ),
@@ -176,25 +176,25 @@ ThemeData buildAppTheme() {
     ),
     textTheme: textTheme.copyWith(
       headlineLarge: const TextStyle(
-        color: Color(0xFFF7FAF8),
+        color: Colors.white,
         fontSize: 34,
         fontWeight: FontWeight.w900,
         letterSpacing: -1.0,
       ),
       headlineMedium: const TextStyle(
-        color: Color(0xFFF7FAF8),
+        color: Colors.white,
         fontSize: 25,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.6,
       ),
       titleLarge: const TextStyle(
-        color: Color(0xFFF7FAF8),
+        color: Colors.white,
         fontSize: 21,
         fontWeight: FontWeight.w800,
       ),
-      bodyLarge: const TextStyle(color: Color(0xFFF0F4F2), fontSize: 16),
-      bodyMedium: const TextStyle(color: Color(0xFFB7C6C2), fontSize: 14),
-      labelSmall: const TextStyle(color: Color(0xFF91A39E), fontSize: 11),
+      bodyLarge: const TextStyle(color: Colors.white, fontSize: 16),
+      bodyMedium: const TextStyle(color: Color(0xFFB7B7B7), fontSize: 14),
+      labelSmall: const TextStyle(color: Color(0xFF7B7B7B), fontSize: 11),
     ),
     extensions: const [SaveRoomTokens.dark],
   );
