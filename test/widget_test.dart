@@ -8,7 +8,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('SaveRoom'), findsWidgets);
-    expect(find.text('Fixture mode'), findsOneWidget);
+    expect(find.text('Live API'), findsOneWidget);
+    expect(find.text('Scan.Price.Collect.'), findsOneWidget);
     expect(find.text('SCAN A CARD'), findsOneWidget);
   });
 

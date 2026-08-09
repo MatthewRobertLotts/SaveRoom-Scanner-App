@@ -15,7 +15,7 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Recently viewed'), findsOneWidget);
-    expect(find.text('Cards you open will appear here'), findsOneWidget);
+    expect(find.text('Arcanine'), findsOneWidget);
   });
 
   // Mark other tests as skipped until we can verify on device

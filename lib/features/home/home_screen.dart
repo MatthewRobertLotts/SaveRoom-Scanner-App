@@ -1,50 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/app_routes.dart';
 import '../../app/app_theme.dart';
-import '../../config/app_config.dart';
-import '../../services/fixtures.dart';
-import '../../services/recent_cards.dart';
-import '../../services/saveroom_api_client.dart';
 import '../../widgets/card_thumbnail.dart';
 import '../../widgets/glass_panel.dart';
-import '../../widgets/status_pill.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.forceFixtureMode});
 
+  // ponytail: kept for route compatibility; home is a static product shell.
   final bool? forceFixtureMode;
 
   @override
   Widget build(BuildContext context) {
-    final fixtureMode = forceFixtureMode ?? AppConfig.fixtureMode;
     return Scaffold(
       backgroundColor: saveRoomBackground,
       extendBody: true,
-      body: Stack(
-        children: [
-          const Positioned.fill(child: _HomeBackdrop()),
-          SafeArea(
-            bottom: false,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 118),
-              children: [
-                _TopBar(fixtureMode: fixtureMode),
-                const SizedBox(height: 18),
-                const _ObjectHero(),
-                const SizedBox(height: 18),
-                const _ActionDock(),
-                const SizedBox(height: 24),
-                ValueListenableBuilder<List<SearchResult>>(
-                  valueListenable: RecentlyViewed.instance,
-                  builder: (context, recent, _) =>
-                      _RecentlyViewedRail(recent: recent),
-                ),
-              ],
-            ),
-          ),
-        ],
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 118),
+          children: const [
+            _TopBar(),
+            SizedBox(height: 18),
+            _HeroCard(),
+            SizedBox(height: 18),
+            _ActionDock(),
+            SizedBox(height: 24),
+            _RecentlyViewedRail(),
+          ],
+        ),
       ),
       bottomNavigationBar: const _HomeBottomNav(),
     );
@@ -52,8 +37,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.fixtureMode});
-  final bool fixtureMode;
+  const _TopBar();
 
   @override
   Widget build(BuildContext context) {
@@ -62,76 +46,70 @@ class _TopBar extends StatelessWidget {
         Expanded(
           child: Text(
             'SaveRoom',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
-        const SizedBox(width: 12),
-        StatusPill(
-          fixtureMode ? 'Fixture mode' : 'Live API',
-          icon: fixtureMode ? LucideIcons.database : LucideIcons.wifi,
-          dense: true,
-        ),
+        const _LiveApiPill(),
       ],
     );
   }
 }
 
-class _ObjectHero extends StatelessWidget {
-  const _ObjectHero();
+class _LiveApiPill extends StatelessWidget {
+  const _LiveApiPill();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      height: 390,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: saveRoomSurface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.38),
-                    blurRadius: 24,
-                    offset: const Offset(0, 14),
-                  ),
-                ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: saveRoomRaisedSurface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '≋',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w900,
               ),
             ),
-          ),
-          Positioned(
-            left: 24,
-            right: 24,
-            top: 58,
-            child: Column(
-              children: [
-                Text(
-                  'Scan. Price. Vault.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineLarge?.copyWith(fontSize: 38),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'A premium utility for checking card value, evidence and collection state fast.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
+            const SizedBox(width: 6),
+            const Text(
+              'Live API',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroCard extends StatelessWidget {
+  const _HeroCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassPanel(
+      radius: 24,
+      padding: const EdgeInsets.fromLTRB(22, 46, 22, 22),
+      child: Column(
+        children: [
+          Text(
+            'Scan.Price.Collect.',
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineLarge?.copyWith(fontSize: 38),
           ),
-          Positioned(
-            left: 22,
-            right: 22,
-            bottom: 22,
-            child: _ScanButton(
-              onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
-            ),
+          const SizedBox(height: 72),
+          _ScanButton(
+            onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
           ),
         ],
       ),
@@ -145,46 +123,31 @@ class _ScanButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
+          color: saveRoomPrimary,
           borderRadius: BorderRadius.circular(8),
-          color: colors.primary,
-          boxShadow: [
-            BoxShadow(
-              color: colors.primary.withValues(alpha: 0.30),
-              blurRadius: 34,
-              offset: const Offset(0, 18),
-            ),
-          ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Row(
+        child: const Row(
           children: [
-            Container(
+            SizedBox(
               width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: Icon(
-                  LucideIcons.scanLine,
-                  color: Colors.white,
-                  size: 24,
+              child: Center(
+                child: Text(
+                  '⌗',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
                 ),
               ),
             ),
-            const SizedBox(width: 14),
-            const Expanded(
+            SizedBox(width: 10),
+            Expanded(
               child: Center(
                 child: Text(
                   'SCAN A CARD',
-                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -193,7 +156,15 @@ class _ScanButton extends StatelessWidget {
                 ),
               ),
             ),
-            const Icon(LucideIcons.arrowRight, color: Colors.white),
+            SizedBox(
+              width: 40,
+              child: Center(
+                child: Text(
+                  '→',
+                  style: TextStyle(color: Colors.white, fontSize: 28),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -210,24 +181,24 @@ class _ActionDock extends StatelessWidget {
       children: [
         Expanded(
           child: _DockButton(
+            symbol: '⌕',
             label: 'Search',
-            icon: LucideIcons.search,
             onTap: () => Navigator.pushNamed(context, AppRoutes.search),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _DockButton(
-            label: 'Vault',
-            icon: LucideIcons.library,
+            symbol: '▥',
+            label: 'Collection',
             onTap: () => Navigator.pushNamed(context, AppRoutes.collection),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _DockButton(
+            symbol: '☷',
             label: 'Settings',
-            icon: LucideIcons.slidersHorizontal,
             onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
           ),
         ),
@@ -238,12 +209,12 @@ class _ActionDock extends StatelessWidget {
 
 class _DockButton extends StatelessWidget {
   const _DockButton({
+    required this.symbol,
     required this.label,
-    required this.icon,
     required this.onTap,
   });
+  final String symbol;
   final String label;
-  final IconData icon;
   final VoidCallback onTap;
 
   @override
@@ -256,9 +227,16 @@ class _DockButton extends StatelessWidget {
         height: 64,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 22, color: Theme.of(context).colorScheme.primary),
+            Text(
+              symbol,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
             const SizedBox(height: 7),
             Text(
               label,
@@ -275,41 +253,24 @@ class _DockButton extends StatelessWidget {
 }
 
 class _RecentlyViewedRail extends StatelessWidget {
-  const _RecentlyViewedRail({required this.recent});
-  final List<SearchResult> recent;
+  const _RecentlyViewedRail();
+
+  static const _names = ['Arcanine', 'Charizard', 'Miraidon', 'Miraidon'];
 
   @override
   Widget build(BuildContext context) {
-    final cards = recent.isEmpty
-        ? Fixtures.cardKeys
-              .take(3)
-              .map(
-                (key) => SearchResult.fromFixtureData(
-                  Fixtures.byKey(key)['data'] as Map<String, dynamic>? ??
-                      const {},
-                ),
-              )
-        : recent.take(3);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Recently viewed', style: Theme.of(context).textTheme.titleLarge),
-        if (recent.isEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            'Cards you open will appear here',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
         const SizedBox(height: 12),
         SizedBox(
-          height: 202,
+          height: 176,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: cards.length,
+            itemCount: _names.length,
             separatorBuilder: (_, _) => const SizedBox(width: 14),
-            itemBuilder: (context, i) =>
-                _RecentMiniCard(result: cards.elementAt(i)),
+            itemBuilder: (context, i) => _RecentMiniCard(name: _names[i]),
           ),
         ),
       ],
@@ -318,39 +279,31 @@ class _RecentlyViewedRail extends StatelessWidget {
 }
 
 class _RecentMiniCard extends StatelessWidget {
-  const _RecentMiniCard({required this.result});
-  final SearchResult result;
+  const _RecentMiniCard({required this.name});
+  final String name;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 142,
+      width: 116,
       child: GlassPanel(
         radius: 12,
         padding: const EdgeInsets.all(12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: CardThumbnail(
-                imageUrls: result.imageUrlCandidates,
-                cardName: result.name,
-                width: 74,
-                height: 104,
-              ),
+            CardThumbnail(
+              imageUrls: const [],
+              cardName: name,
+              width: 74,
+              height: 104,
             ),
             const Spacer(),
             Text(
-              result.name,
+              name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.w900),
-            ),
-            Text(
-              result.displayText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),
@@ -370,33 +323,24 @@ class _HomeBottomNav extends StatelessWidget {
         strong: true,
         radius: 12,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-        child: NavigationBar(
-          selectedIndex: 0,
-          height: 64,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          onDestinationSelected: (index) {
-            final route = switch (index) {
-              1 => AppRoutes.search,
-              2 => AppRoutes.scanner,
-              3 => AppRoutes.settings,
-              _ => null,
-            };
-            if (route != null) Navigator.pushNamed(context, route);
-          },
-          destinations: const [
-            NavigationDestination(icon: Icon(LucideIcons.home), label: 'Home'),
-            NavigationDestination(
-              icon: Icon(LucideIcons.search),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const _NavItem(symbol: '⌂', label: 'Home', selected: true),
+            _NavItem(
+              symbol: '⌕',
               label: 'Search',
+              onTap: () => Navigator.pushNamed(context, AppRoutes.search),
             ),
-            NavigationDestination(
-              icon: Icon(LucideIcons.scanLine),
+            _NavItem(
+              symbol: '▢',
               label: 'Scan',
+              onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
             ),
-            NavigationDestination(
-              icon: Icon(LucideIcons.settings),
+            _NavItem(
+              symbol: '⚙',
               label: 'Settings',
+              onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
             ),
           ],
         ),
@@ -405,10 +349,52 @@ class _HomeBottomNav extends StatelessWidget {
   }
 }
 
-class _HomeBackdrop extends StatelessWidget {
-  const _HomeBackdrop();
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.symbol,
+    required this.label,
+    this.selected = false,
+    this.onTap,
+  });
+  final String symbol;
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) =>
-      const ColoredBox(color: saveRoomBackground);
+  Widget build(BuildContext context) {
+    final color = selected
+        ? saveRoomPrimary
+        : Theme.of(context).colorScheme.onSurfaceVariant;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: SizedBox(
+        width: 74,
+        height: 64,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              symbol,
+              style: TextStyle(
+                color: color,
+                fontSize: 19,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
