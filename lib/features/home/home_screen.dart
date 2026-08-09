@@ -24,33 +24,12 @@ class HomeScreen extends StatelessWidget {
       title: 'SaveRoom',
       bottomBar: const _HomeBottomNav(),
       children: [
-        _HeroDashboard(fixtureMode: fixtureMode),
+        _HeroStage(fixtureMode: fixtureMode),
         const SizedBox(height: 18),
-        const _HomeSearchBar(),
+        _PrimaryActions(),
         const SizedBox(height: 18),
-        _ActionStrip(
-          actions: [
-            _HomeAction(
-              'SCAN A CARD',
-              'Camera frame',
-              LucideIcons.scanLine,
-              () => Navigator.pushNamed(context, AppRoutes.scanner),
-            ),
-            _HomeAction(
-              'Search',
-              'Find cards',
-              LucideIcons.search,
-              () => Navigator.pushNamed(context, AppRoutes.search),
-            ),
-            _HomeAction(
-              'Collection',
-              'Your vault',
-              LucideIcons.library,
-              () => Navigator.pushNamed(context, AppRoutes.collection),
-            ),
-          ],
-        ),
-        const SizedBox(height: 26),
+        const _CommandSearchBar(),
+        const SizedBox(height: 24),
         ValueListenableBuilder<List<SearchResult>>(
           valueListenable: RecentlyViewed.instance,
           builder: (context, recent, _) => _RecentlyViewedRail(recent: recent),
@@ -60,9 +39,8 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _HeroDashboard extends StatelessWidget {
-  const _HeroDashboard({required this.fixtureMode});
-
+class _HeroStage extends StatelessWidget {
+  const _HeroStage({required this.fixtureMode});
   final bool fixtureMode;
 
   @override
@@ -70,8 +48,8 @@ class _HeroDashboard extends StatelessWidget {
     return GlassPanel(
       accent: true,
       strong: true,
-      radius: 34,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      radius: 38,
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -83,26 +61,55 @@ class _HeroDashboard extends StatelessWidget {
                 dense: true,
               ),
               const Spacer(),
-              Icon(LucideIcons.sparkles, color: saveRoomGold),
-            ],
-          ),
-          const SizedBox(height: 22),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Expanded(child: _HeroCopy()),
-              const SizedBox(width: 12),
-              _CardStackPreview(),
+              _RoundIcon(icon: LucideIcons.sparkles, color: saveRoomGold),
             ],
           ),
           const SizedBox(height: 18),
+          SizedBox(
+            height: 186,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: 0,
+                  top: 12,
+                  right: 104,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your card vault.',
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Scan, search, price and collect from one polished workspace.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  right: 14,
+                  top: 0,
+                  child: _FloatingCard(keyName: 'en:sv04-234', tilt: 0.10),
+                ),
+                Positioned(
+                  right: 56,
+                  top: 42,
+                  child: _FloatingCard(keyName: 'en:sv03-223', tilt: -0.09),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
           const Row(
             children: [
-              _MetricPill('Cards', '0'),
-              SizedBox(width: 8),
-              _MetricPill('Value', '£0'),
-              SizedBox(width: 8),
-              _MetricPill('List', '0'),
+              _HeroMetric(label: 'Cards', value: '0'),
+              SizedBox(width: 10),
+              _HeroMetric(label: 'Value', value: '£0'),
+              SizedBox(width: 10),
+              _HeroMetric(label: 'Listed', value: '0'),
             ],
           ),
         ],
@@ -111,124 +118,237 @@ class _HeroDashboard extends StatelessWidget {
   }
 }
 
-class _HeroCopy extends StatelessWidget {
-  const _HeroCopy();
+class _FloatingCard extends StatelessWidget {
+  const _FloatingCard({required this.keyName, required this.tilt});
+  final String keyName;
+  final double tilt;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Card scanner', style: Theme.of(context).textTheme.headlineLarge),
-        const SizedBox(height: 6),
-        Text(
-          'Look up cards, check market price, and build the collection flow without fake inventory.',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
+    final result = SearchResult.fromFixtureData(
+      Fixtures.byKey(keyName)['data'] as Map<String, dynamic>? ?? const {},
     );
-  }
-}
-
-class _CardStackPreview extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: 92,
-      height: 128,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 16,
-            top: 8,
-            child: _MiniCard(color: colors.secondary.withValues(alpha: 0.42)),
-          ),
-          Positioned(
-            left: 4,
-            top: 0,
-            child: _MiniCard(color: colors.primary.withValues(alpha: 0.42)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniCard extends StatelessWidget {
-  const _MiniCard({required this.color});
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 64,
-      height: 96,
-      decoration: BoxDecoration(
-        color: saveRoomMutedSurface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color),
-      ),
-      padding: const EdgeInsets.all(6),
-      child: Column(
-        children: [
-          Expanded(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(7),
-              ),
+    return Transform.rotate(
+      angle: tilt,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.45),
+              blurRadius: 28,
+              offset: const Offset(0, 20),
             ),
-          ),
-          const SizedBox(height: 6),
-          Container(height: 5, width: 42, color: Colors.white24),
-          const SizedBox(height: 4),
-          Container(height: 4, width: 30, color: Colors.white12),
-        ],
+          ],
+        ),
+        child: CardThumbnail(
+          imageUrls: result.imageUrlCandidates,
+          cardName: result.name,
+          width: 82,
+          height: 116,
+        ),
       ),
     );
   }
 }
 
-class _MetricPill extends StatelessWidget {
-  const _MetricPill(this.label, this.value);
+class _HeroMetric extends StatelessWidget {
+  const _HeroMetric({required this.label, required this.value});
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: saveRoomBackground.withValues(alpha: 0.52),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(value, style: Theme.of(context).textTheme.titleLarge),
-              Text(label, style: Theme.of(context).textTheme.labelSmall),
-            ],
-          ),
+      child: GlassPanel(
+        strong: true,
+        shadow: false,
+        radius: 22,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(value, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 2),
+            Text(label, style: Theme.of(context).textTheme.labelSmall),
+          ],
         ),
       ),
     );
   }
 }
 
-class _HomeSearchBar extends StatefulWidget {
-  const _HomeSearchBar();
-
+class _PrimaryActions extends StatelessWidget {
   @override
-  State<_HomeSearchBar> createState() => _HomeSearchBarState();
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _GradientButton(
+          label: 'SCAN A CARD',
+          subtitle: 'Open camera frame',
+          icon: LucideIcons.scanLine,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _SecondaryAction(
+                label: 'Search',
+                icon: LucideIcons.search,
+                onTap: () => Navigator.pushNamed(context, AppRoutes.search),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _SecondaryAction(
+                label: 'Collection',
+                icon: LucideIcons.library,
+                onTap: () => Navigator.pushNamed(context, AppRoutes.collection),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
-class _HomeSearchBarState extends State<_HomeSearchBar> {
+class _GradientButton extends StatelessWidget {
+  const _GradientButton({
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 74,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [colors.primary, const Color(0xFF52D7B8)],
+          ),
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: [
+            BoxShadow(
+              color: colors.primary.withValues(alpha: 0.28),
+              blurRadius: 30,
+              offset: const Offset(0, 16),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: Row(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Icon(icon, color: Colors.black, size: 24),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.black.withValues(alpha: 0.62),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            const Icon(LucideIcons.arrowRight, color: Colors.black),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SecondaryAction extends StatelessWidget {
+  const _SecondaryAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassPanel(
+      onTap: onTap,
+      radius: 26,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          _RoundIcon(icon: icon, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.titleMedium),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoundIcon extends StatelessWidget {
+  const _RoundIcon({required this.icon, required this.color});
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.16),
+        shape: BoxShape.circle,
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Icon(icon, color: color, size: 20),
+      ),
+    );
+  }
+}
+
+class _CommandSearchBar extends StatefulWidget {
+  const _CommandSearchBar();
+
+  @override
+  State<_CommandSearchBar> createState() => _CommandSearchBarState();
+}
+
+class _CommandSearchBarState extends State<_CommandSearchBar> {
   final _controller = TextEditingController();
 
   @override
@@ -239,67 +359,21 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      decoration: const InputDecoration(
-        hintText: 'Search cards by name, set, or number…',
-        prefixIcon: Icon(LucideIcons.search, size: 20),
-      ),
-      textInputAction: TextInputAction.search,
-      onSubmitted: (_) => Navigator.pushNamed(context, AppRoutes.search),
-    );
-  }
-}
-
-class _HomeAction {
-  const _HomeAction(this.title, this.subtitle, this.icon, this.onTap);
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final VoidCallback onTap;
-}
-
-class _ActionStrip extends StatelessWidget {
-  const _ActionStrip({required this.actions});
-  final List<_HomeAction> actions;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 132,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (context, i) => _ActionCard(action: actions[i]),
-        separatorBuilder: (_, _) => const SizedBox(width: 12),
-        itemCount: actions.length,
-      ),
-    );
-  }
-}
-
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({required this.action});
-  final _HomeAction action;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 136,
-      child: GlassPanel(
-        onTap: action.onTap,
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(action.icon, color: Theme.of(context).colorScheme.primary),
-            const Spacer(),
-            Text(action.title, style: Theme.of(context).textTheme.titleMedium),
-            Text(
-              action.subtitle,
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
-          ],
+    return GlassPanel(
+      radius: 26,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      child: TextField(
+        controller: _controller,
+        decoration: const InputDecoration(
+          hintText: 'Search cards by name, set, or number…',
+          prefixIcon: Icon(LucideIcons.search, size: 20),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          filled: false,
         ),
+        textInputAction: TextInputAction.search,
+        onSubmitted: (_) => Navigator.pushNamed(context, AppRoutes.search),
       ),
     );
   }
@@ -335,12 +409,12 @@ class _RecentlyViewedRail extends StatelessWidget {
         ],
         const SizedBox(height: 12),
         SizedBox(
-          height: 172,
+          height: 178,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemBuilder: (context, i) =>
                 _RecentMiniCard(result: cards.elementAt(i)),
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
             itemCount: cards.length,
           ),
         ),
@@ -356,7 +430,7 @@ class _RecentMiniCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 126,
+      width: 132,
       child: GlassPanel(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -366,6 +440,8 @@ class _RecentMiniCard extends StatelessWidget {
               child: CardThumbnail(
                 imageUrls: result.imageUrlCandidates,
                 cardName: result.name,
+                width: 68,
+                height: 96,
               ),
             ),
             const Spacer(),
@@ -373,7 +449,7 @@ class _RecentMiniCard extends StatelessWidget {
               result.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: const TextStyle(fontWeight: FontWeight.w900),
             ),
             Text(
               result.displayText,

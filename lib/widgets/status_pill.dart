@@ -10,34 +10,53 @@ class StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: dense ? 10 : 12,
-        vertical: dense ? 5 : 7,
-      ),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: dense ? 14 : 16, color: colors.primary),
-            const SizedBox(width: 6),
+        gradient: LinearGradient(
+          colors: [
+            colors.primary.withValues(alpha: 0.20),
+            colors.secondary.withValues(alpha: 0.10),
           ],
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: dense
-                  ? Theme.of(context).textTheme.labelSmall
-                  : Theme.of(context).textTheme.labelMedium,
-            ),
+        ),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.34)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.12),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: dense ? 11 : 14,
+          vertical: dense ? 6 : 8,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: dense ? 14 : 16, color: colors.primary),
+              const SizedBox(width: 6),
+            ],
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    (dense
+                            ? Theme.of(context).textTheme.labelSmall
+                            : Theme.of(context).textTheme.labelMedium)
+                        ?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.86),
+                          fontWeight: FontWeight.w800,
+                        ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -10,7 +12,7 @@ class SaveRoomShell extends StatelessWidget {
     required this.children,
     this.bottomBar,
     this.actions,
-    this.contentPadding = const EdgeInsets.fromLTRB(18, 8, 18, 28),
+    this.contentPadding = const EdgeInsets.fromLTRB(20, 10, 20, 34),
   });
 
   final String title;
@@ -24,10 +26,21 @@ class SaveRoomShell extends StatelessWidget {
     return Scaffold(
       backgroundColor: saveRoomBackground,
       extendBody: true,
-      appBar: AppBar(title: Text(title), actions: actions),
+      appBar: AppBar(
+        title: Text(title),
+        actions: actions,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: ColoredBox(
+              color: saveRoomBackground.withValues(alpha: 0.62),
+            ),
+          ),
+        ),
+      ),
       body: Stack(
         children: [
-          const Positioned.fill(child: _OpalBackdrop()),
+          const Positioned.fill(child: _PremiumBackdrop()),
           SafeArea(
             top: false,
             child: ListView(padding: contentPadding, children: children),
@@ -37,14 +50,11 @@ class SaveRoomShell extends StatelessWidget {
       bottomNavigationBar: bottomBar == null
           ? null
           : SafeArea(
-              minimum: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+              minimum: const EdgeInsets.fromLTRB(20, 0, 20, 14),
               child: GlassPanel(
                 strong: true,
-                radius: 28,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
+                radius: 34,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
                 child: bottomBar!,
               ),
             ),
@@ -52,22 +62,64 @@ class SaveRoomShell extends StatelessWidget {
   }
 }
 
-class _OpalBackdrop extends StatelessWidget {
-  const _OpalBackdrop();
+class _PremiumBackdrop extends StatelessWidget {
+  const _PremiumBackdrop();
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: const Alignment(0.7, -0.95),
-          radius: 1.15,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [
-            saveRoomPrimary.withValues(alpha: 0.16),
+            const Color(0xFF071416),
             saveRoomBackground,
-            saveRoomBackground,
+            const Color(0xFF020303),
           ],
-          stops: const [0, 0.44, 1],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -90,
+            right: -80,
+            child: _GlowBall(
+              size: 260,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          Positioned(
+            bottom: 80,
+            left: -120,
+            child: _GlowBall(size: 240, color: saveRoomGold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GlowBall extends StatelessWidget {
+  const _GlowBall({required this.size, required this.color});
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              color.withValues(alpha: 0.18),
+              color.withValues(alpha: 0.06),
+              Colors.transparent,
+            ],
+          ),
         ),
       ),
     );

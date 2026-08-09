@@ -245,83 +245,109 @@ class _ScannerScreenState extends State<ScannerScreen> {
             color: colors.onSurfaceVariant,
           ),
         ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Text('LIGHTING', style: theme.textTheme.labelSmall),
+            const SizedBox(width: 10),
+            Text(
+              'Good  •  Hold steady',
+              style: theme.textTheme.bodySmall?.copyWith(color: colors.primary),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         GlassPanel(
           strong: true,
           accent: true,
-          radius: 34,
+          radius: 38,
           padding: EdgeInsets.zero,
-          child: Stack(
-            children: [
-              SizedBox(
-                height: 430,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _ScannerFramePainter(colors.primary),
-                      ),
-                    ),
-                    Center(child: _ScannerCardPlaceholder()),
-                  ],
+          child: SizedBox(
+            height: 470,
+            child: Stack(
+              children: [
+                Positioned.fill(child: _CameraBackdrop()),
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _ScannerFramePainter(colors.primary),
+                  ),
                 ),
-              ),
-            ],
+                Center(child: _ScannerCardPlaceholder()),
+                Positioned(
+                  left: 18,
+                  right: 18,
+                  top: 18,
+                  child: Row(
+                    children: [
+                      StatusPill(
+                        'Auto focus',
+                        dense: true,
+                        icon: LucideIcons.crosshair,
+                      ),
+                      const Spacer(),
+                      StatusPill(
+                        'Manual search',
+                        dense: true,
+                        icon: LucideIcons.search,
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 18,
+                  right: 18,
+                  bottom: 18,
+                  child: GlassPanel(
+                    radius: 24,
+                    shadow: false,
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.lightbulb, color: colors.primary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Use even lighting and fill the frame.',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: GlassPanel(
-                padding: const EdgeInsets.all(18),
+        GlassPanel(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'LIGHTING',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.7,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
+                    Text('LIGHTING', style: theme.textTheme.labelSmall),
+                    const SizedBox(height: 4),
                     Text(
                       'Good  •  Hold steady',
-                      style: theme.textTheme.titleSmall?.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         color: colors.primary,
-                        fontWeight: FontWeight.w800,
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Camera recognition is not claimed until it is wired.',
+                      style: theme.textTheme.bodySmall,
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: GlassPanel(
-                padding: EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'MODE',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.7,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Manual fallback',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Icon(LucideIcons.shieldCheck, color: colors.primary),
+            ],
+          ),
         ),
         const SizedBox(height: 26),
         Center(
@@ -536,6 +562,44 @@ class _ScannerScreenState extends State<ScannerScreen> {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CameraBackdrop extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.primary.withValues(alpha: 0.10),
+            const Color(0xFF050708),
+            saveRoomGold.withValues(alpha: 0.06),
+          ],
+        ),
+      ),
+      child: Stack(
+        children: List.generate(9, (i) {
+          return Positioned(
+            left: (i % 3) * 130 - 40,
+            top: (i ~/ 3) * 170 - 20,
+            child: Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.025),
+                ),
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
