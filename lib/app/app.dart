@@ -16,6 +16,7 @@ class SaveRoomScannerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'SaveRoom Scanner',
       theme: buildAppTheme(),
       initialRoute: initialRoute ?? AppRoutes.home,
