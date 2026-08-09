@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -37,54 +35,18 @@ class GlassPanel extends StatelessWidget {
         ? colors.primary.withValues(alpha: 0.48)
         : tokens.glassBorder;
 
-    Widget panel = ClipRRect(
-      borderRadius: borderRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                top.withValues(alpha: 0.98),
-                bottom.withValues(alpha: 0.98),
-              ],
-            ),
-            borderRadius: borderRadius,
-            border: Border.all(color: borderColor),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: borderRadius,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: borderRadius,
-                          gradient: RadialGradient(
-                            center: Alignment.topRight,
-                            radius: 0.9,
-                            colors: [
-                              colors.primary.withValues(
-                                alpha: accent ? 0.10 : 0.02,
-                              ),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(padding: padding, child: child),
-                ],
-              ),
-            ),
-          ),
+    Widget panel = DecoratedBox(
+      decoration: BoxDecoration(
+        color: strong ? top : bottom,
+        borderRadius: borderRadius,
+        border: Border.all(color: borderColor),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: borderRadius,
+          child: Padding(padding: padding, child: child),
         ),
       ),
     );

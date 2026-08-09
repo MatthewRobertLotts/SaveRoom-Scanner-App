@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/app_routes.dart';
@@ -33,15 +32,9 @@ class HomeScreen extends StatelessWidget {
               children: [
                 _TopBar(fixtureMode: fixtureMode),
                 const SizedBox(height: 18),
-                const _ObjectHero()
-                    .animate()
-                    .fadeIn(duration: 360.ms)
-                    .slideY(begin: 0.04, end: 0),
+                const _ObjectHero(),
                 const SizedBox(height: 18),
-                const _ActionDock()
-                    .animate()
-                    .fadeIn(delay: 120.ms, duration: 320.ms)
-                    .slideY(begin: 0.05, end: 0),
+                const _ActionDock(),
                 const SizedBox(height: 24),
                 ValueListenableBuilder<List<SearchResult>>(
                   valueListenable: RecentlyViewed.instance,
@@ -91,46 +84,31 @@ class _ObjectHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     return SizedBox(
-      height: 500,
+      height: 390,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(
-            top: 54,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(46),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFF1E1E1E).withValues(alpha: 0.96),
-                    const Color(0xFF0B0B0B).withValues(alpha: 0.98),
-                  ],
-                ),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                color: saveRoomSurface,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.52),
-                    blurRadius: 46,
-                    offset: const Offset(0, 30),
-                  ),
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.11),
-                    blurRadius: 70,
-                    offset: const Offset(0, 20),
+                    color: Colors.black.withValues(alpha: 0.38),
+                    blurRadius: 24,
+                    offset: const Offset(0, 14),
                   ),
                 ],
               ),
             ),
           ),
-          Positioned.fill(top: 0, child: const _HeroCards()),
           Positioned(
             left: 24,
             right: 24,
-            bottom: 116,
+            top: 58,
             child: Column(
               children: [
                 Text(
@@ -161,75 +139,6 @@ class _ObjectHero extends StatelessWidget {
   }
 }
 
-class _HeroCards extends StatelessWidget {
-  const _HeroCards();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topCenter,
-      children: const [
-        Positioned(
-          top: 44,
-          left: 44,
-          child: _HeroCard(keyName: 'en:sv03-223', tilt: -0.16, scale: 0.84),
-        ),
-        Positioned(
-          top: 34,
-          right: 44,
-          child: _HeroCard(keyName: 'en:sv02-201', tilt: 0.15, scale: 0.84),
-        ),
-        Positioned(
-          top: 0,
-          child: _HeroCard(keyName: 'en:sv04-234', tilt: 0, scale: 1),
-        ),
-      ],
-    );
-  }
-}
-
-class _HeroCard extends StatelessWidget {
-  const _HeroCard({
-    required this.keyName,
-    required this.tilt,
-    required this.scale,
-  });
-  final String keyName;
-  final double tilt;
-  final double scale;
-
-  @override
-  Widget build(BuildContext context) {
-    final result = SearchResult.fromFixtureData(
-      Fixtures.byKey(keyName)['data'] as Map<String, dynamic>? ?? const {},
-    );
-    return Transform.rotate(
-      angle: tilt,
-      child: Transform.scale(
-        scale: scale,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.62),
-                blurRadius: 34,
-                offset: const Offset(0, 26),
-              ),
-            ],
-          ),
-          child: CardThumbnail(
-            imageUrls: result.imageUrlCandidates,
-            cardName: result.name,
-            width: 132,
-            height: 184,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ScanButton extends StatelessWidget {
   const _ScanButton({required this.onTap});
   final VoidCallback onTap;
@@ -252,7 +161,7 @@ class _ScanButton extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.fromLTRB(10, 8, 20, 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
           children: [
             Container(
@@ -262,20 +171,25 @@ class _ScanButton extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                LucideIcons.scanLine,
-                color: Colors.white,
-                size: 27,
+              child: const Center(
+                child: Icon(
+                  LucideIcons.scanLine,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
             ),
             const SizedBox(width: 14),
             const Expanded(
-              child: Text(
-                'SCAN A CARD',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
+              child: Center(
+                child: Text(
+                  'SCAN A CARD',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ),
@@ -337,13 +251,24 @@ class _DockButton extends StatelessWidget {
     return GlassPanel(
       onTap: onTap,
       radius: 8,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        children: [
-          Icon(icon, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
-        ],
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: SizedBox(
+        height: 64,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, size: 22, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(height: 7),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -484,54 +409,6 @@ class _HomeBackdrop extends StatelessWidget {
   const _HomeBackdrop();
 
   @override
-  Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF181818), Color(0xFF0B0B0B)],
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: -110,
-            right: -120,
-            child: _Glow(size: 320, color: primary),
-          ),
-          const Positioned(
-            bottom: 90,
-            left: -120,
-            child: _Glow(size: 260, color: saveRoomPrimary),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Glow extends StatelessWidget {
-  const _Glow({required this.size, required this.color});
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color.withValues(alpha: 0.20),
-            color.withValues(alpha: 0.06),
-            Colors.transparent,
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      const ColoredBox(color: saveRoomBackground);
 }

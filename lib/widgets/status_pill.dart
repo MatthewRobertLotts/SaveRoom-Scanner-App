@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../app/app_theme.dart';
+
 class StatusPill extends StatelessWidget {
   const StatusPill(this.label, {super.key, this.icon, this.dense = false});
 
@@ -12,21 +14,9 @@ class StatusPill extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colors.primary.withValues(alpha: 0.20),
-            colors.secondary.withValues(alpha: 0.10),
-          ],
-        ),
+        color: saveRoomRaisedSurface,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.34)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: 0.12),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
       ),
       child: Padding(
         padding: EdgeInsets.symmetric(
@@ -35,6 +25,7 @@ class StatusPill extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (icon != null) ...[
               Icon(icon, size: dense ? 14 : 16, color: colors.primary),
